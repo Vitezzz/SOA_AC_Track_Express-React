@@ -22,6 +22,6 @@ export const updateCategoria_Inventario = async (id, {nombre}) => {
 }
 
 export const deleteCategoria_Inventario = async(id) => {
-    const result = await pool.query(`DELETE FROM categoria_inventario WHERE id = $1`, [id]);
+    const result = await pool.query(`DELETE FROM categoria_inventario WHERE id = $1 RETURNING *`, [id]);
     return result.rows[0];
 }

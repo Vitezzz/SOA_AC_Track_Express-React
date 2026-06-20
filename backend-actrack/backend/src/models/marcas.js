@@ -21,6 +21,6 @@ export const updateMarca = async(id, {nombre}) => {
 }
 
 export const deleteMarca = async(id) => {
-    const result = await pool.query(`DELETE FROM marca WHERE id =$1`, [id])
+    const result = await pool.query(`DELETE FROM marca WHERE id =$1 RETURNING *`, [id])
     return result.rows[0];
 }

@@ -6,7 +6,7 @@ const allRoles = async (req, res) => {
         res.status(200).json(roles)
     }catch(error){
         console.error(error);
-        res.status(500).json({ message: 'Error de adolfita'})
+        res.status(500).json({ message: 'Error de servidor'})
     }
 }
 
@@ -27,7 +27,7 @@ const idRol = async (req, res) => {
         res.status(200).json(rolExist)
     }catch(error){
         console.error(error);
-        res.status(500).json({ message: "Error de adolfita"})
+        res.status(500).json({ message: "Error de servidor"})
 
     }
 }

@@ -24,6 +24,6 @@ export const updateMovimientosInventario = async (id, { inv_id, ord_id, usu_id, 
 }
 
 export const deleteMovimientosInventario = async (id) => {
-    const result = await pool.query(`DELETE FROM movimientos_inventario WHERE id = $1`, [id]);
+    const result = await pool.query(`DELETE FROM movimientos_inventario WHERE id = $1 RETURNING *`, [id]);
     return result.rows[0];
 }
