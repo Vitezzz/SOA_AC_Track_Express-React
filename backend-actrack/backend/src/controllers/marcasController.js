@@ -25,7 +25,7 @@ const marcaById = async(req, res) => {
         const marcaId = await getMarcaId(id);
 
         if(!marcaId){
-            return res.status(400).json({message: 'Id de marca no encontrado'})
+            return res.status(404).json({message: 'Id de marca no encontrado'})
         }
 
         res.status(200).json(marcaId)
