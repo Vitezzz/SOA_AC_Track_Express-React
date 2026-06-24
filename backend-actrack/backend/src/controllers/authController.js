@@ -1,5 +1,8 @@
+import { deleteSesiones, insertSesiones } from '../models/sesiones.js';
 import { createUser, findUserByEmail } from '../models/usuarios.js'
-import { generateToken, cookieOptions } from '../utils/authUtils.js'
+import { cookieOptions, generateAccessToken, generateRefreshToken } from '../utils/authUtils.js'
+import jwt, { decode } from 'jsonwebtoken';
+import { selectSesionesByToken } from '../models/sesiones.js';
 import bcrypt from 'bcryptjs'
 
 const register = async (req, res) => {
@@ -23,7 +26,7 @@ const register = async (req, res) => {
             rol_id, nombre, paterno, materno, email, password: passwordHash
         });
 
-        const token = generateToken(nuevoUsuario.id);
+        const token = generateAccessToken(nuevoUsuario.id);
 
         res.cookie('token', token, cookieOptions);
 
@@ -60,12 +63,20 @@ const login = async (req, res) => {
             return res.status(401).json({ message: 'Credenciales inválidas'});
         }
 
-        const token = generateToken(user.id);
+        const accessToken = generateAccessToken(user.id);
+        const refreshToken = generateRefreshToken(user.id);
 
-        res.cookie ('token', token, cookieOptions);
+        //Calcular fecha de expiracion del refresh (7 días desde ahora)
+        const expira = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+        //Guardar refresh token en BD 
+        await insertSesiones(user.id, refreshToken, expira);
+
+        res.cookie ('token', accessToken, cookieOptions);
 
         res.status(200).json({
             email : user.email,
+            refreshToken
         })
     } catch (error) {
         console.error(error)
@@ -86,8 +97,36 @@ const getProfile = async(req, res) => {
 }
 
 const logout = async(req,res) => {
-    res.clearCookie('token', cookieOptions)
+    await deleteSesiones(req.user.id);
+    res.clearCookie('token', cookieOptions);
     res.status(200).json({message: 'Sesion cerrada'});
 }
 
-export {register, login, getProfile, logout};
+const refresh = async (req,res) => {
+    try{
+        const { refreshToken } = req.body;
+
+        if(!refreshToken){
+            return res.status(401).json({ message : 'Refresh token requerido'});
+        }
+
+        const sesion = await selectSesionesByToken(refreshToken);
+
+        if(!sesion){
+            return res.status(401).json({ message : 'Refresh token inválido'})
+        }
+
+        const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+
+        const accessToken = generateAccessToken(decoded.id);
+
+        res.cookie('token', accessToken, cookieOptions);
+
+        res.json({ message : 'Token renovado'})
+    }catch(error){
+        console.error(error)
+        res.status(401).json({ message: "Refresh token expirado o invàlido"})
+    }
+}
+
+export {register, login, getProfile, logout, refresh};

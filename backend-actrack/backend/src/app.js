@@ -23,6 +23,10 @@ import mantenimientoPreventivoRouter from './routes/mantenimientoPreventivoRoute
 import checklistPlantillasRouter from './routes/checklistPlantillasRouter.js'
 import checklistItemsPlantillaRouter from './routes/checklistItemsPlantilla.js'
 import checklistEjecucionRouter from './routes/checklistEjecucion.js'
+import oauthCuentasRouter from './routes/oauth_cuentas.router.js'
+import notificacionesRouter from './routes/notificaciones.router.js'
+import rutasRouter from './routes/rutas.router.js'
+import rutaParadasRouter from './routes/rutaParadas.router.js'
 
 const app = express(); //create an express app
 
@@ -33,7 +37,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/roles/', rolesRoutes)
 app.use('/api/clientes/', clientesRoutes);
 app.use('/api/marcas/', marcasRoutes);
-app.use('/api/equipos/',equiposRoute);
+app.use('/api/equipos/', equiposRoute);
 app.use('/api/categoriaServicio', categoriaServicioRoute);
 app.use('/api/categoriaInventario', categoriaInventarioRoute);
 app.use('/api/inventario', inventarioRoute);
@@ -51,5 +55,9 @@ app.use('/api/mantenimiento_preventivo', mantenimientoPreventivoRouter);
 app.use('/api/checklist_plantillas', checklistPlantillasRouter);
 app.use('/api/checklist_items_plantilla', checklistItemsPlantillaRouter);
 app.use('/api/checklist_ejecucion', checklistEjecucionRouter);
+app.use('/api/oauth_cuentas', oauthCuentasRouter);
+app.use('/api/notificaciones', notificacionesRouter);
+app.use('/api/rutas', rutasRouter);
+app.use('/api/ruta_paradas', rutaParadasRouter);
 
 export default app;
