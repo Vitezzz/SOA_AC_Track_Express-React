@@ -29,7 +29,7 @@ const getTipoMovimientoInventarioById = async (req, res) => {
         const listaMovimientosInventarioById = await selectTipoMovimientoInventarioById(id);
 
         if (!listaMovimientosInventarioById) {
-            return res.status(404).json({ message: "Id de movimiento invnetario no encontrado" })
+            return res.status(404).json({ message: "Id de movimiento inventario no encontrado" })
         }
 
         res.status(200).json(listaMovimientosInventarioById);

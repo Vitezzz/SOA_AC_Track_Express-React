@@ -2,6 +2,8 @@ import {
     selectTecnicos, selectTecnicoById, insertTecnicos, updateTecnicos,
     deleteTecnicos
 } from "../models/tecnicos.js";
+import { findUserById } from "../models/usuarios.js";
+import { selectEspecialidadById } from "../models/especialidad.js";
 
 const getTecnicos = async (req, res) => {
     try {
@@ -50,6 +52,12 @@ const postTecnicos = async (req, res) => {
             return res.status(400).json({ message: "Campos faltantes " })
         }
 
+        const usuarioExiste = await findUserById(usu_id);
+        if(!usuarioExiste) return res.status(404).json({ message : 'Usuario no encontrado'});
+
+        const especialidadExiste = await selectEspecialidadById(esp_id);
+        if(!especialidadExiste) return res.status(404).json({ message: 'Especialidad no encontrada'})
+
         const nuevoTecnico = await insertTecnicos({ usu_id, esp_id });
 
         res.status(201).json({
@@ -72,6 +80,13 @@ const putTecnicos = async (req, res) => {
         if (!id) {
             return res.status(400).json({ message: "Id no encontrado" })
         }
+
+
+        const usuarioExiste = await findUserById(usu_id);
+        if(!usuarioExiste) return res.status(404).json({ message : 'Usuario no encontrado'});
+
+        const especialidadExiste = await selectEspecialidadById(esp_id);
+        if(!especialidadExiste) return res.status(404).json({ message: 'Especialidad no encontrada'})
 
         const updtTecnico = await updateTecnicos(id, { usu_id, esp_id, disponible });
 

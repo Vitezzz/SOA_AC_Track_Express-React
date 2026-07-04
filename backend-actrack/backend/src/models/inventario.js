@@ -33,3 +33,8 @@ export const deleteInventario = async (id) => {
     );
     return result.rows[0];
 }
+
+export const updateInventarioStock = async (id, stock_actual) => {
+    const result = await pool.query('UPDATE inventario SET stock_actual = $1 WHERE id = $2 RETURNING  *', [stock_actual]);
+    return result.rows[0];
+}

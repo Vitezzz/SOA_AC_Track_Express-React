@@ -2,6 +2,10 @@ import {
     selectAllMovimientosInventario, selectMovimientosInventarioId,
     insertMovimientosInventario, updateMovimientosInventario, deleteMovimientosInventario
 } from "../models/movimientos_inventario.js";
+import { selectInventarioId, updateInventarioStock } from '../models/inventario.js';
+import { selectTipoMovimientoInventarioById } from "../models/tipos_movimiento_inventario.js";
+import { selectOrdenesServicioById } from "../models/ordenes_servicio.js";
+import { findUserById } from "../models/usuarios.js";
 
 const getMovimientosInventario = async (req, res) => {
     try {
@@ -45,7 +49,29 @@ const postMovimientosInventario = async (req, res) => {
             return res.status(400).json({ message: "Campos faltantes" })
         }
 
-        const nuevoMovimientoInventario = await insertMovimientosInventario({inv_id, ord_id, usu_id, tip_id, cantidad});
+        const ordenesServicioExiste = await selectOrdenesServicioById(ord_id);
+        if (!ordenesServicioExiste) return res.status(404).json({ message: 'Orden servicio no encontrada' });
+
+        const usuarioExiste = await findUserById(usu_id)
+        if (!usuarioExiste) return res.status(404).json({ message: 'Usuario no encontrado' })
+
+        const tipoMov = await selectTipoMovimientoInventarioById(tip_id);
+        if (!tipoMov) return res.status(404).json({ message: 'Tipo de movimiento no encontrado' })
+
+        const item = await selectInventarioId(inv_id);
+        if (!item) return res.status(404).json({ message: 'Item no encontrado' });
+
+        if (tipoMov.nombre === "Salida" && item.stock_actual < cantidad) {
+            return res.status(400).json({ message: "Stock insuficiente" })
+        }
+
+        const nuevoMovimientoInventario = await insertMovimientosInventario({ inv_id, ord_id, usu_id, tip_id, cantidad });
+
+        const nuevoStock = tipoMov.nombre === 'Entrada'
+            ? Number(item.stock_actual) + Number(cantidad)
+            : Number(item.stock_actual) - Number(cantidad)
+
+        await updateInventarioStock(inv_id, nuevoStock);
 
         res.status(201).json({
             id: nuevoMovimientoInventario.id,
@@ -64,15 +90,28 @@ const postMovimientosInventario = async (req, res) => {
 const putMovimientosInventario = async (req, res) => {
     try {
 
-        const {id} = req.params;
+        const { id } = req.params;
 
-        if(!id){
-            return res.status(400).json({ message: "Id no encontrado"})
+        if (!id) {
+            return res.status(400).json({ message: "Id no encontrado" })
         }
 
         const { inv_id, ord_id, usu_id, tip_id, cantidad } = req.body;
 
-        const  updtMovimientosInventario = await updateMovimientosInventario(id,{ inv_id, ord_id, usu_id, tip_id, cantidad});
+        const ordenesServicioExiste = await selectOrdenesServicioById(ord_id);
+        if (!ordenesServicioExiste) return res.status(404).json({ message: 'Orden servicio no encontrada' });
+
+        const usuarioExiste = await findUserById(usu_id)
+        if (!usuarioExiste) return res.status(404).json({ message: 'Usuario no encontrado' })
+
+        const tipoMov = await selectTipoMovimientoInventarioById(tip_id);
+        if (!tipoMov) return res.status(404).json({ message: 'Tipo de movimiento no encontrado' })
+
+        const item = await selectInventarioId(inv_id);
+        if (!item) return res.status(404).json({ message: 'Item no encontrado' });
+
+
+        const updtMovimientosInventario = await updateMovimientosInventario(id, { inv_id, ord_id, usu_id, tip_id, cantidad });
 
         res.status(200).json({
             id: updtMovimientosInventario.id,
@@ -92,14 +131,14 @@ const dltMovimientosInventario = async (req, res) => {
     try {
         const { id } = req.params;
 
-        if(!id){
-            return res.status(400).json({ message: 'Id no encontrado'})
+        if (!id) {
+            return res.status(400).json({ message: 'Id no encontrado' })
         }
 
         const delMovimientosInventario = await deleteMovimientosInventario(id);
 
-        if(!delMovimientosInventario){
-            return res.status(400).json({ message: "no se encontro id del movimiento de inventario"})
+        if (!delMovimientosInventario) {
+            return res.status(400).json({ message: "no se encontro id del movimiento de inventario" })
         }
 
         res.status(200).json(delMovimientosInventario);

@@ -31,3 +31,8 @@ export const deleteMantenimientoPreventivo = async (id) => {
         RETURNING *`, [id]);
     return result.rows[0]
 }
+
+export const selectMantenimientoPreventivoByCliente = async (cli_id) => {
+    const result = await pool.query(`SELECT * FROM mantenimiento_preventivo WHERE cli_id = $1`,[cli_id]);
+    return result.rows;
+}

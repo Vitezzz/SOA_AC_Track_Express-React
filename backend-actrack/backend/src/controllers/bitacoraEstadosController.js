@@ -2,14 +2,16 @@ import {
     selectBitacoraEstados, selectBitacoraEstadosById,
     insertBitacoraEstados
 } from "../models/bitacora_estados.js";
+import { selectOrdenesServicioById } from "../models/ordenes_servicio.js";
+import { findUserById } from "../models/usuarios.js";
 
 const getBitacoraEstados = async (req, res) => {
     try {
 
         const listaBitacoraEstados = await selectBitacoraEstados();
 
-        if(!listaBitacoraEstados){
-            return res.status(400).json({ message: "Listado de bitacora estados no encontrado"})
+        if (!listaBitacoraEstados) {
+            return res.status(400).json({ message: "Listado de bitacora estados no encontrado" })
         }
 
         res.status(200).json(listaBitacoraEstados)
@@ -24,14 +26,14 @@ const getBitacoraEstadosById = async (req, res) => {
 
         const { id } = req.params;
 
-        if(!id){
-            return res.status(400).json({ message: "Id no encontrado"})
+        if (!id) {
+            return res.status(400).json({ message: "Id no encontrado" })
         }
 
         const bitacoraEstadosId = await selectBitacoraEstadosById(id);
 
-        if(!bitacoraEstadosId){
-            return res.status(404).json({ message: "Id de bitacora estados no encontrado"});
+        if (!bitacoraEstadosId) {
+            return res.status(404).json({ message: "Id de bitacora estados no encontrado" });
         }
 
         res.status(200).json(bitacoraEstadosId)
@@ -46,11 +48,17 @@ const postBitacoraEstados = async (req, res) => {
 
         const { ord_id, usu_id, estado_anterior, estado_nuevo } = req.body;
 
-        if(!ord_id || !usu_id || !estado_nuevo){
-            return res.status(400).json({ message: "Campos faltantes"})
+        if (!ord_id || !usu_id || !estado_nuevo) {
+            return res.status(400).json({ message: "Campos faltantes" })
         }
 
-        const nuevoBitacoraEstado = await insertBitacoraEstados({ ord_id, usu_id, estado_anterior, estado_nuevo})
+        const ordenExiste = await selectOrdenesServicioById(ord_id);
+        if (!ordenExiste) return res.status(400).json({ message: 'Orden no encontrada' });
+
+        const usuarioExiste = await findUserById(usu_id);
+        if(!usuarioExiste) return res.status(400).json({ message : 'Usuario no encontrado'})
+
+        const nuevoBitacoraEstado = await insertBitacoraEstados({ ord_id, usu_id, estado_anterior, estado_nuevo })
 
         res.status(201).json({
             id: nuevoBitacoraEstado.id,
@@ -66,4 +74,4 @@ const postBitacoraEstados = async (req, res) => {
     }
 }
 
-export { getBitacoraEstados, getBitacoraEstadosById, postBitacoraEstados}
+export { getBitacoraEstados, getBitacoraEstadosById, postBitacoraEstados }

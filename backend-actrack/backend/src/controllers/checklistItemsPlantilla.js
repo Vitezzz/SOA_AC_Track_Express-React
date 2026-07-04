@@ -3,6 +3,7 @@ import {
     insertChecklistItemsPlantilla, updateChecklistItemsPlantilla,
     deleteChecklistItemsPlantilla
 } from "../models/checklistItemsPlantilla.js";
+import { selectChecklistPlantillasById } from "../models/checklistPlantillas.js";
 
 const getChecklistItemsPlantilla = async (req, res) => {
     try {
@@ -48,6 +49,9 @@ const postChecklistItemsPlantilla = async (req, res) => {
             return res.status(400).json({ message: "Campos faltantes" });
         }
 
+        const checklistPlantillaExiste = await selectChecklistPlantillasById(che_id);
+        if (!checklistPlantillaExiste) return res.status(404).json({ message: "Error del servidor" });
+
         const nuevoChecklistItemPlantilla = await insertChecklistItemsPlantilla({ che_id, descripcion, orden });
 
         res.status(201).json({
@@ -73,6 +77,10 @@ const putChecklistItemsPlantillaById = async (req, res) => {
             return res.status(404).json({ message: "Id no encontrado" })
         }
 
+        const checklistPlantillaExiste = await selectChecklistPlantillasById(che_id);
+        if (!checklistPlantillaExiste) return res.status(404).json({ message: "Error del servidor" });
+
+
         const checklistItemPlantillaUpdt = await updateChecklistItemsPlantilla(id, { che_id, descripcion, orden });
 
         if (!checklistItemPlantillaUpdt) {
@@ -97,14 +105,14 @@ const dltChecklistItemsPlantillaById = async (req, res) => {
 
         const { id } = req.params;
 
-        if(!id){
-            return res.status(404).json({ message: "Id no encontrado"})
+        if (!id) {
+            return res.status(404).json({ message: "Id no encontrado" })
         }
 
         const checklistItemsPlantillaDlt = await deleteChecklistItemsPlantilla(id);
 
-        if(!checklistItemsPlantillaDlt){
-            return res.status(404).json({ message : "Checklist Items Plantilla no encontrado"});
+        if (!checklistItemsPlantillaDlt) {
+            return res.status(404).json({ message: "Checklist Items Plantilla no encontrado" });
         }
 
         res.status(200).json(checklistItemsPlantillaDlt)
@@ -115,7 +123,8 @@ const dltChecklistItemsPlantillaById = async (req, res) => {
     }
 }
 
-export { getChecklistItemsPlantilla, getChecklistItemsPlantillaById, postChecklistItemsPlantilla,
+export {
+    getChecklistItemsPlantilla, getChecklistItemsPlantillaById, postChecklistItemsPlantilla,
     putChecklistItemsPlantillaById, dltChecklistItemsPlantillaById
 }
 

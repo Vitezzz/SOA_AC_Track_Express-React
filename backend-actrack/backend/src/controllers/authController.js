@@ -53,14 +53,14 @@ const login = async (req, res) => {
 
         const user = await findUserByEmail(email);
 
-        if(!user){
-            return res.status(401).json({ message: 'Credenciales Inválidas'});
+        if (!user) {
+            return res.status(401).json({ message: 'Credenciales Inválidas' });
         }
 
         const coincide = await bcrypt.compare(password, user.password);
 
-        if(!coincide){
-            return res.status(401).json({ message: 'Credenciales inválidas'});
+        if (!coincide) {
+            return res.status(401).json({ message: 'Credenciales inválidas' });
         }
 
         const accessToken = generateAccessToken(user.id);
@@ -72,48 +72,53 @@ const login = async (req, res) => {
         //Guardar refresh token en BD 
         await insertSesiones(user.id, refreshToken, expira);
 
-        res.cookie ('token', accessToken, cookieOptions);
+        res.cookie('token', accessToken, cookieOptions);
 
         res.status(200).json({
-            email : user.email,
+            email: user.email,
             refreshToken
         })
     } catch (error) {
         console.error(error)
-        res.status(500).json({ message: 'Error del servidor'})
+        res.status(500).json({ message: 'Error del servidor' })
     }
 }
 
-const getProfile = async(req, res) => {
-    try{
-        if(!req.user){
-            return res.status(401).json({ message: 'No autenticado'});
+const getProfile = async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ message: 'No autenticado' });
         }
         res.json(req.user);
-    }catch(error){
+    } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Error del servidor'});
+        res.status(500).json({ message: 'Error del servidor' });
     }
 }
 
-const logout = async(req,res) => {
-    await deleteSesiones(req.user.id);
-    res.clearCookie('token', cookieOptions);
-    res.status(200).json({message: 'Sesion cerrada'});
+const logout = async (req, res) => {
+    try {
+        await deleteSesiones(req.user.id);
+        res.clearCookie('token', cookieOptions);
+        res.status(200).json({ message: 'Sesion cerrada' });
+    } catch (error) {
+        console.error('Error:', error)
+        res.status(500).json({ message: 'Error del servidor' });
+    }
 }
 
-const refresh = async (req,res) => {
-    try{
+const refresh = async (req, res) => {
+    try {
         const { refreshToken } = req.body;
 
-        if(!refreshToken){
-            return res.status(401).json({ message : 'Refresh token requerido'});
+        if (!refreshToken) {
+            return res.status(401).json({ message: 'Refresh token requerido' });
         }
 
         const sesion = await selectSesionesByToken(refreshToken);
 
-        if(!sesion){
-            return res.status(401).json({ message : 'Refresh token inválido'})
+        if (!sesion) {
+            return res.status(401).json({ message: 'Refresh token inválido' })
         }
 
         const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
@@ -122,11 +127,11 @@ const refresh = async (req,res) => {
 
         res.cookie('token', accessToken, cookieOptions);
 
-        res.json({ message : 'Token renovado'})
-    }catch(error){
+        res.json({ message: 'Token renovado' })
+    } catch (error) {
         console.error(error)
-        res.status(401).json({ message: "Refresh token expirado o invàlido"})
+        res.status(401).json({ message: "Refresh token expirado o invàlido" })
     }
 }
 
-export {register, login, getProfile, logout, refresh};
+export { register, login, getProfile, logout, refresh };

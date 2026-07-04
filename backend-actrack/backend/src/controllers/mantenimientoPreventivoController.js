@@ -1,16 +1,31 @@
 import {
     selectMantenimientoPreventivo, selectMantenimientoById,
+    selectMantenimientoPreventivoByCliente,
     insertMantenimientoPreventivo, updateMantenimientoPreventivo,
     deleteMantenimientoPreventivo
 } from "../models/mantenimientoPreventivo.js";
+import { puedeVerTodo } from "../utils/roleUtils.js";
+import { getClienteById } from "../models/clientes.js";
+import { getEquipoById } from "../models/equipos.js";
+import { getClienteIdByUserId } from '../utils/lookupUtils.js'
 
 const getMantenimientoPreventivo = async (req, res) => {
     try {
 
-        const listaMantenimientoPreventivo = await selectMantenimientoPreventivo();
+        let listaMantenimientoPreventivo;
+
+        if (puedeVerTodo(req.user.rol_id)) {
+            listaMantenimientoPreventivo = await selectMantenimientoPreventivo();
+        } else if (req.user.rol_id === 3) {
+            const cli_id = await getClienteIdByUserId(req.user.id);
+            if(!cli_id) return res.status(404).json({ message: 'Cliente no encontrado'});
+            listaMantenimientoPreventivo = await selectMantenimientoPreventivoByCliente(cli_id);
+        } else {
+            return res.status(403).json({ message: 'No tienes acceso' });
+        }
 
         if (listaMantenimientoPreventivo.length === 0) {
-            return res.status(404).json({ message: "Lista de mantenimineto preventivo no encontrada" })
+            return res.status(404).json({ message: "Lista de mantenimiento preventivo no encontrada" })
         }
 
         res.status(200).json(listaMantenimientoPreventivo);
@@ -26,13 +41,13 @@ const getMantenimientoPreventivoById = async (req, res) => {
         const { id } = req.params;
 
         if (!id) {
-            return res.status(404).json({ message: "Id no encontado" })
+            return res.status(404).json({ message: "Id no encontrado" })
         }
 
         const mantenimientoPreventivoId = await selectMantenimientoById(id);
 
         if (!mantenimientoPreventivoId) {
-            return res.status(404).json({ message: "Id de manteniemineto preventivo no encontrado" });
+            return res.status(404).json({ message: "Id de mantenimiento preventivo no encontrado" });
         }
 
         res.status(200).json(mantenimientoPreventivoId)
@@ -51,6 +66,12 @@ const postMantenimientoPreventivo = async (req, res) => {
         if (!cli_id || !frecuencia_dias || !proxima_fecha) {
             return res.status(400).json({ message: "Campos no encontrados" })
         }
+
+        const clienteExiste = await getClienteById(cli_id);
+        if (!clienteExiste) return res.status(404).json({ message: 'Cliente no encontrado' })
+
+        const equipoExiste = await getEquipoById(equ_id);
+        if (!equipoExiste) return res.status(404).json({ message: 'Equipo no encontrado' })
 
         const nuevoMantenimientoPreventivo = await insertMantenimientoPreventivo({ cli_id, equ_id, frecuencia_dias, proxima_fecha, activo });
 
@@ -80,6 +101,13 @@ const putMantenimientoPreventivo = async (req, res) => {
             return res.status(404).json({ message: "Id no encontrado" })
         }
 
+
+        const clienteExiste = await getClienteById(cli_id);
+        if (!clienteExiste) return res.status(404).json({ message: 'Cliente no encontrado' })
+
+        const equipoExiste = await getEquipoById(equ_id);
+        if (!equipoExiste) return res.status(404).json({ message: 'Equipo no encontrado' })
+
         const mantenimientoPreventivoUpdt = await updateMantenimientoPreventivo(id, { cli_id, equ_id, frecuencia_dias, proxima_fecha, activo })
 
         if (!mantenimientoPreventivoUpdt) {
@@ -106,14 +134,14 @@ const dltMantenimientoPreventivo = async (req, res) => {
 
         const { id } = req.params;
 
-        if(!id){
-            return res.status(404).json({ message: "Id no encontrado"})
+        if (!id) {
+            return res.status(404).json({ message: "Id no encontrado" })
         }
 
         const mantenimientoPreventivoDlt = await deleteMantenimientoPreventivo(id);
 
-        if(!mantenimientoPreventivoDlt){
-            return res.status(404).json({ message: "Mantenimiento preventivo no encontrado para eliminar"});
+        if (!mantenimientoPreventivoDlt) {
+            return res.status(404).json({ message: "Mantenimiento preventivo no encontrado para eliminar" });
         }
 
         res.status(200).json(mantenimientoPreventivoDlt);
@@ -124,7 +152,8 @@ const dltMantenimientoPreventivo = async (req, res) => {
     }
 }
 
-export { getMantenimientoPreventivo, getMantenimientoPreventivoById, postMantenimientoPreventivo,
+export {
+    getMantenimientoPreventivo, getMantenimientoPreventivoById, postMantenimientoPreventivo,
     putMantenimientoPreventivo, dltMantenimientoPreventivo
 }
 

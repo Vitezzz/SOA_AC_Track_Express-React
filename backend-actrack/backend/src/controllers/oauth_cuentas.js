@@ -2,6 +2,7 @@ import {
     selectOauthCuentas, selectOauthCuentasById,
     insertOauthCuentas, updateOauthCuentas, deleteOauthCuentas
 } from "../models/oauth_cuentas.js";
+import { findUserById } from "../models/usuarios.js";
 
 const getOauthCuentas = async (req, res) => {
     try {
@@ -51,6 +52,9 @@ const postOauthCuentas = async (req, res) => {
             return res.status(400).json({ message: "Campos no encontrados" })
         }
 
+        const usuarioExiste = await findUserById(usu_id);
+        if (!usuarioExiste) return res.status(404).json({ message: 'Usuario no encontrado' })
+
         const nuevaOauthCuenta = await insertOauthCuentas({ usu_id, proveedor, provider_uid });
 
         res.status(201).json({
@@ -77,10 +81,13 @@ const putOauthCuentas = async (req, res) => {
             return res.status(404).json({ message: "Id no encontrado" })
         }
 
+        const usuarioExiste = await findUserById(usu_id);
+        if (!usuarioExiste) return res.status(404).json({ message: 'Usuario no encontrado' })
+
         const oauthCuentasId = await updateOauthCuentas(id, { usu_id, proveedor, provider_uid })
 
-        if(!oauthCuentasId){
-            return res.status(404).json({ message: "Datos no validados"})
+        if (!oauthCuentasId) {
+            return res.status(404).json({ message: "Datos no validados" })
         }
 
         res.status(200).json({
@@ -101,14 +108,14 @@ const dltOauthCuentas = async (req, res) => {
 
         const { id } = req.params;
 
-        if(!id){
-            return res.status(404).json({ message:  "Id no encontrado"})
+        if (!id) {
+            return res.status(404).json({ message: "Id no encontrado" })
         }
 
-        const oauthCuentasDlt = await  deleteOauthCuentas(id);
+        const oauthCuentasDlt = await deleteOauthCuentas(id);
 
-        if(!oauthCuentasDlt){
-            return res.status(404).json({ message : "Oauth cuenta no encontrad"})
+        if (!oauthCuentasDlt) {
+            return res.status(404).json({ message: "Oauth cuenta no encontrad" })
         }
 
         res.status(200).json(oauthCuentasDlt);
@@ -119,4 +126,4 @@ const dltOauthCuentas = async (req, res) => {
     }
 }
 
-export { getOauthCuentas, getOauthCuentasById, postOauthCuentas, putOauthCuentas, dltOauthCuentas};
+export { getOauthCuentas, getOauthCuentasById, postOauthCuentas, putOauthCuentas, dltOauthCuentas };

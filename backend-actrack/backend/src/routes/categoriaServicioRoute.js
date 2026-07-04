@@ -1,12 +1,13 @@
 import express from 'express';
 import { listadoCategoriaServicio, categoriaServicioById, crearCategoriaServicio, putCategoriaServicio, categoriaServicioDelete } from '../controllers/categoria_servicioController.js';
+import { protect } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-router.get('/',listadoCategoriaServicio);
-router.get('/:id', categoriaServicioById);
-router.post('/', crearCategoriaServicio);
-router.put('/:id', putCategoriaServicio);
-router.delete('/:id', categoriaServicioDelete);
+router.get('/',protect,listadoCategoriaServicio);
+router.get('/:id', protect,categoriaServicioById);
+router.post('/', protect,crearCategoriaServicio);
+router.put('/:id', protect,putCategoriaServicio);
+router.delete('/:id',protect ,categoriaServicioDelete);
 
 export default router;

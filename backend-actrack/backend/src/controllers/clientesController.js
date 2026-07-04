@@ -1,11 +1,12 @@
-import { getClientes, getClienteById, getClienteByEmail, createCliente, updateCliente, deleteCliente} from "../models/clientes.js";
+import { getClientes, getClienteById, getClienteByEmail, createCliente, updateCliente, deleteCliente } from "../models/clientes.js";
+import { findUserById } from "../models/usuarios.js";
 
 
 const allClientes = async (req, res) => {
     try {
         const listaClientes = await getClientes();
         if (!listaClientes) {
-            return res.status(400).json({ message: 'Adolfitas no encontradas' });
+            return res.status(400).json({ message: 'Clientes no encontrados' });
         }
         res.status(200).json(listaClientes);
     } catch (error) {
@@ -19,13 +20,13 @@ const clienteById = async (req, res) => {
         const { id } = req.params;
 
         if (!id) {
-            return res.status(400).json({ message: "Adolfita no encontrada" })
+            return res.status(400).json({ message: "Id no encontrado" })
         }
 
         const clienteId = await getClienteById(id);
 
         if (!clienteId) {
-            return res.status(400).json({ message: "Adolfita no encontrada" });
+            return res.status(400).json({ message: "Cliente no encontrado" });
         }
 
         res.status(200).json(clienteId);
@@ -45,10 +46,12 @@ const crearCliente = async (req, res) => {
         }
 
         const clienteExiste = await getClienteByEmail(email);
-
         if (clienteExiste) {
-            return res.status(400).json({ message: 'Adolfita ya registrada' })
+            return res.status(400).json({ message: 'Cliente ya registrado' })
         }
+
+        const usuarioExiste = await findUserById(usu_id);
+        if (!usuarioExiste) return res.status(404).json({ message: 'Usuario no encontrado' })
 
         const nuevoCliente = await createCliente({
             usu_id, nombre, email, telefono, direccion
@@ -76,6 +79,10 @@ const clienteUpdate = async (req, res) => {
         if (!id) {
             return res.status(400).json({ message: 'Id no encontrado' });
         };
+
+
+        const usuarioExiste = await findUserById(usu_id);
+        if (!usuarioExiste) return res.status(404).json({ message: 'Usuario no encontrado' })
 
         const actualizarCliente = await updateCliente(id, { usu_id, nombre, email, telefono, direccion, activo });
 
@@ -113,4 +120,4 @@ const clienteDelete = async (req, res) => {
     }
 }
 
-export {allClientes, clienteById, crearCliente, clienteDelete, clienteUpdate}
+export { allClientes, clienteById, crearCliente, clienteDelete, clienteUpdate }

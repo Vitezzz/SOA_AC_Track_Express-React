@@ -2,6 +2,8 @@ import {
     selectCotizacionDetalle, selectCotizacionDetalleId,
     insertCotizacionDetalle, updateCotizacionDetalle, deleteCotizacionDetalle
 } from "../models/cotizacion_detalle.js";
+import { selectCotizacionesById } from "../models/cotizaciones.js";
+import { selectInventarioId } from "../models/inventario.js";
 
 const getCotizacionDetalle = async (req, res) => {
     try {
@@ -46,9 +48,15 @@ const postCotizacionDetalleById = async (req, res) => {
 
         const { inv_id, cot_id, cantidad, precio_unitario, es_mano_obra } = req.body;
 
-        if (!inv_id || !cot_id || !cantidad || !precio_unitario ) {
+        if (!inv_id || !cot_id || !cantidad || !precio_unitario) {
             return res.status(400).json({ message: "Faltan campos" })
         }
+
+        const inventarioExiste = await selectInventarioId(inv_id);
+        if (!inventarioExiste) return res.status(404).json({ message: 'Inventario no encontrado' });
+
+        const cotizacionExiste = await selectCotizacionesById(cot_id);
+        if (!cotizacionExiste) return res.status(404).json({ message: 'Cotizacion no encontrada' })
 
         const nuevaCotizacionDetalle = await insertCotizacionDetalle({ inv_id, cot_id, cantidad, precio_unitario, es_mano_obra });
 
@@ -78,10 +86,16 @@ const putCotizacionDetalleById = async (req, res) => {
             return res.status(400).json({ message: "Id no encontrado" })
         }
 
+        const inventarioExiste = await selectInventarioId(inv_id);
+        if (!inventarioExiste) return res.status(404).json({ message: 'Inventario no encontrado' });
+
+        const cotizacionExiste = await selectCotizacionesById(cot_id);
+        if (!cotizacionExiste) return res.status(404).json({ message: 'Cotizacion no encontrada' })
+
         const cotizacionDetalleUpdt = await updateCotizacionDetalle(id, { inv_id, cot_id, cantidad, precio_unitario, es_mano_obra })
 
-        if(!cotizacionDetalleUpdt){
-            return res.status(404).json({ message: "Id de cotizacion detalle no encontrado"})
+        if (!cotizacionDetalleUpdt) {
+            return res.status(404).json({ message: "Id de cotizacion detalle no encontrado" })
         }
 
         res.status(200).json({
@@ -105,14 +119,14 @@ const dltCotizacionDetalle = async (req, res) => {
 
         const { id } = req.params;
 
-        if(!id){
-            return res.status(400).json({ message: "Id no encontrado"})
+        if (!id) {
+            return res.status(400).json({ message: "Id no encontrado" })
         }
 
         const cotizacionDetalleDlt = await deleteCotizacionDetalle(id);
 
-        if(!cotizacionDetalleDlt){
-            return res.status(404).json({ message: "Id de cotizacion detalle no encontrado"})
+        if (!cotizacionDetalleDlt) {
+            return res.status(404).json({ message: "Id de cotizacion detalle no encontrado" })
         }
 
         res.status(200).json(cotizacionDetalleDlt)
@@ -122,4 +136,4 @@ const dltCotizacionDetalle = async (req, res) => {
     }
 }
 
-export { getCotizacionDetalle, getCotizacionDetalleById, postCotizacionDetalleById, putCotizacionDetalleById, dltCotizacionDetalle}
+export { getCotizacionDetalle, getCotizacionDetalleById, postCotizacionDetalleById, putCotizacionDetalleById, dltCotizacionDetalle }

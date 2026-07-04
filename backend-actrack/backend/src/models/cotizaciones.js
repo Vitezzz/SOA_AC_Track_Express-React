@@ -10,6 +10,11 @@ export const selectCotizacionesById = async (id) => {
     return result.rows[0];
 }
 
+export const selectCotizacionesByCliente = async(cli_id) => {
+    const result = await pool.query(`SELECT * FROM cotizaciones WHERE cli_id = $1`, [cli_id]);
+    return result.rows;
+}
+
 export const insertCotizaciones = async ({ ord_id, tec_id, cli_id, folio, estado, total,
     notas
 }) => {

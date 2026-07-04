@@ -2,13 +2,14 @@ import express from 'express';
 import { getOauthCuentas, getOauthCuentasById,
     postOauthCuentas, putOauthCuentas, dltOauthCuentas
  } from '../controllers/oauth_cuentas.js';
+ import { protect } from '../middlewares/authMiddleware.js';
 
  const router = express.Router();
 
- router.get('/', getOauthCuentas);
- router.get('/:id', getOauthCuentasById);
- router.post('/', postOauthCuentas);
- router.put('/:id', putOauthCuentas);
- router.delete('/:id', dltOauthCuentas);
+ router.get('/', protect,getOauthCuentas);
+ router.get('/:id', protect,getOauthCuentasById);
+ router.post('/', protect,postOauthCuentas);
+ router.put('/:id', protect,putOauthCuentas);
+ router.delete('/:id', protect,dltOauthCuentas);
 
  export default router;

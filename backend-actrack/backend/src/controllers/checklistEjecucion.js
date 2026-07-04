@@ -2,6 +2,8 @@ import {
     selectChecklistEjecucion, insertChecklistEjecucion,
     updateChecklistEjecucion
 } from "../models/checklistEjecucion.js";
+import { selectChecklistPlantillasById } from "../models/checklistPlantillas.js";
+import { selectOrdenesServicio, selectOrdenesServicioById } from "../models/ordenes_servicio.js";
 
 const getChecklistEjecucion = async (req, res) => {
     try {
@@ -32,6 +34,12 @@ const postChecklistEjecucion = async (req, res) => {
             return res.status(400).json({ message: "Campos faltantes" })
         }
 
+        const checklistPlantillaExiste = await selectChecklistPlantillasById(che_id);
+        if (!checklistPlantillaExiste) return res.status(404).json({ message: 'Checklist plantilla no encontrado' })
+
+        const ordenExiste = await selectOrdenesServicioById(ord_id);
+        if (!ordenExiste) return res.status(404).json({ message: 'Orden no encontrada' })
+
         const nuevoChecklistEjecucion = await insertChecklistEjecucion({ che_id, ord_id, item_desc, completado, total, notas })
 
 
@@ -59,6 +67,12 @@ const putChecklistEjecucion = async (req, res) => {
             return res.status(404).json({ message: "Id no encontrado" });
         }
 
+        const checklistPlantillaExiste = await selectChecklistPlantillasById(che_id);
+        if (!checklistPlantillaExiste) return res.status(404).json({ message: 'Checklist plantilla no encontrado' })
+
+        const ordenExiste = await selectOrdenesServicioById(ord_id);
+        if (!ordenExiste) return res.status(404).json({ message: 'Orden no encontrada' })
+
         const checklistEjecucionUpdt = await updateChecklistEjecucion(id, { che_id, ord_id, item_desc, completado, total, notas });
 
         if (!checklistEjecucionUpdt) {
@@ -81,4 +95,4 @@ const putChecklistEjecucion = async (req, res) => {
     }
 }
 
-export { getChecklistEjecucion, postChecklistEjecucion, putChecklistEjecucion}
+export { getChecklistEjecucion, postChecklistEjecucion, putChecklistEjecucion }

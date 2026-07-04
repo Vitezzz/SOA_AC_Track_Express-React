@@ -2,6 +2,7 @@ import {
     selectChecklistPlantillas, selectChecklistPlantillasById,
     insertChecklistPlantillas, updateChecklistPlantillas, deleteChecklistPlantillas
 } from "../models/checklistPlantillas.js";
+import { getCategoriaServicioId } from "../models/categoria_servicio.js";
 
 const getChecklistPlantillas = async (req, res) => {
     try {
@@ -48,8 +49,11 @@ const postChecklistPlantillas = async (req, res) => {
         const { cat_id, nombre, activo = true } = req.body;
 
         if (!nombre) {
-            return res.status(400).json({ message: "CAmpo faltante nombre" })
+            return res.status(400).json({ message: "Campo faltante nombre" })
         }
+
+        const categoriaServicioExiste = await getCategoriaServicioId(cat_id);
+        if (!categoriaServicioExiste) return res.status(404).json({ message: 'Categoria Servicio no encontrada' })
 
         const nuevoChecklistPlantillas = await insertChecklistPlantillas({ cat_id, nombre, activo });
 
@@ -71,21 +75,25 @@ const putChecklistPlantillas = async (req, res) => {
     try {
 
         const { id } = req.params;
-        const { cat_id, nombre, activo } = req.body 
-    
-        if(!id){
-            return res.status(404).json({ message: "Id no encontrado"})
+        const { cat_id, nombre, activo } = req.body
+
+        if (!id) {
+            return res.status(404).json({ message: "Id no encontrado" })
         }
+
+        const categoriaServicioExiste = await getCategoriaServicioId(cat_id);
+        if (!categoriaServicioExiste) return res.status(404).json({ message: 'Categoria Servicio no encontrada' })
+
 
         const checklistPlantillaUpdt = await updateChecklistPlantillas(id, { cat_id, nombre, activo });
 
-        if(!checklistPlantillaUpdt){
-            return res.status(404).json({ message: "Checklist Plantilla no encontrado"});
+        if (!checklistPlantillaUpdt) {
+            return res.status(404).json({ message: "Checklist Plantilla no encontrado" });
         }
 
         res.status(200).json({
             id: checklistPlantillaUpdt.id,
-            cat_id : checklistPlantillaUpdt.cat_id,
+            cat_id: checklistPlantillaUpdt.cat_id,
             nombre: checklistPlantillaUpdt.nombre,
             activo: checklistPlantillaUpdt.activo
         })
@@ -102,14 +110,14 @@ const dltChecklistPlantillas = async (req, res) => {
 
         const { id } = req.params;
 
-        if(!id){
-            return res.status(404).json({ message: "Id no encontrado"})
+        if (!id) {
+            return res.status(404).json({ message: "Id no encontrado" })
         }
 
         const checklistPlantillaDlt = await deleteChecklistPlantillas(id);
 
-        if(!checklistPlantillaDlt){
-            return res.status(404).json({ message: "Id de checklist plantilla no encontrado"})
+        if (!checklistPlantillaDlt) {
+            return res.status(404).json({ message: "Id de checklist plantilla no encontrado" })
         }
 
         res.status(200).json(checklistPlantillaDlt);
@@ -120,6 +128,7 @@ const dltChecklistPlantillas = async (req, res) => {
     }
 }
 
-export { getChecklistPlantillas, getChecklistPlantillasById, postChecklistPlantillas,
+export {
+    getChecklistPlantillas, getChecklistPlantillasById, postChecklistPlantillas,
     putChecklistPlantillas, dltChecklistPlantillas
 };

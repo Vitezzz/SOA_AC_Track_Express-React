@@ -3,12 +3,14 @@ import { getOrdenesServicio, getOrdenesServicioById, postOrdenesServicio,
     putOrdenesServicio, dltOrdenesServicio
  } from '../controllers/ordenes_servicioController.js';
 
+ import { protect } from "../middlewares/authMiddleware.js";
+
  const router = express.Router();
 
- router.get('/', getOrdenesServicio);
- router.get('/:id', getOrdenesServicioById);
- router.post('/', postOrdenesServicio);
- router.put('/:id', putOrdenesServicio);
- router.delete('/:id', dltOrdenesServicio);
+ router.get('/', protect ,getOrdenesServicio);
+ router.get('/:id',protect ,getOrdenesServicioById);
+ router.post('/',protect ,postOrdenesServicio);
+ router.put('/:id',protect ,putOrdenesServicio);
+ router.delete('/:id',protect ,dltOrdenesServicio);
 
  export default router;

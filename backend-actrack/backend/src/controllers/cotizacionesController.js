@@ -1,12 +1,27 @@
 import {
-    selectCotizaciones, selectCotizacionesById, insertCotizaciones,
+    selectCotizaciones, selectCotizacionesById, selectCotizacionesByCliente, insertCotizaciones,
     updateCotizaciones, deleteCotizaciones
 } from "../models/cotizaciones.js";
+import { puedeVerTodo } from "../utils/roleUtils.js";
+import { getClienteById } from "../models/clientes.js";
+import { selectOrdenesServicioById } from "../models/ordenes_servicio.js";
+import { selectTecnicoById } from "../models/tecnicos.js";
+import { getClienteIdByUserId } from '../utils/lookupUtils.js'
 
 const getCotizaciones = async (req, res) => {
     try {
 
-        const listaCotizaciones = await selectCotizaciones();
+        let listaCotizaciones;
+
+        if (puedeVerTodo(req.user.rol_id)) {
+            listaCotizaciones = await selectCotizaciones();
+        } else if (req.user.rol_id === 3) {
+            const cli_id = await getClienteIdByUserId(req.user.id);
+            if(!cli_id) return res.status(404).json({ message: 'Cliente no encontrado'});
+            listaCotizaciones = await selectCotizacionesByCliente(cli_id);            
+        } else {
+            return res.status(403).json({ message: "No tienes acceso" })
+        }
 
         if (listaCotizaciones.length === 0) {
             return res.status(404).json({ message: "Lista de cotizaciones no encontrada" })
@@ -53,6 +68,15 @@ const postCotizacione = async (req, res) => {
             return res.status(400).json({ message: "Faltan campos" })
         }
 
+        const clienteExiste = await getClienteById(cli_id);
+        if (!clienteExiste) return res.status(404).json({ message: 'Cliente no encontrado' })
+
+        const ordenExiste = await selectOrdenesServicioById(ord_id);
+        if (!ordenExiste) return res.status(404).json({ message: 'Orden no encontrada' });
+
+        const tecnicoExiste = await selectTecnicoById(tec_id);
+        if (!tecnicoExiste) return res.status(404).json({ message: 'Tecnico no encontrado' })
+
         const nuevaCotizacion = await insertCotizaciones({
             ord_id, tec_id, cli_id, folio, estado, total,
             notas
@@ -84,6 +108,15 @@ const putCotizaciones = async (req, res) => {
             return res.status(404).json({ message: "id no encontrado" });
         }
 
+        const clienteExiste = await getClienteById(cli_id);
+        if (!clienteExiste) return res.status(404).json({ message: 'Cliente no encontrado' })
+
+        const ordenExiste = await selectOrdenesServicioById(ord_id);
+        if (!ordenExiste) return res.status(404).json({ message: 'Orden no encontrada' });
+
+        const tecnicoExiste = await selectTecnicoById(tec_id);
+        if (!tecnicoExiste) return res.status(404).json({ message: 'Tecnico no encontrado' })
+
         const cotizacionUpdt = await updateCotizaciones(id, {
             ord_id, tec_id, cli_id, folio, estado, total,
             notas
@@ -114,16 +147,16 @@ const putCotizaciones = async (req, res) => {
 const dltCotizaciones = async (req, res) => {
     try {
 
-        const{ id } = req.params;
+        const { id } = req.params;
 
-        if(!id){
-            return res.status(404).json({ message: "Id no encontrado"});
+        if (!id) {
+            return res.status(404).json({ message: "Id no encontrado" });
         }
 
         const cotizacionDlt = await deleteCotizaciones(id);
 
-        if(!cotizacionDlt){
-            return res.status(404).json({ message: "Id de cotizacion no encontrado"});
+        if (!cotizacionDlt) {
+            return res.status(404).json({ message: "Id de cotizacion no encontrado" });
         }
 
         return res.status(200).json(cotizacionDlt);
@@ -134,4 +167,4 @@ const dltCotizaciones = async (req, res) => {
     }
 }
 
-export { getCotizaciones,getCotizacioneById, postCotizacione ,putCotizaciones, dltCotizaciones};
+export { getCotizaciones, getCotizacioneById, postCotizacione, putCotizaciones, dltCotizaciones };

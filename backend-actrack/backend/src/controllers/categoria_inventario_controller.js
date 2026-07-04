@@ -90,10 +90,10 @@ const dltCategoriaInventario = async (req, res) => {
         const menosCategoriaInventario = await deleteCategoria_Inventario(id);
 
         if(!menosCategoriaInventario){
-            return res.status(400).json({ message: `Categoria Inventario ${id} eliminada`});
+            return res.status(404).json({ message: `Categoria Inventario ${id} no eliminada`});
         }
 
-        res.status(200).json(menosCategoriaInventario)
+        res.status(200).json(`Categoria Inventario ${id} eliminada`)
     } catch (error) {
         console.error("Error: ", error);
         res.status(500).json({ message: "Error del servidor" });

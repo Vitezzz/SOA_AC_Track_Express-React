@@ -10,6 +10,12 @@ export const selectPagosById = async (id) => {
     return result.rows[0]
 }
 
+export const selectPagosByCliente = async(cli_id) => {
+    const result = await pool.query(`SELECT * FROM pagos WHERE cli_id = $1`, 
+        [cli_id]);
+    return result.rows;
+}
+
 export const insertPagos = async ({ cot_id, ord_id, cli_id, metodo, monto, estado }) => {
     const result = await pool.query(`INSERT INTO pagos (cot_id, ord_id, cli_id, metodo, monto, estado)
         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,

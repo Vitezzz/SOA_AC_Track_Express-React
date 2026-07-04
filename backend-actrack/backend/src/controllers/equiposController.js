@@ -1,15 +1,31 @@
-import { getEquipos, getEquipoById, createEquipo, updateEquipo, deleteEquipo } from "../models/equipos.js";
+import { getEquipos, getEquipoById, selectEquiposByCliente, createEquipo, updateEquipo, deleteEquipo } from "../models/equipos.js";
+import { getClienteById } from "../models/clientes.js";
+import { getMarcaId } from "../models/marcas.js";
+import { puedeVerTodo } from "../utils/roleUtils.js";
+import { getClienteIdByUserId} from '../utils/lookupUtils.js'
 
 const listaEquipos = async (req, res) => {
     try {
-        const listadoEquipos = await getEquipos();
+        let listadoEquipos;
+
+        if (puedeVerTodo(req.user.rol_id)) {
+            listadoEquipos = await getEquipos();
+        } else if (req.user.rol_id === 3) {
+
+            const cli_id = await getClienteIdByUserId(req.user.id);
+            if(!cli_id) return res.status(404).json({ message : 'Cliente no encontrado'});
+            listadoEquipos = await selectEquiposByCliente(cli_id);
+        } else {
+            return res.status(403).json({ message: 'No tienes acceso' });
+        }
+
         if (!listadoEquipos) {
             return res.status(400).json({ message: "Equipos no encontrados" });
         }
         res.status(200).json(listadoEquipos);
     } catch (error) {
         console.error('Error: ', error)
-        res.status(500).json({ message: 'Error de adolfitas' });
+        res.status(500).json({ message: 'Error del servidor' });
     }
 }
 
@@ -30,7 +46,7 @@ const equiposById = async (req, res) => {
         res.status(200).json(equipoId);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: "Error de adolfitas" });
+        res.status(500).json({ message: "Error del servidor" });
     }
 }
 
@@ -41,6 +57,12 @@ const crearEquipo = async (req, res) => {
         if (!cli_id || !mar_id || !modelo || !numero_serie || !tipo) {
             return res.status(400).json({ message: "Campos faltantes" });
         }
+
+        const clienteExiste = await getClienteById(cli_id);
+        if (!clienteExiste) return res.status(404).json({ message: 'Cliente no encontrado' });
+
+        const marcaExiste = await getMarcaId(mar_id);
+        if (!marcaExiste) return res.status(404).json({ message: 'Marca no encontrada' })
 
         const equipoNuevo = await createEquipo({ cli_id, mar_id, modelo, numero_serie, tipo });
 
@@ -54,21 +76,28 @@ const crearEquipo = async (req, res) => {
         })
     } catch (error) {
         console.error("Error :", error)
-        res.status(500).json({ message: "Error de adolfitas"})
+        res.status(500).json({ message: "Error del servidor" })
     }
 }
 
 const actualizarEquipo = async (req, res) => {
-    try{
+    try {
         const { id } = req.params;
-        const { cli_id, mar_id, modelo, numero_serie, tipo} = req.body
-        if(!id){
-            return res.status(400).json({ message: "Id no enecontrado"})
+        const { cli_id, mar_id, modelo, numero_serie, tipo } = req.body
+        if (!id) {
+            return res.status(400).json({ message: "Id no encontrado" })
         }
-        const equipoActualizado = await updateEquipo(id, { cli_id, mar_id, modelo, numero_serie, tipo});
 
-        if(!equipoActualizado){
-            return res.status(404).json({ message: "Equipo no encontrado"})
+        const clienteExiste = await getClienteById(cli_id);
+        if (!clienteExiste) return res.status(404).json({ message: 'Cliente no encontrado' });
+
+        const marcaExiste = await getMarcaId(mar_id);
+        if (!marcaExiste) return res.status(404).json({ message: 'Marca no encontrada' })
+
+        const equipoActualizado = await updateEquipo(id, { cli_id, mar_id, modelo, numero_serie, tipo });
+
+        if (!equipoActualizado) {
+            return res.status(404).json({ message: "Equipo no encontrado" })
         }
 
         res.status(200).json({
@@ -79,27 +108,27 @@ const actualizarEquipo = async (req, res) => {
             numero_serie: equipoActualizado.numero_serie,
             tipo: equipoActualizado.tipo
         })
-    }catch(error){
+    } catch (error) {
         console.error("Error: ", error);
-        res.status(500).json({ message: "Error del servidor"})
+        res.status(500).json({ message: "Error del servidor" })
     }
 }
 
-const eliminarEquipo = async (req, res) =>{
-    try{
+const eliminarEquipo = async (req, res) => {
+    try {
         const { id } = req.params;
-        if(!id){
-            return res.status(400).json({ message: "Id no encontrado"})
+        if (!id) {
+            return res.status(400).json({ message: "Id no encontrado" })
         }
 
         const equipoEliminado = await deleteEquipo(id);
-        
+
         res.status(200).json(equipoEliminado);
 
-    }catch(error){
+    } catch (error) {
         console.error("Error: ", error)
-        res.status(500).json({ message: "Error del servidor"})
+        res.status(500).json({ message: "Error del servidor" })
     }
 }
 
-export { listaEquipos, equiposById, crearEquipo, actualizarEquipo, eliminarEquipo}
+export { listaEquipos, equiposById, crearEquipo, actualizarEquipo, eliminarEquipo }

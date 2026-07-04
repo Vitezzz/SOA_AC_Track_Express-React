@@ -244,11 +244,12 @@ create table MOVIMIENTOS_INVENTARIO (
 /* Table: NOTIFICACIONES                                        */
 /*==============================================================*/
 create table NOTIFICACIONES (
+   ID                   INT2                 not null,
    USU_ID               INT2                 null,
-   ID                   INT2                 null,
    TIPO                 VARCHAR(50)          null,
    TITULO               VARCHAR(50)          null,
-   LEIDO                BOOL                 null
+   LEIDO                BOOL                 null,
+    constraint PK_NOTIFICACIONES primary key (ID)
 );
 
 /*==============================================================*/
@@ -277,7 +278,8 @@ create table ORDENES_SERVICIO (
    DESCRIPCION          TEXT                 null,
    FECHA_PROGRAMADA     TIMESTAMP            null,
    FECHA_CIERRE         TIMESTAMP            null,
-   constraint PK_ORDENES_SERVICIO primary key (ID)
+   TEC_ID               INT2                 null,
+    constraint PK_ORDENES_SERVICIO primary key (ID)
 );
 
 /*==============================================================*/
@@ -317,9 +319,10 @@ create table ROLES (
 /*==============================================================*/
 create table RUTAS (
    ID                   INT2                 not null,
+   TECNICO_ID           INT2                 null,
    FECHA_RUTA           DATE                 null,
    ESTADO               VARCHAR(50)          null,
-   constraint PK_RUTAS primary key (ID)
+    constraint PK_RUTAS primary key (ID)
 );
 
 /*==============================================================*/
@@ -516,6 +519,11 @@ alter table ORDENES_SERVICIO
       references PRIORIDAD (ID)
       on delete restrict on update restrict;
 
+alter table ORDENES_SERVICIO
+   add constraint FK_ORDENES__REFERENCE_TECNICOS foreign key (TEC_ID)
+      references TECNICOS (ID)
+      on delete restrict on update restrict;
+
 alter table PAGOS
    add constraint FK_PAGOS_REFERENCE_COTIZACI foreign key (COT_ID)
       references COTIZACIONES (ID)
@@ -529,6 +537,11 @@ alter table PAGOS
 alter table PAGOS
    add constraint FK_PAGOS_REFERENCE_CLIENTES foreign key (CLI_ID)
       references CLIENTES (ID)
+      on delete restrict on update restrict;
+
+alter table RUTAS
+   add constraint FK_RUTAS_REFERENCE_TECNICOS foreign key (TECNICO_ID)
+      references TECNICOS (ID)
       on delete restrict on update restrict;
 
 alter table RUTA_PARADAS

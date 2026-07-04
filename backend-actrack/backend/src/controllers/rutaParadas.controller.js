@@ -2,6 +2,8 @@ import {
     selectRutaParadasByRutaId, insertRutaParadas,
     updateRutaParadas, deleteRutaParadas
 } from "../models/rutaParadas.js";
+import { selectRutasById } from "../models/rutas.js";
+import { selectOrdenesServicioById } from "../models/ordenes_servicio.js";
 
 const getRutaParadasByRutaId = async (req, res) => {
     try {
@@ -29,6 +31,12 @@ const postRutaParadas = async (req, res) => {
 
         if (!rut_id || !ord_id || !posicion || !hora_estimada) return res.status(400).json({ message: "Campos faltantes" });
 
+        const rutasExiste = await selectRutasById(rut_id);
+        if (!rutasExiste) return res.status(404).json({ message: 'Ruta no encontrada' });
+
+        const ordenServicioExiste = await selectOrdenesServicioById(ord_id)
+        if (!ordenServicioExiste) return res.status(404).json({ message: 'Orden servicio no encontrada' })
+
         const nuevaRutaParada = await insertRutaParadas({ rut_id, ord_id, posicion, hora_estimada, estado });
 
         res.status(201).json({
@@ -54,6 +62,13 @@ const putRutaParadas = async (req, res) => {
 
         if (!id) return res.status(404).json({ message: "Id no encontrada" });
 
+
+        const rutasExiste = await selectRutasById(rut_id);
+        if (!rutasExiste) return res.status(404).json({ message: 'Ruta no encontrada' });
+
+        const ordenServicioExiste = await selectOrdenesServicioById(ord_id)
+        if (!ordenServicioExiste) return res.status(404).json({ message: 'Orden servicio no encontrada' })
+
         const rutaParadaUpdt = await updateRutaParadas(id, { rut_id, ord_id, posicion, hora_estimada, estado });
 
         if (!rutaParadaUpdt) return res.status(404).json({ message: "Ruta parada no encontrada" });
@@ -71,11 +86,11 @@ const dltRutaParadas = async (req, res) => {
 
         const { id } = req.params;
 
-        if(!id) return res.status(404).json({ message : "Id no encontrada"});
+        if (!id) return res.status(404).json({ message: "Id no encontrada" });
 
         const rutaParadaDlt = await deleteRutaParadas(id);
 
-        if(!rutaParadaDlt) return res.status(404).json({ message : "Ruta parada no encontrada"});
+        if (!rutaParadaDlt) return res.status(404).json({ message: "Ruta parada no encontrada" });
 
         res.status(200).json(rutaParadaDlt)
     } catch (error) {
@@ -84,4 +99,4 @@ const dltRutaParadas = async (req, res) => {
     }
 }
 
-export { getRutaParadasByRutaId, postRutaParadas, putRutaParadas, dltRutaParadas}
+export { getRutaParadasByRutaId, postRutaParadas, putRutaParadas, dltRutaParadas }
