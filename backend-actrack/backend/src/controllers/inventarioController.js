@@ -44,7 +44,7 @@ const getInventarioById = async (req, res) => {
 
 const postInventario = async (req, res) => {
     try {
-        const { cat_id, codigo, nombre, unidad_medida, stock_actual, precio_venta } = req.body;
+        const { cat_id, codigo, nombre, unidad_medida, stock_actual, precio_venta, stock_minimo } = req.body;
 
         if (!nombre) {
             return res.status(400).json({ message: "Campo faltante" })
@@ -53,7 +53,7 @@ const postInventario = async (req, res) => {
         const categoriaInventarioExiste = await selectCategoria_InventarioId(cat_id);
         if (!categoriaInventarioExiste) return res.status(404).json({ message: 'Categoria Inventario no encontrada' })
 
-        const nuevoInventario = await insertInventario({ cat_id, codigo, nombre, unidad_medida, stock_actual, precio_venta });
+        const nuevoInventario = await insertInventario({ cat_id, codigo, nombre, unidad_medida, stock_actual, precio_venta, stock_minimo });
 
         res.status(200).json(nuevoInventario)
     } catch (error) {
@@ -70,13 +70,13 @@ const putInventario = async (req, res) => {
             return res.status(400).json({ message: "Id no encontrado" })
         }
 
-        const { cat_id, codigo, nombre, unidad_medida, stock_actual, precio_venta } = req.body;
+        const { cat_id, codigo, nombre, unidad_medida, stock_actual, precio_venta, stock_minimo } = req.body;
 
         const categoriaInventarioExiste = await selectCategoria_InventarioId(cat_id);
         if (!categoriaInventarioExiste) return res.status(404).json({ message: 'Categoria Inventario no encontrada' })
 
 
-        const inventarioEditado = await updateInventario(id, { cat_id, codigo, nombre, unidad_medida, stock_actual, precio_venta });
+        const inventarioEditado = await updateInventario(id, { cat_id, codigo, nombre, unidad_medida, stock_actual, precio_venta, stock_minimo });
 
         res.status(200).json(inventarioEditado)
     } catch (error) {

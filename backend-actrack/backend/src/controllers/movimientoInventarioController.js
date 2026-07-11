@@ -92,6 +92,7 @@ const putMovimientosInventario = async (req, res) => {
 
         const { id } = req.params;
 
+        
         if (!id) {
             return res.status(400).json({ message: "Id no encontrado" })
         }

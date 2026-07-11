@@ -3,6 +3,7 @@ import { selectCotizacionesById } from "../models/cotizaciones.js";
 import { insertPagos } from "../models/pagos.js";
 import { insertBitacoraEstados } from "../models/bitacora_estados.js";
 import { getClienteById } from "../models/clientes.js";
+import { getClienteIdByUserId } from '../utils/lookupUtils.js'
 
 
 export const procesarPago = async({ cot_id, ord_id, cli_id, metodo, monto, estado = "pendiente"}, user) =>{
@@ -49,7 +50,8 @@ export const procesarPago = async({ cot_id, ord_id, cli_id, metodo, monto, estad
         throw error;
     }
 
-    if(user.rol_id !== 2 && user.id !== cli_id){
+    const userCliId = await getClienteIdByUserId(user.id);
+    if(user.rol_id !== 2 && userCliId !== cli_id){
         const error = new Error('No puedes crear un pago para otro cliente');
         error.status = 403;
         throw error;

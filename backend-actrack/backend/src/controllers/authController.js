@@ -1,7 +1,7 @@
 import { deleteSesiones, insertSesiones } from '../models/sesiones.js';
 import { createUser, findUserByEmail } from '../models/usuarios.js'
 import { cookieOptions, generateAccessToken, generateRefreshToken } from '../utils/authUtils.js'
-import jwt, { decode } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { selectSesionesByToken } from '../models/sesiones.js';
 import bcrypt from 'bcryptjs'
 

@@ -105,7 +105,7 @@ const putCotizaciones = async (req, res) => {
         const { ord_id, tec_id, cli_id, folio, estado, total,
             notas } = req.body;
         if (!id) {
-            return res.status(404).json({ message: "id no encontrado" });
+            return res.status(400).json({ message: "id no encontrado" });
         }
 
         const clienteExiste = await getClienteById(cli_id);
@@ -122,7 +122,7 @@ const putCotizaciones = async (req, res) => {
             notas
         });
 
-        if (!cotizacionUpdt.id) {
+        if (!cotizacionUpdt || !cotizacionUpdt.id) {
             return res.status(404).json({ message: "Id de cotizacion no encontrado" })
         }
 
@@ -150,7 +150,7 @@ const dltCotizaciones = async (req, res) => {
         const { id } = req.params;
 
         if (!id) {
-            return res.status(404).json({ message: "Id no encontrado" });
+            return res.status(400).json({ message: "Id no encontrado" });
         }
 
         const cotizacionDlt = await deleteCotizaciones(id);

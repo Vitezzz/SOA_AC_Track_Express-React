@@ -24,7 +24,7 @@ const getChecklistItemsPlantillaById = async (req, res) => {
         const { id } = req.params;
 
         if (!id) {
-            return res.status(404).json({ message: "Id no encontrado" })
+            return res.status(400).json({ message: "Id no encontrado" })
         }
 
         const checklistItemPlantillaId = await selectChecklistItemsPlantillaById(id);
@@ -50,7 +50,7 @@ const postChecklistItemsPlantilla = async (req, res) => {
         }
 
         const checklistPlantillaExiste = await selectChecklistPlantillasById(che_id);
-        if (!checklistPlantillaExiste) return res.status(404).json({ message: "Error del servidor" });
+        if (!checklistPlantillaExiste) return res.status(404).json({ message: "Checklist plantilla no encontrada" });
 
         const nuevoChecklistItemPlantilla = await insertChecklistItemsPlantilla({ che_id, descripcion, orden });
 
@@ -74,11 +74,11 @@ const putChecklistItemsPlantillaById = async (req, res) => {
         const { che_id, descripcion, orden } = req.body
 
         if (!id) {
-            return res.status(404).json({ message: "Id no encontrado" })
+            return res.status(400).json({ message: "Id no encontrado" })
         }
 
         const checklistPlantillaExiste = await selectChecklistPlantillasById(che_id);
-        if (!checklistPlantillaExiste) return res.status(404).json({ message: "Error del servidor" });
+        if (!checklistPlantillaExiste) return res.status(404).json({ message: "Checklist plantilla no encontrada" });
 
 
         const checklistItemPlantillaUpdt = await updateChecklistItemsPlantilla(id, { che_id, descripcion, orden });
@@ -106,7 +106,7 @@ const dltChecklistItemsPlantillaById = async (req, res) => {
         const { id } = req.params;
 
         if (!id) {
-            return res.status(404).json({ message: "Id no encontrado" })
+            return res.status(400).json({ message: "Id no encontrado" })
         }
 
         const checklistItemsPlantillaDlt = await deleteChecklistItemsPlantilla(id);

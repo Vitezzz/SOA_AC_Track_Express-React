@@ -9,8 +9,8 @@ const getNotificaciones = async (req, res) => {
 
         const listaNotificaciones = await selectNotificaciones();
 
-        if (listaNotificaciones.length == 0) {
-            return res.status(400).json({ message: "Lista de notificaciones no encontrada" });
+        if (listaNotificaciones.length === 0) {
+            return res.status(404).json({ message: "Lista de notificaciones no encontrada" });
         }
 
         res.status(200).json(listaNotificaciones);
@@ -27,7 +27,7 @@ const getNotificacionesById = async (req, res) => {
         const { id } = req.params;
 
         if (!id) {
-            return res.status(404).json({ message: "Id no encontrado" });
+            return res.status(400).json({ message: "Id no encontrado" });
         }
 
         const notificacionId = await selectNotificacionesById(id);
@@ -79,7 +79,7 @@ const putNotificaciones = async (req, res) => {
         const { usu_id, tipo, titulo, leido } = req.body;
 
         if (!id) {
-            return res.status(404).json({ message: "Id no encontrado" })
+            return res.status(400).json({ message: "Id no encontrado" })
         }
 
         const usuarioExiste = await findUserById(usu_id)
@@ -111,7 +111,7 @@ const dltNotificaciones = async (req, res) => {
         const { id } = req.params;
 
         if (!id) {
-            return res.status(404).json({ message: "Id no encontrado" });
+            return res.status(400).json({ message: "Id no encontrado" });
         }
 
         const notificacionDlt = await deleteNotificaciones(id);

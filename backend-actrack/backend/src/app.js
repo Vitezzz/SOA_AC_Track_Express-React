@@ -27,11 +27,20 @@ import oauthCuentasRouter from './routes/oauth_cuentas.router.js'
 import notificacionesRouter from './routes/notificaciones.router.js'
 import rutasRouter from './routes/rutas.router.js'
 import rutaParadasRouter from './routes/rutaParadas.router.js'
+import './config/passport.js'
+import passport from 'passport';
+import cors from 'cors';
 
 const app = express(); //create an express app
 
 app.use(express.json());
 app.use(cookieParser())
+app.use(cors({
+    origin: ['http://localhost:5173', 'capacitor://localhost', 'file://'],
+    credentials: true
+}))
+app.use(passport.initialize())
+
 
 app.use('/api/auth', authRoutes);
 app.use('/api/roles/', rolesRoutes)

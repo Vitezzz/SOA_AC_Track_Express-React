@@ -17,7 +17,7 @@ const getPagos = async (req, res) => {
         if (puedeVerTodo(req.user.rol_id)) {
             listaPagos = await selectPagos();
         } else if (req.user.rol_id === 3) {
-            const cli_id = await getClienteById(req.user.id);
+            const cli_id = await getClienteIdByUserId(req.user.id);
             if(!cli_id) return res.status(404).json({ message : 'Cliente no encontrado'});
             listaPagos = await selectPagosByCliente(cli_id)
         } else {

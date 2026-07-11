@@ -11,7 +11,7 @@ const getChecklistEjecucion = async (req, res) => {
         const { ordId } = req.params;
 
         if (!ordId) {
-            return res.status(404).json({ message: "Ord_id no encontrado" })
+            return res.status(400).json({ message: "Ord_id no encontrado" })
         }
 
         const listaChecklistEjecucion = await selectChecklistEjecucion(ordId);
@@ -64,7 +64,7 @@ const putChecklistEjecucion = async (req, res) => {
         const { che_id, ord_id, item_desc, completado, total, notas } = req.body
 
         if (!id) {
-            return res.status(404).json({ message: "Id no encontrado" });
+            return res.status(400).json({ message: "Id no encontrado" });
         }
 
         const checklistPlantillaExiste = await selectChecklistPlantillasById(che_id);

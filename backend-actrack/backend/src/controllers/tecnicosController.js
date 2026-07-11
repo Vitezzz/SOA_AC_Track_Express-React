@@ -10,7 +10,7 @@ const getTecnicos = async (req, res) => {
         const listaTecnicos = await selectTecnicos();
 
         if (listaTecnicos.length === 0) {
-            return res.status(500).json({ message: "Lista de tecnicos no encontrada" })
+            return res.status(404).json({ message: "Lista de tecnicos no encontrada" })
         }
 
         res.status(200).json(listaTecnicos);
@@ -26,7 +26,7 @@ const getTecnicosById = async (req, res) => {
         const { id } = req.params;
 
         if (!id) {
-            return res.status(500).json({ message: "Id no encontrado" })
+            return res.status(400).json({ message: "Id no encontrado" })
         }
 
         const tecnicoId = await selectTecnicoById(id);

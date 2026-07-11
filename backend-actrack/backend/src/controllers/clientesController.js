@@ -54,7 +54,7 @@ const crearCliente = async (req, res) => {
         if (!usuarioExiste) return res.status(404).json({ message: 'Usuario no encontrado' })
 
         const nuevoCliente = await createCliente({
-            usu_id, nombre, email, telefono, direccion
+            usu_id, nombre, email, telefono, direccion, activo: true
         });
 
         res.status(201).json({
@@ -81,8 +81,10 @@ const clienteUpdate = async (req, res) => {
         };
 
 
-        const usuarioExiste = await findUserById(usu_id);
-        if (!usuarioExiste) return res.status(404).json({ message: 'Usuario no encontrado' })
+        if (usu_id) {
+            const usuarioExiste = await findUserById(usu_id);
+            if (!usuarioExiste) return res.status(404).json({ message: 'Usuario no encontrado' })
+        }
 
         const actualizarCliente = await updateCliente(id, { usu_id, nombre, email, telefono, direccion, activo });
 

@@ -1,45 +1,17 @@
 import { Card } from "../../components/Card.jsx";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-
-const mockFetch = async (url, options) => {
-  console.log("Simulacion de peticion de ", url, " con datos: ", options.body);
-
-  //Simulación de retraso de red
-  await new Promise((resolve) => setTimeout(resolve, 800));
-
-  const data = JSON.parse(options.body);
-
-  //Simulación de login exitoso
-  if (data.email === "test@test.com" && data.password === "1234") {
-    return {
-      ok: true,
-      status: 200,
-      json: async () => ({
-        success: true,
-        token: "fake-jwt-token-123",
-        user: { id: 1, email: "test@test.com", nombre: "User" },
-      }),
-    };
-  }
-  return {
-    ok: false,
-    status: 401,
-    json: async () => ({ success: false, message: "Credenciales incorrectas" }),
-  };
-};
+import { useAuth } from '../../context/AuthContext.jsx'
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
 
-  //Naviagte
-
+  //Navigate
   const navigate = useNavigate();
-
-  const goToHome = () => navigate("/home");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,25 +19,11 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await mockFetch("https://localhost:5173/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Credenciales incorrectas");
-      }
-
-      //Guardamos el token en localStorage para persistir la sesión
-      localStorage.setItem("token", data.token);
-      console.log("login exitoso");
-      goToHome();
+      await login(email, password)
+      navigate("/home");
     } catch (err) {
-      setError(err.message);
-      console.log("Credenciales incorrectas:", err.message);
+      setError(err.message)
+      console.log('Error:', err.message)
     } finally {
       setLoading(false);
     }

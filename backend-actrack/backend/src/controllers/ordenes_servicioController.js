@@ -28,7 +28,7 @@ const getOrdenesServicio = async (req, res) => {
         } else if (req.user.rol_id === 4) {
             const tec_id = await getTecnicoIdByUserId(req.user.id);
             if (!tec_id) return res.status(404).json({ message: 'Tecnico no encontrado' });
-            listadoEquipos = await selectOrdenesByTecnico(tec_id)
+            listaOrdenesServicio = await selectOrdenesByTecnico(tec_id)
         } else {
             return res.status(403).json({ message: "No tienes acceso" })
         }
@@ -69,6 +69,7 @@ const postOrdenesServicio = async (req, res) => {
         const { cli_id, equ_id, cat_id, pri_id, folio,
             prioridad, estatus, descripcion, fecha_programada, fecha_cierre, tec_id } = req.body;
 
+        if (!cli_id || !folio) return res.status(400).json({ message: "Campos requeridos cli_id, folio" })
 
         const clienteExiste = await getClienteById(cli_id);
         if (!clienteExiste) return res.status(404).json({ message: 'Cliente no encontrado' });
@@ -86,8 +87,6 @@ const postOrdenesServicio = async (req, res) => {
             const tecnicoExiste = await selectTecnicoById(tec_id);
             if (!tecnicoExiste) return res.status(404).json({ message: 'Tecnico no encontrado' })
         }
-
-        if (!cli_id || !folio) return res.status(400).json({ message: "Campos requeridos cli_id, folio" })
 
         const nuevaOrdenServicio = await insertOrdenesServicio({
             cli_id, equ_id, cat_id, pri_id, folio,

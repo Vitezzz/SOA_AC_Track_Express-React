@@ -10,6 +10,14 @@ export const selectOauthCuentasById = async(id) => {
     return result.rows[0];
 }
 
+export const selectOauthCuentaByProvider = async (provider_uid, proveedor) => {
+    const result = await pool.query(
+        'SELECT * FROM oauth_cuentas WHERE provider_uid = $1 AND proveedor = $2',
+        [provider_uid, proveedor]
+    )
+    return result.rows[0]
+}
+
 export const insertOauthCuentas = async ({ usu_id, proveedor, provider_uid}) => {
     const result = await pool.query(`INSERT INTO oauth_cuentas (usu_id, proveedor, provider_uid) VALUES 
         ($1, $2, $3) RETURNING *`, [usu_id, proveedor, provider_uid])
