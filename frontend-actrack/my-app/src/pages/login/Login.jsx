@@ -30,43 +30,50 @@ const Login = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-64">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <Card>
-        <form onSubmit={handleSubmit} className="card-body">
-          <h1 className="card-title text-2xl justify-center">Login</h1>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <h1 className="text-2xl font-semibold text-gray-900 text-center mb-6">Iniciar Sesión</h1>
           <label className="form-control w-full">
-            <span className="label-text">Email</span>
+            <span className="text-sm font-medium text-gray-700 mb-1 block">Email</span>
             <input
               type="email"
-              className="input input-bordered w-full"
+              className="input input-bordered w-full rounded-lg border-gray-200 focus:border-gray-400 focus:ring-0"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </label>
           <label className="form-control w-full">
-            <span className="label-text">Contraseña</span>
+            <span className="text-sm font-medium text-gray-700 mb-1 block">Contraseña</span>
             <input
               type="password"
-              className="input input-bordered w-full"
+              className="input input-bordered w-full rounded-lg border-gray-200 focus:border-gray-400 focus:ring-0"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
           </label>
-          <label>No tienes una cuenta? <Link to="/signup" className="text-primary hover:text-secondary transition-colors duration-200">Registrate aqui</Link></label>
-          {error && <p className="text-error text-sm mt-2">{error}</p>}
+          <label className="block text-sm text-gray-500 text-center">
+            No tienes una cuenta?{" "}
+            <Link to="/signup" className="text-gray-900 font-medium hover:text-gray-600 transition-colors">
+              Regístrate aquí
+            </Link>
+          </label>
+          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
           <button
             type="submit"
-            className="btn btn-primary mt-4"
+            className="btn w-full bg-gray-900 text-white hover:bg-gray-800 border-none rounded-lg py-3"
             disabled={loading}
           >
             {loading ? (
-              <span className="loading loading-spinner" />
+              <span className="loading loading-spinner loading-sm" />
             ) : (
               "Ingresar"
             )}
           </button>
+          <a href="/api/auth/google" className="btn w-full bg-white text-gray-700 border
+          border-gray-200 hover:bg-gray-50 rounded-lg py-3">Iniciar Sesión con Google</a>
         </form>
       </Card>
     </div>

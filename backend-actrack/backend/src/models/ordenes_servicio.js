@@ -47,3 +47,17 @@ export const selectOrdenesByTecnico = async (tec_id) => {
     return result.rows;
 }
 
+export const generarSiguienteFolio = async () => {
+    const anio = new Date().getFullYear();
+
+    const result = await pool.query(
+        `SELECT folio FROM ordenes_servicio WHERE folio LIKE $1 ORDER BY folio DESC LIMIT 1`,
+        [`OS-${anio}-%`]
+    );
+
+    const ultimoFolio = result.rows[0]?.folio;
+    const siguienteNumero = ultimoFolio ? parseInt(ultimoFolio.split('-')[2], 10) + 1 : 1;
+
+    return `OS-${anio}-${String(siguienteNumero).padStart(3, '0')}`;
+}
+

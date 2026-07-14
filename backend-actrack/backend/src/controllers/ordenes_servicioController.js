@@ -1,6 +1,6 @@
 import {
     selectOrdenesServicio, selectOrdenesServicioById, selectOrdenesByCliente, insertOrdenesServicio, selectOrdenesByTecnico,
-    updateOrdenesServicio, deleteOrdenesServicio
+    updateOrdenesServicio, deleteOrdenesServicio, generarSiguienteFolio
 } from "../models/ordenes_servicio.js";
 import { insertBitacoraEstados } from "../models/bitacora_estados.js";
 import { puedeVerTodo } from "../utils/roleUtils.js";
@@ -66,10 +66,18 @@ const getOrdenesServicioById = async (req, res) => {
 
 const postOrdenesServicio = async (req, res) => {
     try {
-        const { cli_id, equ_id, cat_id, pri_id, folio,
+        const { equ_id, cat_id, pri_id,
             prioridad, estatus, descripcion, fecha_programada, fecha_cierre, tec_id } = req.body;
 
-        if (!cli_id || !folio) return res.status(400).json({ message: "Campos requeridos cli_id, folio" })
+        let cli_id = req.body.cli_id;
+
+        if(req.user.rol_id === 3){
+            cli_id = await getClienteIdByUserId(req.user.id);
+
+            if(!cli_id) return res.status(404).json({ message: 'Cliente no encontrado'})
+        }
+
+        if (!cli_id) return res.status(400).json({ message: "Campo requerido cli_id" })
 
         const clienteExiste = await getClienteById(cli_id);
         if (!clienteExiste) return res.status(404).json({ message: 'Cliente no encontrado' });
@@ -87,6 +95,8 @@ const postOrdenesServicio = async (req, res) => {
             const tecnicoExiste = await selectTecnicoById(tec_id);
             if (!tecnicoExiste) return res.status(404).json({ message: 'Tecnico no encontrado' })
         }
+
+        const folio = await generarSiguienteFolio();
 
         const nuevaOrdenServicio = await insertOrdenesServicio({
             cli_id, equ_id, cat_id, pri_id, folio,

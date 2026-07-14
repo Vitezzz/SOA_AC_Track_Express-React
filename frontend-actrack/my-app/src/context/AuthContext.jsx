@@ -11,7 +11,7 @@ export function AuthProvider({ children }) {
 
     //Hace un get a la /api/auth/profile con la cookie de sesion
     useEffect(() => {
-        fetch("/api/auth/profile", { credentials: "include" })
+        apiFetch("/api/auth/profile")
             .then((res) => (res.ok ? res.json() : null))
             .then((data) => {
                 //Si el backend responde ok, guarda usuario en setUser(data)
@@ -40,6 +40,8 @@ export function AuthProvider({ children }) {
         //Obtener perfil completo
         const profileRes = await fetch("/api/auth/profile", { credentials: "include"})
         const profile= await profileRes.json()
+        //Guardamos el refresh token que devuelve el backend
+        if(data.refreshToken) localStorage.setItem("refreshToken", data.refreshToken)
         //SI todo salio bien , data es el objeto del usuario
         //lo guardo en el estado global
         setUser(profile)
@@ -78,9 +80,41 @@ export function AuthProvider({ children }) {
         return data
     }
 
+    const apiFetch = async (url, options = {}) => {
+
+        const res = await fetch(url, {...options, credentials: "include"} )
+
+        if(res.status !== 401) return res;
+
+        //Sacar el refresh token guardado
+        const refreshToken = localStorage.getItem("refreshToken") 
+
+        if(!refreshToken){
+            setUser(null);
+            return res;
+        }
+
+        //Pedir access token nuevo
+        const refreshRes = await fetch('/api/auth/refresh', {
+            method: 'POST',
+            headers: {"Content-Type":'application/json'},
+            body: JSON.stringify({refreshToken}),
+            credentials: "include"
+        })
+
+        if(!refreshRes.ok){
+            setUser(null);
+            localStorage.removeItem("refreshToken")
+            return res;
+        }
+
+        return fetch(url, { ...options, credentials: "include"});
+
+    }
+
     return(
         //Todo lo que este dentro de <AuthContext.Provider> en App.jsx le provee user y loading
-        <AuthContext.Provider value={{ user, loading, login, logout, register }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, register, apiFetch }}>
             {children}
         </AuthContext.Provider>
     )

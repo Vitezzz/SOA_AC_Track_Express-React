@@ -36,73 +36,73 @@ const SignUp = () => {
   }
 
   return (
-    <div className="flex justify-center items-center min-h-64">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <Card>
-        <form onSubmit={handleSubmit} className="card-body">
-          <h1 className="card-title text-2xl justify-center">Registro</h1>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <h1 className="text-2xl font-semibold text-gray-900 text-center mb-6">Crear Cuenta</h1>
           <label className="form-control w-full">
-            <span className="label-text">Nombre</span>
+            <span className="text-sm font-medium text-gray-700 mb-1 block">Nombre</span>
             <input
               type="text"
               name="nombre"
-              className="input input-bordered w-full"
+              className="input input-bordered w-full rounded-lg border-gray-200 focus:border-gray-400 focus:ring-0"
               value={formData.nombre}
               onChange={handleChange}
               required
             />
           </label>
           <label className="form-control w-full">
-            <span className="label-text">Apellido Paterno</span>
+            <span className="text-sm font-medium text-gray-700 mb-1 block">Apellido Paterno</span>
             <input
               type="text"
               name="paterno"
-              className="input input-bordered w-full"
+              className="input input-bordered w-full rounded-lg border-gray-200 focus:border-gray-400 focus:ring-0"
               value={formData.paterno}
               onChange={handleChange}
               required
             />
           </label>
           <label className="form-control w-full">
-            <span className="label-text">Apellido Materno</span>
+            <span className="text-sm font-medium text-gray-700 mb-1 block">Apellido Materno</span>
             <input
               type="text"
               name="materno"
-              className="input input-bordered w-full"
+              className="input input-bordered w-full rounded-lg border-gray-200 focus:border-gray-400 focus:ring-0"
               value={formData.materno}
               onChange={handleChange}
               required
             />
           </label>
           <label className="form-control w-full">
-            <span className="label-text">Email</span>
+            <span className="text-sm font-medium text-gray-700 mb-1 block">Email</span>
             <input
               type="email"
               name="email"
-              className="input input-bordered w-full"
+              className="input input-bordered w-full rounded-lg border-gray-200 focus:border-gray-400 focus:ring-0"
               value={formData.email}
               onChange={handleChange}
               required
             />
           </label>
           <label className="form-control w-full">
-            <span className="label-text">Contraseña</span>
+            <span className="text-sm font-medium text-gray-700 mb-1 block">Contraseña</span>
             <input
               type="password"
               name="password"
-              className="input input-bordered w-full"
+              className="input input-bordered w-full rounded-lg border-gray-200 focus:border-gray-400 focus:ring-0"
               value={formData.password}
               onChange={handleChange}
               required
             />
           </label>
-          { error && <p className="text-error text-sm mt-2">{error}</p>}
-          <button type="submit" className="btn btn-primary mt-4">
+          { error && <p className="text-red-500 text-sm text-center">{error}</p>}
+          <button type="submit" className="btn w-full bg-gray-900 text-white hover:bg-gray-800 border-none rounded-lg py-3">
             Registrarse
           </button>
-          <label>
-            Ya tienes cuenta? {" "}
-            <Link to="/" className="text-primary hover:text-secondary">
-            Inicia Sesión
+          <label className="block text-sm text-gray-500 text-center">
+            Ya tienes cuenta?{" "}
+            <Link to="/" className="text-gray-900 font-medium hover:text-gray-600 transition-colors">
+              Inicia Sesión
             </Link>
           </label>
         </form>

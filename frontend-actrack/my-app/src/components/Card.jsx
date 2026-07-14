@@ -1,11 +1,11 @@
 const Card = ({ children }) => (
-  <div className="hero min-h-64 bg-base-200 rounded-box p-8">
-          <div className="hero-content text-center">
-            <div className="max-w-md">
-              { children }
-            </div>
-          </div>
-        </div>
+  <div className="flex items-center justify-center p-4">
+    <div className="w-full max-w-md">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 transition-shadow hover:shadow-md">
+        { children }
+      </div>
+    </div>
+  </div>
 );
 
 export { Card };

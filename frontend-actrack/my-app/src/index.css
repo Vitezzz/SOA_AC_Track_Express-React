@@ -4,6 +4,14 @@
 }
 
 body {
-  background-color: var(--color-base-200);
-  color: var(--color-base-content);
+  background-color: #f9fafb;
+  color: #111827;
+  min-height: 100vh;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  --tw-ring-color: transparent !important;
+  border-color: #9ca3af !important;
 }
