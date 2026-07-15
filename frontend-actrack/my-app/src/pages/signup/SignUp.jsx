@@ -11,6 +11,8 @@ const SignUp = () => {
     materno: "",
     email: "",
     password: "",
+    telefono: "",
+    direccion: "",
     rol_id: 3,
   })
 
@@ -95,7 +97,29 @@ const SignUp = () => {
               required
             />
           </label>
-          { error && <p className="text-red-500 text-sm text-center">{error}</p>}
+          <label className="form-control w-full">
+            <span className="text-sm font-medium text-gray-700 mb-1 block">Teléfono</span>
+            <input
+              type="tel"
+              name="telefono"
+              className="input input-bordered w-full rounded-lg border-gray-200 focus:border-gray-400 focus:ring-0"
+              value={formData.telefono}
+              onChange={handleChange}
+              required
+            />
+          </label>
+          <label className="form-control w-full">
+            <span className="text-sm font-medium text-gray-700 mb-1 block">Dirección</span>
+            <input
+              type="text"
+              name="direccion"
+              className="input input-bordered w-full rounded-lg border-gray-200 focus:border-gray-400 focus:ring-0"
+              value={formData.direccion}
+              onChange={handleChange}
+              required
+            />
+          </label>
+          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
           <button type="submit" className="btn w-full bg-gray-900 text-white hover:bg-gray-800 border-none rounded-lg py-3">
             Registrarse
           </button>

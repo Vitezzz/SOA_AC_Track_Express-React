@@ -4,27 +4,60 @@ import { cookieOptions, generateAccessToken, generateRefreshToken } from '../uti
 import jwt from 'jsonwebtoken';
 import { selectSesionesByToken } from '../models/sesiones.js';
 import bcrypt from 'bcryptjs'
+import { ROLES } from '../utils/roleUtils.js'
+import pool from '../config/database.js'
 
 const register = async (req, res) => {
+
+    const { rol_id, nombre, paterno, materno, email, password,telefono, direccion } = req.body;
+
+    if (!nombre || !email || !password) {
+        return res.status(400).json({ message: 'Favor de proporcionar todos los campos' })
+    }
+
+    //Si va a ser cliente , telefono y dirección también son obligatorios
+    //(La tabla clientes los necesita para operar : notificar por SMS, ubicarlo, etc.)
+    if (Number(rol_id) === ROLES.CLIENTE && (!telefono || !direccion)) {
+        return res.status(400).json({ message: 'Teléfono y dirección sonr equeridos' })
+    }
+
+    const usuarioExiste = await findUserByEmail(email)
+    if (usuarioExiste) {
+        return res.status(400).json({ message: "El email ya esta registrado" })
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt)
+
+    const client = await pool.connect();
+
     try {
+        await client.query('BEGIN');
 
-        const { rol_id, nombre, paterno, materno, email, password } = req.body;
+        /*
+        1.-Creamos el usuario(login) DENTRO de la transacción,
+        por eso usamos una query directa con "client", no el modelo createUser
+        (createUser usa el pool general, no participa en nuestra transacción)
+        */
 
-        if (!nombre || !email || !password) {
-            return res.status(400).json({ message: 'Favor de proporcionar todos los campos' })
+        const resultUsuario = await client.query(
+            `INSERT INTO usuarios (rol_id, nombre, paterno, materno, email, password)
+                VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, nombre, email`,
+            [rol_id, nombre, paterno, materno, email, passwordHash]
+        );
+
+        const nuevoUsuario = resultUsuario.rows[0];
+
+        //2) Si es cliente, creamos también su perfil en la misma transacción
+        if(Number(rol_id) === ROLES.CLIENTE){
+            await client.query(
+                `INSERT INTO clientes (usu_id, nombre, email, telefono, direccion, activo)
+                VALUES ($1, $2, $3, $4, $5, $6)`,
+                [nuevoUsuario.id, nombre , email, telefono, direccion, true]
+            );
         }
 
-        const usuarioExiste = await findUserByEmail(email)
-        if (usuarioExiste) {
-            return res.status(400).json({ message: "El email ya esta registrado" })
-        }
-
-        const salt = await bcrypt.genSalt(10);
-        const passwordHash = await bcrypt.hash(password, salt)
-
-        const nuevoUsuario = await createUser({
-            rol_id, nombre, paterno, materno, email, password: passwordHash
-        });
+        await client.query('COMMIT');
 
         const token = generateAccessToken(nuevoUsuario.id);
 
@@ -35,11 +68,15 @@ const register = async (req, res) => {
             nombre: nuevoUsuario.nombre,
             email: nuevoUsuario.email
         })
-    } catch (error) {
-        console.error(error)
-        res.status(500).json({ message: 'Error del servidor' })
 
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error(error);
+        res.status(500).json({ message: 'Error del servidor'});
+    }finally{
+        client.release();
     }
+
 }
 
 
