@@ -1,0 +1,24 @@
+/* Base de las etiquetas de estado (cotización, orden, etc.) */
+.badge-status {
+  @apply text-xs font-medium px-3 py-1 rounded-full;
+}
+
+.badge-status-neutral {
+  @apply bg-gray-100 text-gray-600;
+}
+
+.badge-status-info {
+  @apply bg-blue-100 text-blue-700;
+}
+
+.badge-status-success {
+  @apply bg-green-100 text-green-700;
+}
+
+.badge-status-warning {
+  @apply bg-yellow-100 text-yellow-700;
+}
+
+.badge-status-danger {
+  @apply bg-red-100 text-red-700;
+}

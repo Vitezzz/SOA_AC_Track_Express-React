@@ -10,7 +10,7 @@ export const selectCotizacionesById = async (id) => {
     return result.rows[0];
 }
 
-export const selectCotizacionesByCliente = async(cli_id) => {
+export const selectCotizacionesByCliente = async (cli_id) => {
     const result = await pool.query(`SELECT * FROM cotizaciones WHERE cli_id = $1`, [cli_id]);
     return result.rows;
 }
@@ -33,7 +33,21 @@ export const updateCotizaciones = async (id, { ord_id, tec_id, cli_id, folio, es
     return result.rows[0];
 }
 
-export const deleteCotizaciones = async(id) => {
+export const deleteCotizaciones = async (id) => {
     const result = await pool.query(`DELETE FROM cotizaciones WHERE id = $1 RETURNING  *`, [id]);
     return result.rows[0];
-} 
+}
+
+export const generarSiguienteFolioCotizacion = async () => {
+    const anio = new Date().getFullYear();
+
+    const result = await pool.query(
+        `SELECT folio FROM cotizaciones WHERE folio LIKE $1 ORDER BY folio DESC LIMIT 1`,
+        [`COT-${anio}-%`]
+    );
+
+    const ultimoFolio = result.rows[0]?.folio;
+    const siguienteNumero = ultimoFolio ? parseInt(ultimoFolio.split('-')[2], 10) + 1 : 1;
+
+    return `COT-${anio}-${String(siguienteNumero).padStart(3, '0')}`;
+}

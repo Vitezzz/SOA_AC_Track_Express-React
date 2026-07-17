@@ -1,6 +1,7 @@
 import {
     selectCotizaciones, selectCotizacionesById, selectCotizacionesByCliente, insertCotizaciones,
-    updateCotizaciones, deleteCotizaciones
+    updateCotizaciones, deleteCotizaciones,
+    generarSiguienteFolioCotizacion
 } from "../models/cotizaciones.js";
 import { puedeVerTodo } from "../utils/roleUtils.js";
 import { getClienteById } from "../models/clientes.js";
@@ -17,8 +18,8 @@ const getCotizaciones = async (req, res) => {
             listaCotizaciones = await selectCotizaciones();
         } else if (req.user.rol_id === 3) {
             const cli_id = await getClienteIdByUserId(req.user.id);
-            if(!cli_id) return res.status(404).json({ message: 'Cliente no encontrado'});
-            listaCotizaciones = await selectCotizacionesByCliente(cli_id);            
+            if (!cli_id) return res.status(404).json({ message: 'Cliente no encontrado' });
+            listaCotizaciones = await selectCotizacionesByCliente(cli_id);
         } else {
             return res.status(403).json({ message: "No tienes acceso" })
         }
@@ -61,10 +62,10 @@ const getCotizacioneById = async (req, res) => {
 const postCotizacione = async (req, res) => {
     try {
 
-        const { ord_id, tec_id, cli_id, folio, estado, total,
+        const { ord_id, tec_id, cli_id, estado, total,
             notas } = req.body;
 
-        if (!ord_id || !tec_id || !cli_id || !folio || !estado || !total) {
+        if (!ord_id || !tec_id || !cli_id || !estado || !total) {
             return res.status(400).json({ message: "Faltan campos" })
         }
 
@@ -76,6 +77,8 @@ const postCotizacione = async (req, res) => {
 
         const tecnicoExiste = await selectTecnicoById(tec_id);
         if (!tecnicoExiste) return res.status(404).json({ message: 'Tecnico no encontrado' })
+
+        const folio = await generarSiguienteFolioCotizacion();
 
         const nuevaCotizacion = await insertCotizaciones({
             ord_id, tec_id, cli_id, folio, estado, total,

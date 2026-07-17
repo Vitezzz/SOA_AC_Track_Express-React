@@ -30,25 +30,25 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="page-shell">
       <Card>
         <form onSubmit={handleSubmit} className="space-y-5">
-          <h1 className="text-2xl font-semibold text-gray-900 text-center mb-6">Iniciar Sesión</h1>
+          <h1 className="page-title text-center">Iniciar Sesión</h1>
           <label className="form-control w-full">
-            <span className="text-sm font-medium text-gray-700 mb-1 block">Email</span>
+            <span className="form-label">Email</span>
             <input
               type="email"
-              className="input input-bordered w-full rounded-lg border-gray-200 focus:border-gray-400 focus:ring-0"
+              className="form-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </label>
           <label className="form-control w-full">
-            <span className="text-sm font-medium text-gray-700 mb-1 block">Contraseña</span>
+            <span className="form-label">Contraseña</span>
             <input
               type="password"
-              className="input input-bordered w-full rounded-lg border-gray-200 focus:border-gray-400 focus:ring-0"
+              className="form-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -60,10 +60,10 @@ const Login = () => {
               Regístrate aquí
             </Link>
           </label>
-          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+          {error && <p className="form-error">{error}</p>}
           <button
             type="submit"
-            className="btn w-full bg-gray-900 text-white hover:bg-gray-800 border-none rounded-lg py-3"
+            className="btn-primary w-full py-3"
             disabled={loading}
           >
             {loading ? (
@@ -72,8 +72,7 @@ const Login = () => {
               "Ingresar"
             )}
           </button>
-          <a href="/api/auth/google" className="btn w-full bg-white text-gray-700 border
-          border-gray-200 hover:bg-gray-50 rounded-lg py-3">Iniciar Sesión con Google</a>
+          <a href="/api/auth/google" className="btn-secondary w-full py-3">Iniciar Sesión con Google</a>
         </form>
       </Card>
     </div>

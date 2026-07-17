@@ -1,0 +1,23 @@
+/* Pantalla completa centrada, usada en login/signup/formularios sueltos */
+.page-shell {
+  @apply min-h-screen flex items-center justify-center bg-gray-50;
+}
+
+/* Contenedor angosto para listados (cotizaciones, órdenes, etc.) */
+.page-container {
+  @apply max-w-3xl mx-auto px-4 py-8;
+}
+
+.page-title {
+  @apply text-2xl font-semibold text-gray-900 mb-6;
+}
+
+/* Tarjeta blanca estándar: items de lista, contenedores de sección */
+.panel {
+  @apply bg-white rounded-2xl border border-gray-100 shadow-sm p-6;
+}
+
+/* Variante grande y centrada, para pantallas tipo "hero" (Home, 404) */
+.panel-hero {
+  @apply bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center;
+}

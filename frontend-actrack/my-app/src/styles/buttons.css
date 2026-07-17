@@ -1,0 +1,9 @@
+/* Botón principal: fondo oscuro, para la acción más importante de la pantalla */
+.btn-primary {
+  @apply btn bg-gray-900 text-white hover:bg-gray-800 border-none rounded-lg;
+}
+
+/* Botón secundario: fondo blanco con borde, para acciones alternativas/cancelar */
+.btn-secondary {
+  @apply btn bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 rounded-lg;
+}

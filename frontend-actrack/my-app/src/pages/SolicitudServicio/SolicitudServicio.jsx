@@ -15,6 +15,7 @@ const SolicitudServicio = () => {
     // (ya no hay prioridadId: el cliente no elige prioridad, ver nota abajo)
     const [equipoId, setEquipoId] = useState("");
     const [categoriaId, setCategoriaId] = useState("");
+    const [descripcionEquipo, setDescripcionEquipo] = useState("")
     const [descripcion, setDescripcion] = useState("");
     const [fechaProgramada, setFechaProgramada] = useState("");
 
@@ -68,10 +69,18 @@ const SolicitudServicio = () => {
             return;
         }
 
+        if (equipoId === 'otro' && descripcionEquipo === "") {
+            setError("Falta rellenar la descripcion del equipo");
+            return;
+        }
+
         if (!prioridadNormal) {
             setError("Falta configurar la prioridad 'normal' en el catálogo");
             return;
         }
+
+        const equipoIdFinal = equipoId === 'otro' ? null : Number(equipoId);
+        const descripcionFinal = equipoId === "otro" ? `Equipo : ${descripcionEquipo}\n\nFalla: ${descripcion}` : descripcion;
 
         setSubmitting(true);
         try {
@@ -79,12 +88,12 @@ const SolicitudServicio = () => {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    equ_id: Number(equipoId),
+                    equ_id: equipoIdFinal,
                     cat_id: Number(categoriaId),
                     pri_id: prioridadNormal.id,
                     prioridad: "normal",
                     estatus: "pendiente",
-                    descripcion,
+                    descripcion: descripcionFinal,
                     fecha_programada: fechaProgramada,
                 }),
             });
@@ -99,6 +108,7 @@ const SolicitudServicio = () => {
             setEquipoId("");
             setCategoriaId("");
             setDescripcion("");
+            setDescripcionEquipo("");
             setFechaProgramada("");
         } catch (err) {
             setError(err.message);
@@ -110,40 +120,56 @@ const SolicitudServicio = () => {
     if (loading) return <p className="text-center mt-10">Cargando...</p>;
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="page-shell">
             <Card>
-                <h1 className="text-2xl font-semibold text-gray-900 text-center mb-6">
+                <h1 className="page-title text-center">
                     Solicitar Servicio
                 </h1>
 
                 {folioCreado && (
-                    <p className="text-green-600 text-sm text-center mb-4">
+                    <p className="form-success mb-4">
                         ¡Solicitud creada! Tu folio es <strong>{folioCreado}</strong>
                     </p>
                 )}
-                {error && <p className="text-red-500 text-sm text-center mb-4">{error}</p>}
+                {error && <p className="form-error mb-4">{error}</p>}
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <label className="form-control w-full">
-                        <span className="text-sm font-medium text-gray-700 mb-1 block">Equipo</span>
+                        <span className="form-label">Equipo</span>
                         <select
-                            className="input input-bordered w-full rounded-lg border-gray-200"
+                            className="form-input"
                             value={equipoId}
                             onChange={(e) => setEquipoId(e.target.value)}
                         >
                             <option value="">Selecciona un equipo</option>
+                            <option value="otro">Otro / mi equipo no está en la lista</option>
                             {equipos.map((eq) => (
                                 <option key={eq.id} value={eq.id}>
                                     {eq.tipo} — {eq.modelo} ({eq.numero_serie})
                                 </option>
                             ))}
                         </select>
+                        {
+                            equipoId === "otro" && (
+                                <label className="form-control w-full">
+                                    <span className="text-sm font-medium text-gray-700 mb-1 block">
+                                        Describe tu equipo
+                                    </span>
+                                    <textarea
+                                        className="input input-bordered w-full rounded-lg border-gray-200 h-20"
+                                        value={descripcionEquipo}
+                                        onChange={(e) => setDescripcionEquipo(e.target.value)}
+                                        placeholder="Ej. Split de pared Mirage, blanco, en la sala"
+                                    />
+                                </label>
+                            )
+                        }
                     </label>
 
                     <label className="form-control w-full">
-                        <span className="text-sm font-medium text-gray-700 mb-1 block">Tipo de servicio</span>
+                        <span className="form-label">Tipo de servicio</span>
                         <select
-                            className="input input-bordered w-full rounded-lg border-gray-200"
+                            className="form-input"
                             value={categoriaId}
                             onChange={(e) => setCategoriaId(e.target.value)}
                         >
@@ -157,19 +183,19 @@ const SolicitudServicio = () => {
                     </label>
 
                     <label className="form-control w-full">
-                        <span className="text-sm font-medium text-gray-700 mb-1 block">Descripción de la falla</span>
+                        <span className="form-label">Descripción de la falla</span>
                         <textarea
-                            className="input input-bordered w-full rounded-lg border-gray-200 h-24"
+                            className="form-input h-24"
                             value={descripcion}
                             onChange={(e) => setDescripcion(e.target.value)}
                         />
                     </label>
 
                     <label className="form-control w-full">
-                        <span className="text-sm font-medium text-gray-700 mb-1 block">Fecha preferida</span>
+                        <span className="form-label">Fecha preferida</span>
                         <input
                             type="datetime-local"
-                            className="input input-bordered w-full rounded-lg border-gray-200"
+                            className="form-input"
                             value={fechaProgramada}
                             onChange={(e) => setFechaProgramada(e.target.value)}
                         />
@@ -177,7 +203,7 @@ const SolicitudServicio = () => {
 
                     <button
                         type="submit"
-                        className="btn w-full bg-gray-900 text-white hover:bg-gray-800 border-none rounded-lg py-3"
+                        className="btn-primary w-full py-3"
                         disabled={submitting}
                     >
                         {submitting ? (

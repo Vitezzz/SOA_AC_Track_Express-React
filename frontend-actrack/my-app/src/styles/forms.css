@@ -1,0 +1,23 @@
+/* Quita el anillo azul de foco de DaisyUI y lo cambia por un borde gris sutil */
+.input:focus,
+.select:focus,
+.textarea:focus {
+  --tw-ring-color: transparent !important;
+  border-color: #9ca3af !important;
+}
+
+.form-label {
+  @apply text-sm font-medium text-gray-700 mb-1 block;
+}
+
+.form-input {
+  @apply input w-full rounded-lg border-gray-200 focus:border-gray-400 focus:ring-0;
+}
+
+.form-error {
+  @apply text-red-500 text-sm text-center;
+}
+
+.form-success {
+  @apply text-green-600 text-sm text-center;
+}

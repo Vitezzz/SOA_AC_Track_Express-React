@@ -38,89 +38,89 @@ const SignUp = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="page-shell">
       <Card>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <h1 className="text-2xl font-semibold text-gray-900 text-center mb-6">Crear Cuenta</h1>
+          <h1 className="page-title text-center">Crear Cuenta</h1>
           <label className="form-control w-full">
-            <span className="text-sm font-medium text-gray-700 mb-1 block">Nombre</span>
+            <span className="form-label">Nombre</span>
             <input
               type="text"
               name="nombre"
-              className="input input-bordered w-full rounded-lg border-gray-200 focus:border-gray-400 focus:ring-0"
+              className="form-input"
               value={formData.nombre}
               onChange={handleChange}
               required
             />
           </label>
           <label className="form-control w-full">
-            <span className="text-sm font-medium text-gray-700 mb-1 block">Apellido Paterno</span>
+            <span className="form-label">Apellido Paterno</span>
             <input
               type="text"
               name="paterno"
-              className="input input-bordered w-full rounded-lg border-gray-200 focus:border-gray-400 focus:ring-0"
+              className="form-input"
               value={formData.paterno}
               onChange={handleChange}
               required
             />
           </label>
           <label className="form-control w-full">
-            <span className="text-sm font-medium text-gray-700 mb-1 block">Apellido Materno</span>
+            <span className="form-label">Apellido Materno</span>
             <input
               type="text"
               name="materno"
-              className="input input-bordered w-full rounded-lg border-gray-200 focus:border-gray-400 focus:ring-0"
+              className="form-input"
               value={formData.materno}
               onChange={handleChange}
               required
             />
           </label>
           <label className="form-control w-full">
-            <span className="text-sm font-medium text-gray-700 mb-1 block">Email</span>
+            <span className="form-label">Email</span>
             <input
               type="email"
               name="email"
-              className="input input-bordered w-full rounded-lg border-gray-200 focus:border-gray-400 focus:ring-0"
+              className="form-input"
               value={formData.email}
               onChange={handleChange}
               required
             />
           </label>
           <label className="form-control w-full">
-            <span className="text-sm font-medium text-gray-700 mb-1 block">Contraseña</span>
+            <span className="form-label">Contraseña</span>
             <input
               type="password"
               name="password"
-              className="input input-bordered w-full rounded-lg border-gray-200 focus:border-gray-400 focus:ring-0"
+              className="form-input"
               value={formData.password}
               onChange={handleChange}
               required
             />
           </label>
           <label className="form-control w-full">
-            <span className="text-sm font-medium text-gray-700 mb-1 block">Teléfono</span>
+            <span className="form-label">Teléfono</span>
             <input
               type="tel"
               name="telefono"
-              className="input input-bordered w-full rounded-lg border-gray-200 focus:border-gray-400 focus:ring-0"
+              className="form-input"
               value={formData.telefono}
               onChange={handleChange}
               required
             />
           </label>
           <label className="form-control w-full">
-            <span className="text-sm font-medium text-gray-700 mb-1 block">Dirección</span>
+            <span className="form-label">Dirección</span>
             <input
               type="text"
               name="direccion"
-              className="input input-bordered w-full rounded-lg border-gray-200 focus:border-gray-400 focus:ring-0"
+              className="form-input"
               value={formData.direccion}
               onChange={handleChange}
               required
             />
           </label>
-          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
-          <button type="submit" className="btn w-full bg-gray-900 text-white hover:bg-gray-800 border-none rounded-lg py-3">
+          {error && <p className="form-error">{error}</p>}
+          <button type="submit" className="btn-primary w-full py-3">
             Registrarse
           </button>
           <label className="block text-sm text-gray-500 text-center">

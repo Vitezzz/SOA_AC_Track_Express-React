@@ -1,70 +1,135 @@
 import { useState, useEffect } from "react";
-import { Card } from "../../components/Card.jsx";
-import Table from '../../components/Table.jsx';
-import { useAuth } from "../../context/AuthContext.jsx"; 
+import { useAuth } from "../../context/AuthContext.jsx";
+
+const ESTILOS_ESTADO = {
+    pendiente: "bg-yellow-100 text-yellow-700",
+    en_proceso: "bg-blue-100 text-blue-700",
+    completada: "bg-green-100 text-green-700",
+    cancelada: "bg-red-100 text-red-700",
+};
+
+const formatearFecha = (fecha) =>
+    new Date(fecha).toLocaleDateString("es-MX", {
+        day: "numeric", month: "short", year: "numeric",
+    });
 
 const MisEquipos = () => {
-
-    // TODO 1: declara un estado "equipos" (arreglo, inicia vacío) para
-    // guardar lo que venga del backend, en vez del "devices" hardcodeado.
     const [equipos, setEquipos] = useState([]);
+    const [ordenes, setOrdenes] = useState([]);
+    const [mantenimientos, setMantenimientos] = useState([]);
 
-    // TODO 2: declara un estado "loading" (inicia en true) y uno "error"
-    // (inicia en cadena vacía) — igual que en SolicitudServicio.
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    // TODO 3: saca "apiFetch" de useAuth()
     const { apiFetch } = useAuth();
 
-    // TODO 4: useEffect que se ejecuta una sola vez al montar el componente,
-    // y adentro:
     useEffect(() => {
-        const caragarEquipos = async () => {
+        const cargarDatos = async () => {
             try {
-                //   - llama apiFetch("/api/equipos/")
-                const res = await apiFetch('/api/equipos/');
-                //   - si res.ok, conviértelo a json() y guárdalo con setEquipos
-                if (!res.ok) throw new Error("No se pudireon cargar los equipos");
+                const [resEquipos, resOrdenes, resMant] = await Promise.all([
+                    apiFetch("/api/equipos/"),
+                    apiFetch("/api/ordenes_servicio"),
+                    apiFetch("/api/mantenimiento_preventivo"),
+                ]);
 
-                setEquipos(await res.json())
-                //   - si no, lanza un error con throw new Error(...)
+                if (!resEquipos.ok) throw new Error("No se pudieron cargar los equipos");
+                setEquipos(await resEquipos.json());
+
+                // ordenes_servicio nunca da 404 (ya lo comprobamos en Ordenes.jsx),
+                // así que aquí no hace falta el caso especial.
+                if (!resOrdenes.ok) throw new Error("No se pudieron cargar las órdenes");
+                setOrdenes(await resOrdenes.json());
+
+                // mantenimiento_preventivo sí puede dar 404 si no tienes ninguno
+                // configurado todavía — mismo comportamiento que cotizaciones/pagos.
+                if (resMant.status === 404) {
+                    setMantenimientos([]);
+                } else if (!resMant.ok) {
+                    throw new Error("No se pudo cargar el mantenimiento preventivo");
+                } else {
+                    setMantenimientos(await resMant.json());
+                }
             } catch (err) {
-                //   - en el catch, guarda el mensaje con setError
-                setError(err.message)
+                setError(err.message);
             } finally {
-                //   - en el finally, setLoading(false)
-                // (pista: es CASI idéntico al primer useEffect que hicimos en
-                // SolicitudServicio, solo que aquí es un solo fetch, no Promise.all)
                 setLoading(false);
             }
-        }
-        caragarEquipos();
-    }, [])
-    // TODO 5: antes del return, si loading es true, regresa algo simple
-    // como <p>Cargando...</p>
+        };
+        cargarDatos();
+    }, []);
+
     if (loading) return <p className="text-center mt-10">Cargando...</p>;
 
     return (
-        <>
-            <h2>Mis Equipos</h2>
-            <Card>
-                {/* TODO 6: si hay error, muéstralo con un <p> (mismo estilo
-                text-red-500 que usamos en los otros formularios) */}
-                {error && <p className="text-red-500 text-sm text-center mb-4">{error}</p>}
-                {/* TODO 7: cambia object={devices} por object={equipos} */}
-                {equipos.length === 0 ? (
-                    <p className="text-gray-500 text-center">
-                        Todavía no tienes equipos registrados.
-                    </p>
-                ) : (
-                    <Table object={equipos} />
-                )}
+        <div className="max-w-4xl mx-auto px-4 py-8">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">Mis Equipos</h2>
 
-            </Card>
-        </>
+            {error && <p className="text-red-500 text-sm text-center mb-4">{error}</p>}
+
+            {equipos.length === 0 ? (
+                <p className="text-gray-500 text-center">Todavía no tienes equipos registrados.</p>
+            ) : (
+                <div className="space-y-6">
+                    {equipos.map((eq) => {
+                        // Historial: todas las órdenes que le pertenecen a este equipo
+                        const historial = ordenes.filter((o) => o.equ_id === eq.id);
+
+                        // Próximo mantenimiento: puede no existir, por eso el ?. y el fallback
+                        const mantenimiento = mantenimientos.find((m) => m.equ_id === eq.id);
+
+                        return (
+                            <div key={eq.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                                <div className="flex justify-between items-start mb-1">
+                                    <span className="font-semibold text-gray-900">
+                                        {eq.tipo} — {eq.modelo}
+                                    </span>
+                                    <span
+                                        className={`text-xs font-medium px-3 py-1 rounded-full ${
+                                            eq.activo ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
+                                        }`}
+                                    >
+                                        {eq.activo ? "Activo" : "Inactivo"}
+                                    </span>
+                                </div>
+                                <p className="text-gray-400 text-xs mb-4">N.º de serie: {eq.numero_serie}</p>
+
+                                <p className="text-sm text-gray-700 mb-4">
+                                    <span className="font-medium">Próximo mantenimiento: </span>
+                                    {mantenimiento
+                                        ? formatearFecha(mantenimiento.proxima_fecha)
+                                        : "No programado"}
+                                </p>
+
+                                <div className="border-t border-gray-100 pt-3">
+                                    <p className="text-sm font-medium text-gray-700 mb-2">Historial de órdenes</p>
+                                    {historial.length === 0 ? (
+                                        <p className="text-gray-400 text-sm">Sin órdenes registradas.</p>
+                                    ) : (
+                                        <ul className="space-y-2">
+                                            {historial.map((orden) => (
+                                                <li key={orden.id} className="flex justify-between items-center text-sm">
+                                                    <span className="text-gray-600">
+                                                        {orden.folio} — {formatearFecha(orden.fecha_programada)}
+                                                    </span>
+                                                    <span
+                                                        className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${
+                                                            ESTILOS_ESTADO[orden.estatus] || "bg-gray-100 text-gray-600"
+                                                        }`}
+                                                    >
+                                                        {orden.estatus}
+                                                    </span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
     );
-}
+};
 
 export default MisEquipos;
-

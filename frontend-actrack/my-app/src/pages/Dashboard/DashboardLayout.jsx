@@ -9,7 +9,7 @@ const DashboardLayout = () => {
             to="/dashboard"
             end
             className={({ isActive }) =>
-              isActive ? "btn btn-soft bg-gray-100 text-gray-900" : "btn btn-ghost text-gray-500"
+              isActive ? "side-nav-link-active" : "side-nav-link"
             }
           >
             Dashboard Home
@@ -19,7 +19,7 @@ const DashboardLayout = () => {
           <NavLink
             to="/dashboard/details"
             className={({ isActive }) =>
-              isActive ? "btn btn-soft bg-gray-100 text-gray-900" : "btn btn-ghost text-gray-500"
+              isActive ? "side-nav-link-active" : "side-nav-link"
             }
           >
             Dashboard Details

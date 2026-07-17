@@ -1,17 +1,11 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  themes: light --default, dark --prefersdark, cupcake, aqua;
+  themes: light --default;
 }
 
-body {
-  background-color: #f9fafb;
-  color: #111827;
-  min-height: 100vh;
-}
-
-.input:focus,
-.select:focus,
-.textarea:focus {
-  --tw-ring-color: transparent !important;
-  border-color: #9ca3af !important;
-}
+@import "./styles/base.css";
+@import "./styles/buttons.css";
+@import "./styles/forms.css";
+@import "./styles/cards.css";
+@import "./styles/badges.css";
+@import "./styles/nav.css";

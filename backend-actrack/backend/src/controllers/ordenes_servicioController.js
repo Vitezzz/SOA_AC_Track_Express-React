@@ -71,19 +71,16 @@ const postOrdenesServicio = async (req, res) => {
 
         let cli_id = req.body.cli_id;
 
-        if(req.user.rol_id === 3){
+        if (req.user.rol_id === 3) {
             cli_id = await getClienteIdByUserId(req.user.id);
 
-            if(!cli_id) return res.status(404).json({ message: 'Cliente no encontrado'})
+            if (!cli_id) return res.status(404).json({ message: 'Cliente no encontrado' })
         }
 
         if (!cli_id) return res.status(400).json({ message: "Campo requerido cli_id" })
 
         const clienteExiste = await getClienteById(cli_id);
         if (!clienteExiste) return res.status(404).json({ message: 'Cliente no encontrado' });
-
-        const equipoExiste = await getEquipoById(equ_id);
-        if (!equipoExiste) return res.status(404).json({ message: 'Equipo no encontrado' });
 
         const categoriaServicioExiste = await getCategoriaServicioId(cat_id);
         if (!categoriaServicioExiste) return res.status(404).json({ message: 'Categoria servicio no encontrada' });
@@ -94,6 +91,12 @@ const postOrdenesServicio = async (req, res) => {
         if (tec_id) {
             const tecnicoExiste = await selectTecnicoById(tec_id);
             if (!tecnicoExiste) return res.status(404).json({ message: 'Tecnico no encontrado' })
+        }
+
+        if (equ_id) {
+            const equipoExiste = await getEquipoById(equ_id);
+            if (!equipoExiste) return res.status(404).json({ message: 'Equipo no encontrado' });
+
         }
 
         const folio = await generarSiguienteFolio();
