@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Card } from "../../components/Card.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
+import  LineaTiempoEstado  from '../../components/LineaTiempoEstado.jsx'
 
 const Ordenes = () => {
     const [ordenes, setOrdenes] = useState([]);
@@ -24,16 +24,8 @@ const Ordenes = () => {
         cargarOrdenes();
     }, []);
 
-    const ESTILOS_ESTATUS = {
-        pendiente: "badge-status-warning",
-        en_proceso: "badge-status-info",
-        completada: "badge-status-success",
-        cancelada: "badge-status-danger",
-    };
-
     if (loading) return <p className="text-center mt-10">Cargando...</p>;
 
-    // ... seguimos abajo
     return (
         <div className="page-container">
             <h2 className="page-title">Mis Órdenes</h2>
@@ -44,26 +36,23 @@ const Ordenes = () => {
                 <p className="text-gray-500 text-center">Todavía no tienes órdenes de servicio.</p>
             ) : (
                 <div className="space-y-4">
-                    {ordenes.map((orden) => {
-                        const claseEstatus = ESTILOS_ESTATUS[orden.estatus] || "badge-status-neutral";
-                        return (
-                            <div key={orden.id} className="panel">
-                                <div className="flex justify-between items-start mb-2">
-                                    <span className="font-semibold text-gray-900">Folio: {orden.folio}</span>
-                                    <span className={`badge-status ${claseEstatus}`}>
-                                        {orden.estatus}
-                                    </span>
-                                </div>
-                                <p className="text-gray-600 text-sm mb-2">{orden.descripcion}</p>
-                                <p className="text-gray-400 text-xs">
-                                    Programada: {new Date(orden.fecha_programada).toLocaleDateString("es-MX", {
+                    {ordenes.map((orden) => (
+                        <div key={orden.id} className="panel">
+                            <div className="flex justify-between items-start mb-4">
+                                <span className="font-semibold text-gray-900">Folio: {orden.folio}</span>
+                                <span className="text-gray-400 text-xs">
+                                    {new Date(orden.fecha_programada).toLocaleDateString("es-MX", {
                                         day: "numeric", month: "short", year: "numeric",
-                                        hour: "2-digit", minute: "2-digit"
+                                        hour: "2-digit", minute: "2-digit",
                                     })}
-                                </p>
+                                </span>
                             </div>
-                        );
-                    })}
+
+                            <LineaTiempoEstado estatus={orden.estatus} />
+
+                            <p className="text-gray-600 text-sm mt-4">{orden.descripcion}</p>
+                        </div>
+                    ))}
                 </div>
             )}
         </div>

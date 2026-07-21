@@ -114,7 +114,7 @@ export function AuthProvider({ children }) {
 
     return(
         //Todo lo que este dentro de <AuthContext.Provider> en App.jsx le provee user y loading
-        <AuthContext.Provider value={{ user, loading, login, logout, register, apiFetch }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, register, apiFetch, setUser }}>
             {children}
         </AuthContext.Provider>
     )

@@ -1,6 +1,7 @@
 import { getClientes, getClienteById, getClienteByEmail, createCliente, updateCliente, deleteCliente } from "../models/clientes.js";
 import { findUserById } from "../models/usuarios.js";
-
+import { getClienteIdByUserId } from "../utils/lookupUtils.js";
+import { completarPerfilCliente } from "../models/clientes.js";
 
 const allClientes = async (req, res) => {
     try {
@@ -122,4 +123,41 @@ const clienteDelete = async (req, res) => {
     }
 }
 
-export { allClientes, clienteById, crearCliente, clienteDelete, clienteUpdate }
+const completarPerfil = async (req, res) => {
+    try {
+
+        const { telefono, direccion } = req.body;
+
+        if (!telefono || !direccion) return res.status(400).json({ message: 'Falta rellenar campo telefono o dirección' });
+
+        const cli_id = await getClienteIdByUserId(req.user.id);
+        if (!cli_id) return res.status(404).json({ message: 'Cliente no encontrado' })
+
+        const perfilCompletado = await completarPerfilCliente(cli_id, { telefono, direccion });
+
+        return res.status(200).json({
+            perfilCompletado
+        })
+
+    } catch (error) {
+        console.error('Error: ', error);
+        res.status(500).json({ message: 'Error del servidor', error })
+    }
+}
+
+const verMiPerfil = async (req, res) => {
+
+    try {
+        const cli_id = await getClienteIdByUserId(req.user.id);
+        if (!cli_id) return res.status(404).json({ message: "Cliente no encontrado" })
+
+        const cliente = await getClienteById(cli_id);
+
+        return res.status(200).json(cliente)
+    } catch (error) {
+        console.error('Error: ', error);
+        res.status(500).json({ message : 'Error del servidor'})
+    }
+}
+
+export { allClientes, clienteById, crearCliente, clienteDelete, clienteUpdate, completarPerfil, verMiPerfil }

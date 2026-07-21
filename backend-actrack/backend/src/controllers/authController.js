@@ -6,10 +6,12 @@ import { selectSesionesByToken } from '../models/sesiones.js';
 import bcrypt from 'bcryptjs'
 import { ROLES } from '../utils/roleUtils.js'
 import pool from '../config/database.js'
+import { getClienteIdByUserId } from '../utils/lookupUtils.js';
+import { getClienteById } from '../models/clientes.js';
 
 const register = async (req, res) => {
 
-    const { rol_id, nombre, paterno, materno, email, password,telefono, direccion } = req.body;
+    const { rol_id, nombre, paterno, materno, email, password, telefono, direccion } = req.body;
 
     if (!nombre || !email || !password) {
         return res.status(400).json({ message: 'Favor de proporcionar todos los campos' })
@@ -49,11 +51,11 @@ const register = async (req, res) => {
         const nuevoUsuario = resultUsuario.rows[0];
 
         //2) Si es cliente, creamos también su perfil en la misma transacción
-        if(Number(rol_id) === ROLES.CLIENTE){
+        if (Number(rol_id) === ROLES.CLIENTE) {
             await client.query(
                 `INSERT INTO clientes (usu_id, nombre, email, telefono, direccion, activo)
                 VALUES ($1, $2, $3, $4, $5, $6)`,
-                [nuevoUsuario.id, nombre , email, telefono, direccion, true]
+                [nuevoUsuario.id, nombre, email, telefono, direccion, true]
             );
         }
 
@@ -72,8 +74,8 @@ const register = async (req, res) => {
     } catch (error) {
         await client.query('ROLLBACK');
         console.error(error);
-        res.status(500).json({ message: 'Error del servidor'});
-    }finally{
+        res.status(500).json({ message: 'Error del servidor' });
+    } finally {
         client.release();
     }
 
@@ -126,7 +128,16 @@ const getProfile = async (req, res) => {
         if (!req.user) {
             return res.status(401).json({ message: 'No autenticado' });
         }
-        res.json(req.user);
+
+        let esPerfilCompleto = true;
+
+        if (req.user.rol_id === 3) {
+            const cli_id = await getClienteIdByUserId(req.user.id);
+            const cliente = await getClienteById(cli_id);
+            esPerfilCompleto = cliente.perfil_completo;
+        }
+
+        res.json({ ...req.user, perfil_completo: esPerfilCompleto });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Error del servidor' });

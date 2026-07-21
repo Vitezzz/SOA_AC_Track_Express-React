@@ -9,6 +9,7 @@ import MisEquipos from "./pages/Equipos/MisEquipos.jsx";
 import Pagos from "./pages/Pagos/Pagos.jsx";
 import Ordenes from "./pages/Ordenes/Ordenes.jsx";
 import SolicitudServicio from "./pages/SolicitudServicio/SolicitudServicio.jsx"
+import CompletarPerfil from "./pages/CompletarPerfil/CompletarPerfil.jsx";
 
 //Component
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
@@ -16,6 +17,7 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import DashboardLayout from "./pages/Dashboard/DashboardLayout.jsx";
 import DashboardHome from "./pages/Dashboard/DashboardHome.jsx";
 import DashboardDetails from "./pages/Dashboard/DashboardDetails.jsx";
+import DashboardCliente from "./pages/Dashboard/DashboardCliente.jsx"
 import { AuthProvider } from "./context/AuthContext.jsx";
 
 function App() {
@@ -35,6 +37,8 @@ function App() {
                 <Route path="/ordenes" element={<ProtectedRoute><Ordenes /></ProtectedRoute>}></Route>
                 <Route path="/cotizaciones" element={<ProtectedRoute><Cotizaciones /></ProtectedRoute>}></Route>
                 <Route path="/SolicitudServicio" element={<ProtectedRoute><SolicitudServicio /></ProtectedRoute>}></Route>
+                <Route path="/mi-dashboard" element={<ProtectedRoute><DashboardCliente /></ProtectedRoute>}></Route>
+                <Route path="/completar-perfil" element={<ProtectedRoute><CompletarPerfil /></ProtectedRoute>}></Route>
                 <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
                   <Route index element={<DashboardHome />} />
                   <Route path="details" element={<DashboardDetails />} />

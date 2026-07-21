@@ -25,7 +25,7 @@ const SolicitudServicio = () => {
     const [error, setError] = useState("");
     const [folioCreado, setFolioCreado] = useState("");
 
-    const { apiFetch } = useAuth();
+    const { apiFetch, user } = useAuth();
 
     useEffect(() => {
         const cargarCatalogos = async () => {
@@ -63,6 +63,11 @@ const SolicitudServicio = () => {
         e.preventDefault();
         setError("");
         setFolioCreado("");
+
+        if(user.perfil_completo === false){
+            setError("Completa los datos de tu perfil antes de hacer una solicitud");
+            return
+        }
 
         if (!equipoId || !categoriaId || !descripcion || !fechaProgramada) {
             setError("Completa todos los campos antes de continuar");
