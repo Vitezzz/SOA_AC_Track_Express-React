@@ -146,17 +146,21 @@ const completarPerfil = async (req, res) => {
 }
 
 const verMiPerfil = async (req, res) => {
-
     try {
         const cli_id = await getClienteIdByUserId(req.user.id);
         if (!cli_id) return res.status(404).json({ message: "Cliente no encontrado" })
 
         const cliente = await getClienteById(cli_id);
+        const usuario = await findUserById(req.user.id);
 
-        return res.status(200).json(cliente)
+        return res.status(200).json({
+            ...cliente,
+            paterno: usuario?.paterno || null,
+            materno: usuario?.materno || null,
+        });
     } catch (error) {
         console.error('Error: ', error);
-        res.status(500).json({ message : 'Error del servidor'})
+        res.status(500).json({ message: 'Error del servidor' })
     }
 }
 

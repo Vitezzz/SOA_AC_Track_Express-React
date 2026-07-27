@@ -1,16 +1,16 @@
 import { useState, useEffect } from "react";
 import { Card } from "../../components/Card";
 import { useAuth } from "../../context/AuthContext";
+import AddressAutocompleteInput from "../../components/AddressAutocompleteInput";
 
 const CompletarPerfil = () => {
 
     const [telefono, setTelefono] = useState("");
     const [direccion, setDireccion] = useState("");
-    const [infoCliente, setInfoCliente] = useState(null); // nombre, email, activo — solo lectura
+    const [infoCliente, setInfoCliente] = useState(null);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
-    // Nuevo estado, junto a los demás
     const [guardado, setGuardado] = useState(false);
 
     const { apiFetch, setUser } = useAuth();
@@ -19,9 +19,7 @@ const CompletarPerfil = () => {
         const cargarPerfil = async () => {
             try {
                 const res = await apiFetch("/api/clientes/perfil");
-
                 if (!res.ok) throw new Error("No se pudo cargar tu perfil");
-
                 const data = await res.json();
                 setTelefono(data.telefono || "");
                 setDireccion(data.direccion || "");
@@ -38,7 +36,7 @@ const CompletarPerfil = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
-        setGuardado(false);   // 👈 reinicia el aviso cada vez que reintenta
+        setGuardado(false);
 
         if (!telefono || !direccion) {
             setError("Completa ambos campos antes de continuar");
@@ -54,13 +52,10 @@ const CompletarPerfil = () => {
             });
 
             const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.message || "No se pudieron actualizar los datos");
-            }
+            if (!res.ok) throw new Error(data.message || "No se pudieron actualizar los datos");
 
             setUser((prev) => ({ ...prev, perfil_completo: true }));
-            setGuardado(true);   // 👈 nuevo
+            setGuardado(true);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -70,69 +65,65 @@ const CompletarPerfil = () => {
 
     if (loading) return <p className="text-center mt-10">Cargando...</p>;
 
+    // Nombre completo, uniendo solo las partes que sí existan --
+    // si viene de Google/Facebook, paterno/materno son null y no aparecen.
+    const nombreCompleto = [infoCliente?.nombre, infoCliente?.paterno, infoCliente?.materno]
+        .filter(Boolean)
+        .join(" ");
+
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <Card>
-                <h1 className="text-2xl font-semibold text-gray-900 text-center mb-2">
-                    Mi perfil
-                </h1>
-                <p className="text-sm text-gray-500 text-center mb-6">
-                    Mantén tu teléfono y dirección actualizados para que podamos atenderte.
-                </p>
-
-                {error && <p className="text-red-500 text-sm text-center mb-4">{error}</p>}
-
-                {guardado && (
-                    <p className="text-green-600 text-sm text-center mb-4">
-                        ¡Tus datos se guardaron correctamente!
+        <div className="page-shell">
+            <Card maxWidth="max-w-lg">
+                <div className="text-center mb-6">
+                    <h1 className="page-title mb-1">Mi perfil</h1>
+                    <p className="text-sm text-gray-500">
+                        Mantén tus datos actualizados para que podamos atenderte mejor.
                     </p>
-                )}
+                </div>
+
+                {guardado && <p className="form-success mb-4">¡Tus datos se guardaron correctamente!</p>}
+                {error && <p className="form-error mb-4">{error}</p>}
 
                 {infoCliente && (
-                    <div className="bg-gray-50 rounded-xl p-4 mb-6 space-y-1">
-                        <p className="text-sm text-gray-700">
-                            <span className="font-medium">Nombre:</span> {infoCliente.nombre}
-                        </p>
-                        <p className="text-sm text-gray-700">
-                            <span className="font-medium">Email:</span> {infoCliente.email}
-                        </p>
-                        <p className="text-sm text-gray-700">
-                            <span className="font-medium">Estado de cuenta:</span>{" "}
-                            {infoCliente.activo ? "Activa" : "Inactiva"}
-                        </p>
+                    <div className="panel !shadow-none !border-gray-100 bg-gray-50 mb-6 !p-5">
+                        <div className="flex items-center justify-between mb-4">
+                            <span className="font-semibold text-gray-900 text-lg">{nombreCompleto}</span>
+                            <span className={`badge-status ${infoCliente.activo ? "badge-status-success" : "badge-status-neutral"}`}>
+                                {infoCliente.activo ? "Cuenta activa" : "Cuenta inactiva"}
+                            </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                            <p><span className="text-gray-400">Nombre:</span> <span className="text-gray-700">{infoCliente.nombre || "—"}</span></p>
+                            <p><span className="text-gray-400">Apellido paterno:</span> <span className="text-gray-700">{infoCliente.paterno || "—"}</span></p>
+                            <p><span className="text-gray-400">Apellido materno:</span> <span className="text-gray-700">{infoCliente.materno || "—"}</span></p>
+                            <p><span className="text-gray-400">Correo:</span> <span className="text-gray-700">{infoCliente.email}</span></p>
+                        </div>
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-5">
                     <label className="form-control w-full">
-                        <span className="text-sm font-medium text-gray-700 mb-1 block">Teléfono</span>
+                        <span className="form-label">Teléfono</span>
                         <input
                             type="tel"
-                            className="input input-bordered w-full rounded-lg border-gray-200 focus:border-gray-400 focus:ring-0"
+                            className="form-input"
                             value={telefono}
                             onChange={(e) => setTelefono(e.target.value)}
                         />
                     </label>
 
                     <label className="form-control w-full">
-                        <span className="text-sm font-medium text-gray-700 mb-1 block">Dirección</span>
-                        <input
-                            type="text"
-                            className="input input-bordered w-full rounded-lg border-gray-200 focus:border-gray-400 focus:ring-0"
+                        <span className="form-label">Dirección</span>
+                        <AddressAutocompleteInput
+                            className="form-input"
                             value={direccion}
-                            onChange={(e) => setDireccion(e.target.value)}
+                            onChange={setDireccion}
                         />
                     </label>
-                    <button
-                        type="submit"
-                        className="btn w-full bg-gray-900 text-white hover:bg-gray-800 border-none rounded-lg py-3"
-                        disabled={submitting}
-                    >
-                        {submitting ? (
-                            <span className="loading loading-spinner loading-sm" />
-                        ) : (
-                            "Guardar"
-                        )}
+
+                    <button type="submit" className="btn-primary w-full py-3" disabled={submitting}>
+                        {submitting ? <span className="loading loading-spinner loading-sm" /> : "Guardar cambios"}
                     </button>
                 </form>
             </Card>

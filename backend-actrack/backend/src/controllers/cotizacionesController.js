@@ -8,6 +8,9 @@ import { getClienteById } from "../models/clientes.js";
 import { selectOrdenesServicioById } from "../models/ordenes_servicio.js";
 import { selectTecnicoById } from "../models/tecnicos.js";
 import { getClienteIdByUserId } from '../utils/lookupUtils.js'
+import { enviarSMS, formatearTelefonoE164 } from "../utils/smsService.js";
+import { insertNotificaciones } from "../models/notificaciones.js";
+import pool from '../config/database.js'
 
 const getCotizaciones = async (req, res) => {
     try {
@@ -105,8 +108,7 @@ const putCotizaciones = async (req, res) => {
     try {
 
         const { id } = req.params;
-        const { ord_id, tec_id, cli_id, folio, estado, total,
-            notas } = req.body;
+        const { ord_id, tec_id, cli_id, folio, estado, total, notas } = req.body;
         if (!id) {
             return res.status(400).json({ message: "id no encontrado" });
         }
@@ -121,12 +123,26 @@ const putCotizaciones = async (req, res) => {
         if (!tecnicoExiste) return res.status(404).json({ message: 'Tecnico no encontrado' })
 
         const cotizacionUpdt = await updateCotizaciones(id, {
-            ord_id, tec_id, cli_id, folio, estado, total,
-            notas
+            ord_id, tec_id, cli_id, folio, estado, total, notas
         });
 
         if (!cotizacionUpdt || !cotizacionUpdt.id) {
             return res.status(404).json({ message: "Id de cotizacion no encontrado" })
+        }
+
+        // Si la cotización se está aprobando, notificamos al cliente por SMS.
+        // El avance de la orden (pendiente -> en_proceso -> completada) queda
+        // como responsabilidad del técnico/staff (app de escritorio/móvil),
+        // no se dispara automáticamente aquí.
+        if (estado === 'aprobada') {
+            const mensaje = `AC Track: tu cotización ${cotizacionUpdt.folio} fue confirmada. ¡Gracias por tu preferencia!`;
+            await enviarSMS(clienteExiste.telefono, mensaje);
+            await insertNotificaciones({
+                usu_id: clienteExiste.usu_id,
+                tipo: 'sms_cotizacion_aprobada',
+                titulo: `Cotización ${cotizacionUpdt.folio} aprobada`,
+                leido: false,
+            });
         }
 
         res.status(200).json({
@@ -139,7 +155,6 @@ const putCotizaciones = async (req, res) => {
             total: cotizacionUpdt.total,
             notas: cotizacionUpdt.notas
         })
-
 
     } catch (error) {
         console.error("Error: ", error);

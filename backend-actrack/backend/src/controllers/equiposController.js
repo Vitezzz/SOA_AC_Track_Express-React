@@ -1,8 +1,12 @@
-import { getEquipos, getEquipoById, selectEquiposByCliente, createEquipo, updateEquipo, deleteEquipo } from "../models/equipos.js";
+import {
+    getEquipos, getEquipoById, getEquipoByNumeroSerie,
+    selectEquiposByCliente, createEquipo,
+    updateEquipo, deleteEquipo
+} from "../models/equipos.js";
 import { getClienteById } from "../models/clientes.js";
 import { getMarcaId } from "../models/marcas.js";
 import { puedeVerTodo } from "../utils/roleUtils.js";
-import { getClienteIdByUserId} from '../utils/lookupUtils.js'
+import { getClienteIdByUserId } from '../utils/lookupUtils.js'
 
 const listaEquipos = async (req, res) => {
     try {
@@ -13,7 +17,7 @@ const listaEquipos = async (req, res) => {
         } else if (req.user.rol_id === 3) {
 
             const cli_id = await getClienteIdByUserId(req.user.id);
-            if(!cli_id) return res.status(404).json({ message : 'Cliente no encontrado'});
+            if (!cli_id) return res.status(404).json({ message: 'Cliente no encontrado' });
             listadoEquipos = await selectEquiposByCliente(cli_id);
         } else {
             return res.status(403).json({ message: 'No tienes acceso' });
@@ -52,7 +56,8 @@ const equiposById = async (req, res) => {
 
 const crearEquipo = async (req, res) => {
     try {
-        const { cli_id, mar_id, modelo, numero_serie, tipo } = req.body;
+
+        const { cli_id, mar_id, modelo, numero_serie, tipo, imagen_url } = req.body;
 
         if (!cli_id || !mar_id || !modelo || !numero_serie || !tipo) {
             return res.status(400).json({ message: "Campos faltantes" });
@@ -64,7 +69,10 @@ const crearEquipo = async (req, res) => {
         const marcaExiste = await getMarcaId(mar_id);
         if (!marcaExiste) return res.status(404).json({ message: 'Marca no encontrada' })
 
-        const equipoNuevo = await createEquipo({ cli_id, mar_id, modelo, numero_serie, tipo });
+        const numeroSerieExiste = await getEquipoByNumeroSerie(numero_serie);
+        if (numeroSerieExiste) return res.status(400).json({ message: 'Ya existe un equipo con ese número de serie' });
+
+        const equipoNuevo = await createEquipo({ cli_id, mar_id, modelo, numero_serie, tipo, imagen_url });
 
         res.status(201).json({
             id: equipoNuevo.id,
@@ -72,7 +80,8 @@ const crearEquipo = async (req, res) => {
             mar_id: equipoNuevo.mar_id,
             modelo: equipoNuevo.modelo,
             numero_serie: equipoNuevo.numero_serie,
-            tipo: equipoNuevo.tipo
+            tipo: equipoNuevo.tipo,
+            imagen_url: equipoNuevo.imagen_url
         })
     } catch (error) {
         console.error("Error :", error)
@@ -83,7 +92,7 @@ const crearEquipo = async (req, res) => {
 const actualizarEquipo = async (req, res) => {
     try {
         const { id } = req.params;
-        const { cli_id, mar_id, modelo, numero_serie, tipo } = req.body
+        const { cli_id, mar_id, modelo, numero_serie, tipo, imagen_url } = req.body
         if (!id) {
             return res.status(400).json({ message: "Id no encontrado" })
         }
@@ -94,7 +103,7 @@ const actualizarEquipo = async (req, res) => {
         const marcaExiste = await getMarcaId(mar_id);
         if (!marcaExiste) return res.status(404).json({ message: 'Marca no encontrada' })
 
-        const equipoActualizado = await updateEquipo(id, { cli_id, mar_id, modelo, numero_serie, tipo });
+        const equipoActualizado = await updateEquipo(id, { cli_id, mar_id, modelo, numero_serie, tipo, imagen_url })
 
         if (!equipoActualizado) {
             return res.status(404).json({ message: "Equipo no encontrado" })
@@ -106,7 +115,8 @@ const actualizarEquipo = async (req, res) => {
             mar_id: equipoActualizado.mar_id,
             modelo: equipoActualizado.modelo,
             numero_serie: equipoActualizado.numero_serie,
-            tipo: equipoActualizado.tipo
+            tipo: equipoActualizado.tipo,
+            imagen_url: equipoActualizado.imagen_url
         })
     } catch (error) {
         console.error("Error: ", error);

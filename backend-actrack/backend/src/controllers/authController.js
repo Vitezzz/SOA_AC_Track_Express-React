@@ -115,6 +115,7 @@ const login = async (req, res) => {
 
         res.status(200).json({
             email: user.email,
+            accessToken,
             refreshToken
         })
     } catch (error) {
@@ -133,8 +134,8 @@ const getProfile = async (req, res) => {
 
         if (req.user.rol_id === 3) {
             const cli_id = await getClienteIdByUserId(req.user.id);
-            const cliente = await getClienteById(cli_id);
-            esPerfilCompleto = cliente.perfil_completo;
+            const cliente = cli_id ? await getClienteById(cli_id) : null;
+            esPerfilCompleto = cliente ? cliente.perfil_completo : false;
         }
 
         res.json({ ...req.user, perfil_completo: esPerfilCompleto });
@@ -175,7 +176,7 @@ const refresh = async (req, res) => {
 
         res.cookie('token', accessToken, cookieOptions);
 
-        res.json({ message: 'Token renovado' })
+        res.json({ message: 'Token renovado', accessToken })
     } catch (error) {
         console.error(error)
         res.status(401).json({ message: "Refresh token expirado o invàlido" })

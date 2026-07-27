@@ -1,4 +1,11 @@
-import { getCategoriaServicio, getCategoriaServicioId, createCategoriaServicio, updateCategoriaServicio, deleteCategoriaServicio } from "../models/categoria_servicio.js";
+import {
+    getCategoriaServicio,
+    getCategoriaServicioId,
+    getCategoriaServicioByNombre,
+    createCategoriaServicio,
+    updateCategoriaServicio,
+    deleteCategoriaServicio
+} from "../models/categoria_servicio.js";
 
 const listadoCategoriaServicio = async (req, res) => {
     try {
@@ -42,6 +49,9 @@ const crearCategoriaServicio = async (req, res) => {
             return res.status(400).json({ message: "Dato faltante" })
         }
 
+        const categoriaExiste = await getCategoriaServicioByNombre(nombre);
+        if (categoriaExiste) return res.status(400).json({ message: 'Ya existe una categoría con ese nombre' });
+
         const nuevaCategoriaServicio = await createCategoriaServicio({ nombre });
 
         res.status(201).json({
@@ -61,7 +71,7 @@ const putCategoriaServicio = async (req, res) => {
             return res.status(400).json({ message: 'Id no encontrado' })
         }
 
-        const {nombre} = req.body;
+        const { nombre } = req.body;
 
         const categoriaServicioActualizada = await updateCategoriaServicio(id, { nombre });
 
@@ -75,29 +85,29 @@ const putCategoriaServicio = async (req, res) => {
         });
     } catch (error) {
         console.error('Error: ', error);
-        res.status(500).json({ message: "Error del servidor"});
+        res.status(500).json({ message: "Error del servidor" });
     }
 }
 
-const categoriaServicioDelete = async(req, res) => {
-    try{
+const categoriaServicioDelete = async (req, res) => {
+    try {
         const { id } = req.params;
 
-        if(!id){
-            return res.status(400).json({ message: "Id no encontrado"});
+        if (!id) {
+            return res.status(400).json({ message: "Id no encontrado" });
         }
 
         const csDelete = await deleteCategoriaServicio(id);
 
-        if(!csDelete){
-            return res.status(400).json({ message: "Id de categoria servicio no encontrado"});
+        if (!csDelete) {
+            return res.status(400).json({ message: "Id de categoria servicio no encontrado" });
         }
 
         res.status(200).json(csDelete);
-    }catch(error){
+    } catch (error) {
         console.error("Error: ", error)
-        res.status(500).json({ message: "Error del servidor"})
+        res.status(500).json({ message: "Error del servidor" })
     }
 }
 
-export {listadoCategoriaServicio,categoriaServicioById, crearCategoriaServicio, putCategoriaServicio, categoriaServicioDelete}
+export { listadoCategoriaServicio, categoriaServicioById, crearCategoriaServicio, putCategoriaServicio, categoriaServicioDelete }

@@ -84,9 +84,8 @@ const MisEquipos = () => {
                                         {eq.tipo} — {eq.modelo}
                                     </span>
                                     <span
-                                        className={`text-xs font-medium px-3 py-1 rounded-full ${
-                                            eq.activo ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
-                                        }`}
+                                        className={`text-xs font-medium px-3 py-1 rounded-full ${eq.activo ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
+                                            }`}
                                     >
                                         {eq.activo ? "Activo" : "Inactivo"}
                                     </span>
@@ -112,9 +111,8 @@ const MisEquipos = () => {
                                                         {orden.folio} — {formatearFecha(orden.fecha_programada)}
                                                     </span>
                                                     <span
-                                                        className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${
-                                                            ESTILOS_ESTADO[orden.estatus] || "bg-gray-100 text-gray-600"
-                                                        }`}
+                                                        className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${ESTILOS_ESTADO[orden.estatus] || "bg-gray-100 text-gray-600"
+                                                            }`}
                                                     >
                                                         {orden.estatus}
                                                     </span>
@@ -123,6 +121,9 @@ const MisEquipos = () => {
                                         </ul>
                                     )}
                                 </div>
+                                {eq.imagen_url && (
+                                    <img src={eq.imagen_url} alt={eq.modelo} style={{ width: "100%", borderRadius: "12px", marginBottom: "8px" }} />
+                                )}
                             </div>
                         );
                     })}

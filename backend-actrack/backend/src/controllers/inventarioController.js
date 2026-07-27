@@ -3,7 +3,8 @@ import {
     selectInventarioId,
     insertInventario,
     updateInventario,
-    deleteInventario
+    deleteInventario,
+    generarSiguienteCodigoInventario
 } from "../models/inventario.js";
 import { selectCategoria_InventarioId } from "../models/categoria_inventario.js";
 
@@ -44,14 +45,18 @@ const getInventarioById = async (req, res) => {
 
 const postInventario = async (req, res) => {
     try {
-        const { cat_id, codigo, nombre, unidad_medida, stock_actual, precio_venta, stock_minimo } = req.body;
+
+        const { cat_id, nombre, unidad_medida, stock_actual, precio_venta, stock_minimo } = req.body;
 
         if (!nombre) {
             return res.status(400).json({ message: "Campo faltante" })
         }
 
+
         const categoriaInventarioExiste = await selectCategoria_InventarioId(cat_id);
         if (!categoriaInventarioExiste) return res.status(404).json({ message: 'Categoria Inventario no encontrada' })
+
+        const codigo = await generarSiguienteCodigoInventario();
 
         const nuevoInventario = await insertInventario({ cat_id, codigo, nombre, unidad_medida, stock_actual, precio_venta, stock_minimo });
 

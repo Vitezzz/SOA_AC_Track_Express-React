@@ -73,6 +73,7 @@ const Login = () => {
             )}
           </button>
           <a href="/api/auth/google" className="btn-secondary w-full py-3">Iniciar Sesión con Google</a>
+          <a href="/api/auth/facebook" className="btn-secondary w-full py-3">Iniciar Sesión con Facebook</a>
         </form>
       </Card>
     </div>

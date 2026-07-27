@@ -13,13 +13,21 @@ router.post('/refresh', refresh)
 router.get('/profile', protect, getProfile);
 
 
-router.get('/google', passport.authenticate('google', {scope: ['profile', 'email'] , session : false}))
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'], session: false }))
 router.get('/google/callback', passport.authenticate('google', { session: false, failureRedirect: '/' }),
     (req, res) => {
         res.cookie('token', req.user.token, cookieOptions)
         res.redirect('http://localhost:5173/home')
     }
 )
+
+router.get('/facebook', passport.authenticate('facebook', { scope: ['email'], session: false }));
+router.get('/facebook/callback', passport.authenticate('facebook', { session: false, failureRedirect: '/' }),
+    (req, res) => {
+        res.cookie('token', req.user.token, cookieOptions);
+        res.redirect('http://localhost:5173/home');
+    }
+);
 
 
 export default router;

@@ -59,14 +59,19 @@ const DashboardCliente = () => {
 
     if (loading) return <p className="text-center mt-10">Cargando...</p>;
 
-    // ---------- 1) Servicios por mes ----------
+    // ---------- 1) Servicios completados por mes ----------
+    // Solo contamos órdenes con estatus "completada" -- así esta gráfica
+    // representa trabajo realmente realizado, no solo agendado, y queda
+    // coherente con "Gasto acumulado" (que también filtra solo lo confirmado).
     const conteoServiciosPorMes = {};
-    ordenes.forEach((orden) => {
-        if (!orden.fecha_programada) return;
-        const fecha = new Date(orden.fecha_programada);
-        const clave = `${NOMBRES_MES[fecha.getMonth()]} ${fecha.getFullYear()}`;
-        conteoServiciosPorMes[clave] = (conteoServiciosPorMes[clave] || 0) + 1;
-    });
+    ordenes
+        .filter((orden) => orden.estatus === "completada")
+        .forEach((orden) => {
+            if (!orden.fecha_programada) return;
+            const fecha = new Date(orden.fecha_programada);
+            const clave = `${NOMBRES_MES[fecha.getMonth()]} ${fecha.getFullYear()}`;
+            conteoServiciosPorMes[clave] = (conteoServiciosPorMes[clave] || 0) + 1;
+        });
     const datosServiciosPorMes = Object.entries(conteoServiciosPorMes).map(([mes, cantidad]) => ({
         mes,
         cantidad,
@@ -115,18 +120,22 @@ const DashboardCliente = () => {
                 </p>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Servicios por mes */}
+                    {/* Servicios completados por mes */}
                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                        <p className="text-sm font-medium text-gray-700 mb-4">Servicios por mes</p>
-                        <ResponsiveContainer width="100%" height={250}>
-                            <BarChart data={datosServiciosPorMes}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                                <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
-                                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
-                                <Tooltip />
-                                <Bar dataKey="cantidad" fill="#111827" radius={[6, 6, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                        <p className="text-sm font-medium text-gray-700 mb-4">Servicios completados por mes</p>
+                        {datosServiciosPorMes.length === 0 ? (
+                            <p className="text-gray-400 text-sm">Todavía no tienes servicios completados.</p>
+                        ) : (
+                            <ResponsiveContainer width="100%" height={250}>
+                                <BarChart data={datosServiciosPorMes}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                                    <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
+                                    <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                                    <Tooltip />
+                                    <Bar dataKey="cantidad" fill="#111827" radius={[6, 6, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        )}
                     </div>
 
                     {/* Gasto acumulado */}

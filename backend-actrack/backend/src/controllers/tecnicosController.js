@@ -1,9 +1,11 @@
 import {
-    selectTecnicos, selectTecnicoById, insertTecnicos, updateTecnicos,
+    selectTecnicos, selectTecnicosTodos, selectTecnicoById, insertTecnicos, updateTecnicos,
     deleteTecnicos
 } from "../models/tecnicos.js";
-import { findUserById } from "../models/usuarios.js";
+import { findUserById, findUserByEmail } from "../models/usuarios.js";
 import { selectEspecialidadById } from "../models/especialidad.js";
+import pool from "../config/database.js";
+import bcrypt from "bcryptjs";
 
 const getTecnicos = async (req, res) => {
     try {
@@ -44,31 +46,51 @@ const getTecnicosById = async (req, res) => {
 }
 
 const postTecnicos = async (req, res) => {
+    const { nombre, paterno, materno, email, password, esp_id } = req.body;
+
+    if (!nombre || !email || !password || !esp_id) {
+        return res.status(400).json({ message: "Campos faltantes" });
+    }
+
+    const especialidadExiste = await selectEspecialidadById(esp_id);
+    if (!especialidadExiste) return res.status(404).json({ message: "Especialidad no encontrada" });
+
+    const usuarioExiste = await findUserByEmail(email);
+    if (usuarioExiste) return res.status(400).json({ message: "El email ya está registrado" });
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    const client = await pool.connect();
     try {
+        await client.query('BEGIN');
 
-        const { usu_id, esp_id } = req.body;
+        // rol_id: 4 = técnico, igual que definimos en register()
+        const resultUsuario = await client.query(
+            `INSERT INTO usuarios (rol_id, nombre, paterno, materno, email, password)
+             VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, nombre, email`,
+            [4, nombre, paterno, materno, email, passwordHash]
+        );
+        const nuevoUsuario = resultUsuario.rows[0];
 
-        if (!usu_id || !esp_id) {
-            return res.status(400).json({ message: "Campos faltantes " })
-        }
+        const resultTecnico = await client.query(
+            `INSERT INTO tecnicos (usu_id, esp_id, disponible) VALUES ($1, $2, true) RETURNING *`,
+            [nuevoUsuario.id, esp_id]
+        );
 
-        const usuarioExiste = await findUserById(usu_id);
-        if(!usuarioExiste) return res.status(404).json({ message : 'Usuario no encontrado'});
-
-        const especialidadExiste = await selectEspecialidadById(esp_id);
-        if(!especialidadExiste) return res.status(404).json({ message: 'Especialidad no encontrada'})
-
-        const nuevoTecnico = await insertTecnicos({ usu_id, esp_id });
+        await client.query('COMMIT');
 
         res.status(201).json({
-            id: nuevoTecnico.id,
-            usu_id: nuevoTecnico.usu_id,
-            esp_id: nuevoTecnico.esp_id,
-            disponible: nuevoTecnico.disponible
-        })
+            ...resultTecnico.rows[0],
+            nombre: nuevoUsuario.nombre,
+            email: nuevoUsuario.email,
+        });
     } catch (error) {
-        console.error("Error:", error)
-        res.status(500).json({ message: "Error del servidor" })
+        await client.query('ROLLBACK');
+        console.error("Error:", error);
+        res.status(500).json({ message: "Error del servidor" });
+    } finally {
+        client.release();
     }
 }
 
@@ -83,10 +105,10 @@ const putTecnicos = async (req, res) => {
 
 
         const usuarioExiste = await findUserById(usu_id);
-        if(!usuarioExiste) return res.status(404).json({ message : 'Usuario no encontrado'});
+        if (!usuarioExiste) return res.status(404).json({ message: 'Usuario no encontrado' });
 
         const especialidadExiste = await selectEspecialidadById(esp_id);
-        if(!especialidadExiste) return res.status(404).json({ message: 'Especialidad no encontrada'})
+        if (!especialidadExiste) return res.status(404).json({ message: 'Especialidad no encontrada' })
 
         const updtTecnico = await updateTecnicos(id, { usu_id, esp_id, disponible });
 
@@ -107,14 +129,14 @@ const dltTecnicos = async (req, res) => {
 
         const { id } = req.params;
 
-        if(!id){
-            return res.status(400).json({ message: "Id no encontrado"})
+        if (!id) {
+            return res.status(400).json({ message: "Id no encontrado" })
         }
 
         const tecnicoDelete = await deleteTecnicos(id);
 
-        if(!tecnicoDelete){
-            return res.status(404).json({ message: "Id de tecnico no encontrado"})
+        if (!tecnicoDelete) {
+            return res.status(404).json({ message: "Id de tecnico no encontrado" })
         }
 
         return res.status(200).json(tecnicoDelete)
@@ -125,4 +147,18 @@ const dltTecnicos = async (req, res) => {
     }
 }
 
-export { getTecnicos, getTecnicosById, postTecnicos, putTecnicos, dltTecnicos}
+const getTecnicosTodos = async (req, res) => {
+    try {
+        const listaTecnicos = await selectTecnicosTodos();
+
+        if (listaTecnicos.length === 0) {
+            return res.status(404).json({ message: "Lista de tecnicos no encontrada" });
+        }
+
+        res.status(200).json(listaTecnicos);
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ message: "Error del servidor" });
+    }
+}
+export { getTecnicos, getTecnicosTodos, getTecnicosById, postTecnicos, putTecnicos, dltTecnicos}

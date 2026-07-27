@@ -1,6 +1,6 @@
 import {
     selectOrdenesServicio, selectOrdenesServicioById, selectOrdenesByCliente, insertOrdenesServicio, selectOrdenesByTecnico,
-    updateOrdenesServicio, deleteOrdenesServicio, generarSiguienteFolio
+    updateOrdenesServicio, deleteOrdenesServicio, generarSiguienteFolio, getOrdenesPorTecnicoEnVentana
 } from "../models/ordenes_servicio.js";
 import { insertBitacoraEstados } from "../models/bitacora_estados.js";
 import { puedeVerTodo } from "../utils/roleUtils.js";
@@ -91,6 +91,13 @@ const postOrdenesServicio = async (req, res) => {
         if (tec_id) {
             const tecnicoExiste = await selectTecnicoById(tec_id);
             if (!tecnicoExiste) return res.status(404).json({ message: 'Tecnico no encontrado' })
+
+            const conflictos = await getOrdenesPorTecnicoEnVentana(tec_id, fecha_programada, null);
+            if (conflictos.length > 0) {
+                return res.status(409).json({
+                    message: `Ese técnico ya tiene la orden ${conflictos[0].folio} programada cerca de esa fecha/hora (dentro de 2 horas). Elige otro horario o técnico.`
+                });
+            }
         }
 
         if (equ_id) {
@@ -172,6 +179,18 @@ const putOrdenesServicio = async (req, res) => {
 
         const prioridadExiste = await selectPrioridadById(pri_id);
         if (!prioridadExiste) return res.status(404).json({ message: 'Prioridad no encontrada' });
+
+        if (tec_id) {
+            const tecnicoExiste = await selectTecnicoById(tec_id);
+            if (!tecnicoExiste) return res.status(404).json({ message: 'Tecnico no encontrado' })
+
+            const conflictos = await getOrdenesPorTecnicoEnVentana(tec_id, fecha_programada, id);
+            if (conflictos.length > 0) {
+                return res.status(409).json({
+                    message: `Ese técnico ya tiene la orden ${conflictos[0].folio} programada cerca de esa fecha/hora (dentro de 2 horas). Elige otro horario o técnico.`
+                });
+            }
+        }
 
         const ordenAnterior = await selectOrdenesServicioById(id);
 

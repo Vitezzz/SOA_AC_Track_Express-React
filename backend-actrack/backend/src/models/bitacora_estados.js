@@ -16,5 +16,12 @@ export const insertBitacoraEstados = async ({ ord_id, usu_id, estado_anterior, e
     return result.rows[0];
 }
 
+export const selectBitacoraPorOrden = async (ord_id) => {
+    const result = await pool.query(
+        `SELECT * FROM bitacora_estados WHERE ord_id = $1 ORDER BY id ASC`,
+        [ord_id]
+    );
+    return result.rows;
+}
 
 

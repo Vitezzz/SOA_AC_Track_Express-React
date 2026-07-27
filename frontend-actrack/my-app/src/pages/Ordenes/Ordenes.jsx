@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext.jsx";
-import  LineaTiempoEstado  from '../../components/LineaTiempoEstado.jsx'
+import LineaTiempoEstado from '../../components/LineaTiempoEstado.jsx';
 
 const Ordenes = () => {
     const [ordenes, setOrdenes] = useState([]);
+    const [historiales, setHistoriales] = useState({}); // { [ord_id]: ["pendiente", "en_proceso", ...] }
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -14,7 +15,22 @@ const Ordenes = () => {
             try {
                 const res = await apiFetch("/api/ordenes_servicio");
                 if (!res.ok) throw new Error("No se pudieron cargar tus órdenes");
-                setOrdenes(await res.json());
+                const dataOrdenes = await res.json();
+                setOrdenes(dataOrdenes);
+
+                // Por cada orden, pedimos su historial real de bitácora
+                const resultados = await Promise.all(
+                    dataOrdenes.map((orden) => apiFetch(`/api/bitacora_estados/orden/${orden.id}`))
+                );
+
+                const historialesPorOrden = {};
+                for (let i = 0; i < dataOrdenes.length; i++) {
+                    if (resultados[i].ok) {
+                        const filas = await resultados[i].json();
+                        historialesPorOrden[dataOrdenes[i].id] = filas.map((f) => f.estado_nuevo);
+                    }
+                }
+                setHistoriales(historialesPorOrden);
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -48,7 +64,10 @@ const Ordenes = () => {
                                 </span>
                             </div>
 
-                            <LineaTiempoEstado estatus={orden.estatus} />
+                            <LineaTiempoEstado
+                                estatus={orden.estatus}
+                                historial={historiales[orden.id] || [orden.estatus]}
+                            />
 
                             <p className="text-gray-600 text-sm mt-4">{orden.descripcion}</p>
                         </div>

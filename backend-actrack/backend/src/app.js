@@ -30,18 +30,27 @@ import rutaParadasRouter from './routes/rutaParadas.router.js'
 import './config/passport.js'
 import passport from 'passport';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import uploadRoutes from './routes/uploadRoutes.js';
+ 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 const app = express(); //create an express app
 
 app.use(express.json());
 app.use(cookieParser())
 app.use(cors({
-    origin: ['http://localhost:5173', 'capacitor://localhost', 'file://'],
+    origin: ['http://localhost:5173', 'http://localhost:5174', 'capacitor://localhost', 'file://'],
     credentials: true
 }))
 app.use(passport.initialize())
 
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+app.use('/api/upload', uploadRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/roles/', rolesRoutes)
 app.use('/api/clientes/', clientesRoutes);

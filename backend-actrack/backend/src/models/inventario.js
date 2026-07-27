@@ -12,7 +12,7 @@ export const selectInventarioId = async (id) => {
 
 export const insertInventario = async ({ cat_id, codigo, nombre, unidad_medida, stock_actual, precio_venta, stock_minimo }) => {
     const result = await pool.query(
-        `INSERT INTO inventario (cat_id, codigo, nombre, unidad_medida, stock_actual, precio_venta, activo, stock_minimo) VALUES ($1, $2, $3, $4, $5, $6, $7, true) RETURNING *`,
+        `INSERT INTO inventario (cat_id, codigo, nombre, unidad_medida, stock_actual, precio_venta, stock_minimo, activo) VALUES ($1, $2, $3, $4, $5, $6, $7, true) RETURNING *`,
         [cat_id, codigo, nombre, unidad_medida, stock_actual, precio_venta, stock_minimo]
     );
     return result.rows[0];
@@ -21,7 +21,7 @@ export const insertInventario = async ({ cat_id, codigo, nombre, unidad_medida, 
 export const updateInventario = async (id, { cat_id, codigo, nombre, unidad_medida, stock_actual, precio_venta, stock_minimo }) => {
     const result = await pool.query(
         `UPDATE inventario SET cat_id = $1, codigo = $2, nombre = $3, unidad_medida = $4, stock_actual = $5, precio_venta = $6, stock_minimo = $7 WHERE id = $8 RETURNING *`,
-        [cat_id, codigo, nombre, unidad_medida, stock_actual, precio_venta, stock_minimo,id]
+        [cat_id, codigo, nombre, unidad_medida, stock_actual, precio_venta, stock_minimo, id]
     );
     return result.rows[0];
 }
@@ -35,6 +35,15 @@ export const deleteInventario = async (id) => {
 }
 
 export const updateInventarioStock = async (id, stock_actual) => {
-    const result = await pool.query('UPDATE inventario SET stock_actual = $1 WHERE id = $2 RETURNING  *',         [stock_actual, id]);
+    const result = await pool.query('UPDATE inventario SET stock_actual = $1 WHERE id = $2 RETURNING  *', [stock_actual, id]);
     return result.rows[0];
+}
+
+export const generarSiguienteCodigoInventario = async () => {
+    const result = await pool.query(
+        `SELECT codigo FROM inventario WHERE codigo LIKE 'INV-%' ORDER BY codigo DESC LIMIT 1`
+    );
+    const ultimo = result.rows[0]?.codigo;
+    const siguienteNumero = ultimo ? parseInt(ultimo.split('-')[1], 10) + 1 : 1;
+    return `INV-${String(siguienteNumero).padStart(4, '0')}`;
 }
