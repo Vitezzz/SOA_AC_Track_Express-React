@@ -10,6 +10,8 @@ import Pagos from "./pages/Pagos/Pagos.jsx";
 import Ordenes from "./pages/Ordenes/Ordenes.jsx";
 import SolicitudServicio from "./pages/SolicitudServicio/SolicitudServicio.jsx"
 import CompletarPerfil from "./pages/CompletarPerfil/CompletarPerfil.jsx";
+import OrdenDetalle from "./pages/Ordenes/OrdenDetalle.jsx";
+import EquipoDetalle from "./pages/Equipos/EquipoDetalle.jsx";
 
 //Component
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
@@ -33,8 +35,10 @@ function App() {
                 <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/misequipos" element={<ProtectedRoute><MisEquipos /></ProtectedRoute>}></Route>
+                <Route path="/equipos/:id" element={<ProtectedRoute><EquipoDetalle /></ProtectedRoute>}></Route>
                 <Route path="/pagos" element={<ProtectedRoute><Pagos /></ProtectedRoute>}></Route>
                 <Route path="/ordenes" element={<ProtectedRoute><Ordenes /></ProtectedRoute>}></Route>
+                <Route path="/ordenes/:id" element={<ProtectedRoute><OrdenDetalle /></ProtectedRoute>}></Route>
                 <Route path="/cotizaciones" element={<ProtectedRoute><Cotizaciones /></ProtectedRoute>}></Route>
                 <Route path="/SolicitudServicio" element={<ProtectedRoute><SolicitudServicio /></ProtectedRoute>}></Route>
                 <Route path="/mi-dashboard" element={<ProtectedRoute><DashboardCliente /></ProtectedRoute>}></Route>

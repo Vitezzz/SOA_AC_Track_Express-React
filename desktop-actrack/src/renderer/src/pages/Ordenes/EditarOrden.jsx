@@ -11,6 +11,7 @@ const EditarOrden = () => {
 
     const [orden, setOrden] = useState(null);
     const [tecnicos, setTecnicos] = useState([]);
+    const [disponibilidad, setDisponibilidad] = useState({});
 
     const [estatus, setEstatus] = useState("");
     const [tecId, setTecId] = useState("");
@@ -25,7 +26,7 @@ const EditarOrden = () => {
             try {
                 const [resOrden, resTecnicos] = await Promise.all([
                     apiFetch(`/api/ordenes_servicio/${id}`),
-                    apiFetch("/api/tecnicos/"),
+                    apiFetch("/api/tecnicos/todos"),
                 ]);
 
                 if (!resOrden.ok) throw new Error("No se pudo cargar la orden");
@@ -34,8 +35,6 @@ const EditarOrden = () => {
                 setEstatus(dataOrden.estatus);
                 setTecId(dataOrden.tec_id || "");
 
-                // tecnicos puede dar 404 si no hay ninguno disponible -- lo
-                // tratamos como lista vacía, no como error real.
                 if (resTecnicos.status === 404) {
                     setTecnicos([]);
                 } else if (resTecnicos.ok) {
@@ -50,6 +49,23 @@ const EditarOrden = () => {
         cargarDatos();
     }, [id]);
 
+    useEffect(() => {
+        if (!orden?.fecha_programada) return;
+
+        const consultarDisponibilidad = async () => {
+            const res = await apiFetch(
+                `/api/tecnicos/disponibilidad?fecha=${orden.fecha_programada}&excluir=${id}`
+            );
+            if (res.ok) {
+                const datos = await res.json();
+                const mapa = {};
+                datos.forEach((t) => { mapa[t.id] = t.ocupado; });
+                setDisponibilidad(mapa);
+            }
+        };
+        consultarDisponibilidad();
+    }, [orden?.fecha_programada, id]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
@@ -57,9 +73,6 @@ const EditarOrden = () => {
         setGuardando(true);
 
         try {
-            // El PUT exige TODOS los campos -- reusamos los que ya venían
-            // en "orden" (cliente, equipo, categoría, etc.) y solo
-            // cambiamos estatus/tec_id, que es lo que este formulario edita.
             const res = await apiFetch(`/api/ordenes_servicio/${id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
@@ -121,8 +134,8 @@ const EditarOrden = () => {
                     >
                         <option value="">Sin asignar</option>
                         {tecnicos.map((tec) => (
-                            <option key={tec.id} value={tec.id}>
-                                Técnico #{tec.usu_id}
+                            <option key={tec.id} value={tec.id} disabled={disponibilidad[tec.id]}>
+                                Técnico #{tec.usu_id} {disponibilidad[tec.id] ? "— Ocupado en esta fecha" : ""}
                             </option>
                         ))}
                     </select>

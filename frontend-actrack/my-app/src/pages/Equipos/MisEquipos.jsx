@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { Link } from "react-router-dom";
 
 const ESTILOS_ESTADO = {
     pendiente: "bg-yellow-100 text-yellow-700",
@@ -78,7 +79,7 @@ const MisEquipos = () => {
                         const mantenimiento = mantenimientos.find((m) => m.equ_id === eq.id);
 
                         return (
-                            <div key={eq.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                            <Link key={eq.id} to={`/equipos/${eq.id}`} className="block bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-shadow">
                                 <div className="flex justify-between items-start mb-1">
                                     <span className="font-semibold text-gray-900">
                                         {eq.tipo} — {eq.modelo}
@@ -124,7 +125,7 @@ const MisEquipos = () => {
                                 {eq.imagen_url && (
                                     <img src={eq.imagen_url} alt={eq.modelo} style={{ width: "100%", borderRadius: "12px", marginBottom: "8px" }} />
                                 )}
-                            </div>
+                            </Link>
                         );
                     })}
                 </div>

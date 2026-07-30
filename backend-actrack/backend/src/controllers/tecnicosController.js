@@ -1,6 +1,6 @@
 import {
     selectTecnicos, selectTecnicosTodos, selectTecnicoById, insertTecnicos, updateTecnicos,
-    deleteTecnicos
+    deleteTecnicos, selectTecnicosConDisponibilidad
 } from "../models/tecnicos.js";
 import { findUserById, findUserByEmail } from "../models/usuarios.js";
 import { selectEspecialidadById } from "../models/especialidad.js";
@@ -65,7 +65,6 @@ const postTecnicos = async (req, res) => {
     try {
         await client.query('BEGIN');
 
-        // rol_id: 4 = técnico, igual que definimos en register()
         const resultUsuario = await client.query(
             `INSERT INTO usuarios (rol_id, nombre, paterno, materno, email, password)
              VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, nombre, email`,
@@ -161,4 +160,18 @@ const getTecnicosTodos = async (req, res) => {
         res.status(500).json({ message: "Error del servidor" });
     }
 }
-export { getTecnicos, getTecnicosTodos, getTecnicosById, postTecnicos, putTecnicos, dltTecnicos}
+
+const getDisponibilidadTecnicos = async (req, res) => {
+    try {
+        const { fecha, excluir } = req.query;
+        if (!fecha) return res.status(400).json({ message: "Falta la fecha a consultar" });
+
+        const tecnicos = await selectTecnicosConDisponibilidad(fecha, excluir || null);
+        res.status(200).json(tecnicos);
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ message: "Error del servidor" });
+    }
+}
+
+export { getTecnicos, getTecnicosTodos, getTecnicosById, postTecnicos, putTecnicos, dltTecnicos, getDisponibilidadTecnicos }

@@ -47,6 +47,14 @@ const equiposById = async (req, res) => {
             return res.status(400).json({ message: "Id de equipo no encontrado" })
         }
 
+        // Un cliente solo puede ver el detalle de SUS propios equipos.
+        if (req.user.rol_id === 3) {
+            const cli_id = await getClienteIdByUserId(req.user.id);
+            if (!cli_id || equipoId.cli_id !== cli_id) {
+                return res.status(403).json({ message: "No tienes acceso a este equipo" });
+            }
+        }
+
         res.status(200).json(equipoId);
     } catch (error) {
         console.error(error);

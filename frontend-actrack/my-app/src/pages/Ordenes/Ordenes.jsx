@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import LineaTiempoEstado from '../../components/LineaTiempoEstado.jsx';
+import { Link } from "react-router-dom";
 
 const Ordenes = () => {
     const [ordenes, setOrdenes] = useState([]);
@@ -53,7 +54,7 @@ const Ordenes = () => {
             ) : (
                 <div className="space-y-4">
                     {ordenes.map((orden) => (
-                        <div key={orden.id} className="panel">
+                        <Link key={orden.id} to={`/ordenes/${orden.id}`} className="panel block hover:shadow-md transition-shadow">
                             <div className="flex justify-between items-start mb-4">
                                 <span className="font-semibold text-gray-900">Folio: {orden.folio}</span>
                                 <span className="text-gray-400 text-xs">
@@ -70,7 +71,7 @@ const Ordenes = () => {
                             />
 
                             <p className="text-gray-600 text-sm mt-4">{orden.descripcion}</p>
-                        </div>
+                        </Link>
                     ))}
                 </div>
             )}

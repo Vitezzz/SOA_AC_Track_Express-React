@@ -57,6 +57,18 @@ const getOrdenesServicioById = async (req, res) => {
             return res.status(404).json({ message: "Id de orden servicio no encontrado" });
         }
 
+        if (req.user.rol_id === 3) {
+            const cli_id = await getClienteIdByUserId(req.user.id);
+            if (!cli_id || ordenServicioId.cli_id !== cli_id) {
+                return res.status(403).json({ message: "No tienes acceso a esta orden" });
+            }
+        } else if (req.user.rol_id === 4) {
+            const tec_id = await getTecnicoIdByUserId(req.user.id);
+            if (!tec_id || ordenServicioId.tec_id !== tec_id) {
+                return res.status(403).json({ message: "No tienes acceso a esta orden" });
+            }
+        }
+
         res.status(200).json(ordenServicioId);
     } catch (error) {
         console.error("Error: ", error)

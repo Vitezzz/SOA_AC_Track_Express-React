@@ -13,6 +13,7 @@ const CrearOrden = () => {
     const [categorias, setCategorias] = useState([]);
     const [prioridades, setPrioridades] = useState([]);
     const [tecnicos, setTecnicos] = useState([]);
+    const [disponibilidad, setDisponibilidad] = useState({});
 
     const [cliId, setCliId] = useState("");
     const [equId, setEquId] = useState("");
@@ -27,6 +28,20 @@ const CrearOrden = () => {
     const [error, setError] = useState("");
 
     useEffect(() => {
+        if (!fechaProgramada) return;
+        const consultarDisponibilidad = async () => {
+            const res = await apiFetch(`/api/tecnicos/disponibilidad?fecha=${fechaProgramada}`);
+            if (res.ok) {
+                const datos = await res.json();
+                const mapa = {};
+                datos.forEach((t) => { mapa[t.id] = t.ocupado; });
+                setDisponibilidad(mapa);
+            }
+        };
+        consultarDisponibilidad();
+    }, [fechaProgramada]);
+
+    useEffect(() => {
         const cargarCatalogos = async () => {
             try {
                 const [resClientes, resEquipos, resCategorias, resPrioridades, resTecnicos] = await Promise.all([
@@ -34,7 +49,7 @@ const CrearOrden = () => {
                     apiFetch("/api/equipos/"),
                     apiFetch("/api/categoriaServicio"),
                     apiFetch("/api/prioridad"),
-                    apiFetch("/api/tecnicos/"),
+                    apiFetch("/api/tecnicos/todos"),
                 ]);
 
                 if (resClientes.ok) setClientes(await resClientes.json());
@@ -51,8 +66,6 @@ const CrearOrden = () => {
         cargarCatalogos();
     }, []);
 
-    // Solo mostramos equipos del cliente ya elegido -- no tiene sentido
-    // ofrecer equipos de otros clientes al crear la orden.
     const equiposDelCliente = equipos.filter((eq) => String(eq.cli_id) === String(cliId));
 
     const prioridadNormal = prioridades.find((p) => p.num_prioridad === 2);
@@ -156,7 +169,9 @@ const CrearOrden = () => {
                     <select value={tecId} onChange={(e) => setTecId(e.target.value)} style={{ width: "100%", padding: "8px" }}>
                         <option value="">Sin asignar</option>
                         {tecnicos.map((tec) => (
-                            <option key={tec.id} value={tec.id}>Técnico #{tec.usu_id}</option>
+                            <option key={tec.id} value={tec.id} disabled={disponibilidad[tec.id]}>
+                                Técnico #{tec.usu_id} {disponibilidad[tec.id] ? "— Ocupado en esta fecha" : ""}
+                            </option>
                         ))}
                     </select>
                 </label>
