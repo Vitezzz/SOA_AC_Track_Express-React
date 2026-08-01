@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import Icon from "../../components/Icon";
 
 const ListaTecnicos = () => {
     const [tecnicos, setTecnicos] = useState([]);
@@ -39,7 +40,7 @@ const ListaTecnicos = () => {
         cargarDatos();
     }, []);
 
-    if (loading) return <p style={{ padding: "24px" }}>Cargando...</p>;
+    if (loading) return <p className="page">Cargando...</p>;
 
     const tecnicosConEspecialidad = tecnicos.map((tec) => {
         const especialidad = especialidades.find((e) => e.id === tec.esp_id);
@@ -60,29 +61,30 @@ const ListaTecnicos = () => {
     });
 
     return (
-        <div style={{ padding: "24px" }}>
-            <Link to="/home">← Inicio</Link>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div className="page">
+            <Link to="/home" className="page-back">← Inicio</Link>
+            <div className="page-header">
                 <h2>Gestión de Técnicos</h2>
                 <Link to="/tecnicos/nuevo">
-                    <button>+ Nuevo Técnico</button>
+                    <button className="btn-primary">+ Nuevo Técnico</button>
                 </Link>
             </div>
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && <p className="error-text">{error}</p>}
 
-            <div style={{ display: "flex", gap: "12px", margin: "16px 0" }}>
-                <input
-                    type="text"
-                    placeholder="Buscar por nombre o especialidad..."
-                    value={busqueda}
-                    onChange={(e) => setBusqueda(e.target.value)}
-                    style={{ flex: 1, padding: "8px" }}
-                />
+            <div className="toolbar">
+                <div className="search-field">
+                    <Icon name="search" className="icon-sm" />
+                    <input
+                        type="text"
+                        placeholder="Buscar por nombre o especialidad..."
+                        value={busqueda}
+                        onChange={(e) => setBusqueda(e.target.value)}
+                    />
+                </div>
                 <select
                     value={filtroDisponibilidad}
                     onChange={(e) => setFiltroDisponibilidad(e.target.value)}
-                    style={{ padding: "8px" }}
                 >
                     <option value="todos">Todos</option>
                     <option value="disponibles">Solo disponibles</option>
@@ -91,44 +93,41 @@ const ListaTecnicos = () => {
             </div>
 
             {tecnicosFiltrados.length === 0 ? (
-                <p>No se encontraron técnicos con esos filtros.</p>
+                <div className="panel empty-state">
+                    <p className="empty-state-title">No se encontraron técnicos</p>
+                    <p className="empty-state-description">Prueba con otro nombre, especialidad o filtro.</p>
+                </div>
             ) : (
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <div className="table-wrap">
+                <table className="table">
                     <thead>
-                        <tr style={{ textAlign: "left", borderBottom: "2px solid #e5e7eb" }}>
-                            <th style={{ padding: "8px" }}>Nombre</th>
-                            <th style={{ padding: "8px" }}>Especialidad</th>
-                            <th style={{ padding: "8px" }}>Disponibilidad</th>
-                            <th style={{ padding: "8px" }}>Acciones</th>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Especialidad</th>
+                            <th>Disponibilidad</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {tecnicosFiltrados.map((tec) => (
-                            <tr key={tec.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                                <td style={{ padding: "8px" }}>{tec.nombreMostrar}</td>
-                                <td style={{ padding: "8px" }}>{tec.nombreEspecialidad}</td>
-                                <td style={{ padding: "8px" }}>
-                                    <span
-                                        style={{
-                                            padding: "2px 8px",
-                                            borderRadius: "999px",
-                                            fontSize: "12px",
-                                            background: tec.disponible ? "#dcfce7" : "#f3f4f6",
-                                            color: tec.disponible ? "#15803d" : "#6b7280",
-                                        }}
-                                    >
+                            <tr key={tec.id}>
+                                <td>{tec.nombreMostrar}</td>
+                                <td>{tec.nombreEspecialidad}</td>
+                                <td>
+                                    <span className={`badge ${tec.disponible ? "badge-success" : "badge-neutral"}`}>
                                         {tec.disponible ? "Disponible" : "No disponible"}
                                     </span>
                                 </td>
-                                <td style={{ padding: "8px" }}>
+                                <td>
                                     <Link to={`/tecnicos/${tec.id}/editar`}>
-                                        <button>Editar</button>
+                                        <button className="btn-sm">Editar</button>
                                     </Link>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
+                </div>
             )}
         </div>
     );

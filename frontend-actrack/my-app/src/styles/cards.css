@@ -1,23 +1,92 @@
-/* Pantalla completa centrada, usada en login/signup/formularios sueltos */
-.page-shell {
-  @apply min-h-screen flex items-center justify-center bg-gray-50;
-}
-
-/* Contenedor angosto para listados (cotizaciones, órdenes, etc.) */
-.page-container {
-  @apply max-w-3xl mx-auto px-4 py-8;
-}
-
-.page-title {
-  @apply text-2xl font-semibold text-gray-900 mb-6;
-}
-
 /* Tarjeta blanca estándar: items de lista, contenedores de sección */
 .panel {
-  @apply bg-white rounded-2xl border border-gray-100 shadow-sm p-6;
+  @apply p-6;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-base), transform var(--transition-base);
+}
+
+a.panel:hover,
+.panel-hoverable:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 /* Variante grande y centrada, para pantallas tipo "hero" (Home, 404) */
 .panel-hero {
-  @apply bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center;
+  @apply p-12 text-center relative overflow-hidden;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
+}
+
+.panel-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  height: 6px;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-soft-strong));
+}
+
+/* Estado vacío: reemplaza los textos sueltos por una tarjeta con presencia */
+.empty-state {
+  @apply text-center py-14 px-6;
+}
+
+.empty-state-icon {
+  @apply mx-auto mb-4 flex items-center justify-center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 9999px;
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent-hover);
+}
+
+.empty-state-icon svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.empty-state-title {
+  @apply font-medium mb-1;
+  color: var(--color-text);
+}
+
+.empty-state-description {
+  @apply text-sm max-w-sm mx-auto;
+  color: var(--color-text-muted);
+}
+
+/* Spinner de carga centrado, usado mientras se piden datos al backend */
+.loading-state {
+  @apply flex items-center justify-center py-20;
+}
+
+/* Tarjeta de acceso rápido (dashboard, enlaces de navegación). Se combina
+   con la clase "panel" en el JSX para heredar fondo/borde/sombra. */
+.quick-link-card {
+  @apply flex items-start gap-3;
+  transition: box-shadow var(--transition-base), transform var(--transition-base);
+}
+
+.quick-link-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.quick-link-icon {
+  @apply flex items-center justify-center shrink-0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent-hover);
+}
+
+.quick-link-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
 }

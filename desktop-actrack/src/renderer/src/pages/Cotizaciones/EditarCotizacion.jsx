@@ -78,19 +78,19 @@ const EditarCotizacion = () => {
         }
     };
 
-    if (loading) return <p style={{ padding: "24px" }}>Cargando...</p>;
+    if (loading) return <p className="page">Cargando...</p>;
 
     return (
-        <div style={{ padding: "24px", maxWidth: "480px" }}>
+        <div className="page page-narrow">
             <h2>Editar Cotización: {cotizacion?.folio}</h2>
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
-            {guardado && <p style={{ color: "green" }}>¡Cotización actualizada correctamente!</p>}
+            {error && <p className="error-text">{error}</p>}
+            {guardado && <p className="success-text">¡Cotización actualizada correctamente!</p>}
 
-            <form onSubmit={handleSubmit}>
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Estado</span>
-                    <select value={estado} onChange={(e) => setEstado(e.target.value)} style={{ width: "100%", padding: "8px" }}>
+            <form onSubmit={handleSubmit} className="form">
+                <label>
+                    <span>Estado</span>
+                    <select value={estado} onChange={(e) => setEstado(e.target.value)}>
                         <option value="borrador">Borrador</option>
                         <option value="enviada">Enviada</option>
                         <option value="aprobada">Aprobada</option>
@@ -98,27 +98,27 @@ const EditarCotizacion = () => {
                     </select>
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Técnico responsable</span>
-                    <select value={tecId} onChange={(e) => setTecId(e.target.value)} style={{ width: "100%", padding: "8px" }}>
+                <label>
+                    <span>Técnico responsable</span>
+                    <select value={tecId} onChange={(e) => setTecId(e.target.value)}>
                         {tecnicos.map((tec) => (
                             <option key={tec.id} value={tec.id}>Técnico #{tec.usu_id}</option>
                         ))}
                     </select>
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Total</span>
-                    <input type="number" step="0.01" min="0" value={total} onChange={(e) => setTotal(e.target.value)} style={{ width: "100%", padding: "8px" }} />
+                <label>
+                    <span>Total</span>
+                    <input type="number" step="0.01" min="0" value={total} onChange={(e) => setTotal(e.target.value)} />
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Notas</span>
-                    <textarea value={notas} onChange={(e) => setNotas(e.target.value)} style={{ width: "100%", padding: "8px" }} />
+                <label>
+                    <span>Notas</span>
+                    <textarea value={notas} onChange={(e) => setNotas(e.target.value)} />
                 </label>
 
-                <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
-                    <button type="submit" disabled={guardando}>{guardando ? "Guardando..." : "Guardar cambios"}</button>
+                <div className="form-actions">
+                    <button type="submit" disabled={guardando} className="btn-primary">{guardando ? "Guardando..." : "Guardar cambios"}</button>
                     <button type="button" onClick={() => navigate("/cotizaciones")}>Volver</button>
                 </div>
             </form>

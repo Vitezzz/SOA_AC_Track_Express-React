@@ -77,18 +77,18 @@ const CrearPago = () => {
         }
     };
 
-    if (loading) return <p style={{ padding: "24px" }}>Cargando...</p>;
+    if (loading) return <p className="page">Cargando...</p>;
 
     return (
-        <div style={{ padding: "24px", maxWidth: "480px" }}>
+        <div className="page page-narrow">
             <h2>Registrar Pago</h2>
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && <p className="error-text">{error}</p>}
 
-            <form onSubmit={handleSubmit}>
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Orden de servicio *</span>
-                    <select value={ordId} onChange={(e) => setOrdId(e.target.value)} style={{ width: "100%", padding: "8px" }}>
+            <form onSubmit={handleSubmit} className="form">
+                <label>
+                    <span>Orden de servicio *</span>
+                    <select value={ordId} onChange={(e) => setOrdId(e.target.value)}>
                         <option value="">Selecciona una orden</option>
                         {ordenes.map((orden) => {
                             const cliente = clientes.find((c) => c.id === orden.cli_id);
@@ -101,9 +101,9 @@ const CrearPago = () => {
                     </select>
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Método de pago *</span>
-                    <select value={metodo} onChange={(e) => setMetodo(e.target.value)} style={{ width: "100%", padding: "8px" }}>
+                <label>
+                    <span>Método de pago *</span>
+                    <select value={metodo} onChange={(e) => setMetodo(e.target.value)}>
                         <option value="efectivo">Efectivo</option>
                         <option value="transferencia">Transferencia</option>
                         <option value="tarjeta">Tarjeta</option>
@@ -111,24 +111,23 @@ const CrearPago = () => {
                     </select>
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Monto *</span>
+                <label>
+                    <span>Monto *</span>
                     <input
                         type="number"
                         step="0.01"
                         min="0"
                         value={monto}
                         onChange={(e) => setMonto(e.target.value)}
-                        style={{ width: "100%", padding: "8px" }}
                     />
                 </label>
 
-                <p style={{ color: "#6b7280", fontSize: "13px" }}>
+                <p className="hint-text" style={{ marginBottom: "0.75rem" }}>
                     Nota: al registrar este pago, la orden se marcará automáticamente como <strong>"pagada"</strong>.
                 </p>
 
-                <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
-                    <button type="submit" disabled={guardando}>
+                <div className="form-actions" style={{ marginTop: 0 }}>
+                    <button type="submit" disabled={guardando} className="btn-primary">
                         {guardando ? "Registrando..." : "Registrar pago"}
                     </button>
                     <button type="button" onClick={() => navigate("/pagos")}>Cancelar</button>

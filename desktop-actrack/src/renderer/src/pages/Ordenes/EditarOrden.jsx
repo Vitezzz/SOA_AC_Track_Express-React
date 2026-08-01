@@ -102,22 +102,21 @@ const EditarOrden = () => {
         }
     };
 
-    if (loading) return <p style={{ padding: "24px" }}>Cargando...</p>;
+    if (loading) return <p className="page">Cargando...</p>;
 
     return (
-        <div style={{ padding: "24px", maxWidth: "480px" }}>
+        <div className="page page-narrow">
             <h2>Editar Orden: {orden?.folio}</h2>
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
-            {guardado && <p style={{ color: "green" }}>¡Orden actualizada correctamente!</p>}
+            {error && <p className="error-text">{error}</p>}
+            {guardado && <p className="success-text">¡Orden actualizada correctamente!</p>}
 
-            <form onSubmit={handleSubmit}>
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Estatus</span>
+            <form onSubmit={handleSubmit} className="form">
+                <label>
+                    <span>Estatus</span>
                     <select
                         value={estatus}
                         onChange={(e) => setEstatus(e.target.value)}
-                        style={{ width: "100%", padding: "8px" }}
                     >
                         {ESTADOS_POSIBLES.map((valor) => (
                             <option key={valor} value={valor}>{valor}</option>
@@ -125,12 +124,11 @@ const EditarOrden = () => {
                     </select>
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Técnico asignado</span>
+                <label>
+                    <span>Técnico asignado</span>
                     <select
                         value={tecId}
                         onChange={(e) => setTecId(e.target.value)}
-                        style={{ width: "100%", padding: "8px" }}
                     >
                         <option value="">Sin asignar</option>
                         {tecnicos.map((tec) => (
@@ -141,8 +139,8 @@ const EditarOrden = () => {
                     </select>
                 </label>
 
-                <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
-                    <button type="submit" disabled={guardando}>
+                <div className="form-actions">
+                    <button type="submit" disabled={guardando} className="btn-primary">
                         {guardando ? "Guardando..." : "Guardar cambios"}
                     </button>
                     <button type="button" onClick={() => navigate("/ordenes")}>

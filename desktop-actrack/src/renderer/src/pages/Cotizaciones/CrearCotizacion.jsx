@@ -77,18 +77,18 @@ const CrearCotizacion = () => {
         }
     };
 
-    if (loading) return <p style={{ padding: "24px" }}>Cargando...</p>;
+    if (loading) return <p className="page">Cargando...</p>;
 
     return (
-        <div style={{ padding: "24px", maxWidth: "480px" }}>
+        <div className="page page-narrow">
             <h2>Nueva Cotización</h2>
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && <p className="error-text">{error}</p>}
 
-            <form onSubmit={handleSubmit}>
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Orden de servicio *</span>
-                    <select value={ordId} onChange={(e) => setOrdId(e.target.value)} style={{ width: "100%", padding: "8px" }}>
+            <form onSubmit={handleSubmit} className="form">
+                <label>
+                    <span>Orden de servicio *</span>
+                    <select value={ordId} onChange={(e) => setOrdId(e.target.value)}>
                         <option value="">Selecciona una orden</option>
                         {ordenes.map((orden) => {
                             const cliente = clientes.find((c) => c.id === orden.cli_id);
@@ -101,9 +101,9 @@ const CrearCotizacion = () => {
                     </select>
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Técnico responsable *</span>
-                    <select value={tecId} onChange={(e) => setTecId(e.target.value)} style={{ width: "100%", padding: "8px" }}>
+                <label>
+                    <span>Técnico responsable *</span>
+                    <select value={tecId} onChange={(e) => setTecId(e.target.value)}>
                         <option value="">Selecciona un técnico</option>
                         {tecnicos.map((tec) => (
                             <option key={tec.id} value={tec.id}>Técnico #{tec.usu_id}</option>
@@ -111,25 +111,24 @@ const CrearCotizacion = () => {
                     </select>
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Total *</span>
+                <label>
+                    <span>Total *</span>
                     <input
                         type="number"
                         step="0.01"
                         min="0"
                         value={total}
                         onChange={(e) => setTotal(e.target.value)}
-                        style={{ width: "100%", padding: "8px" }}
                     />
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Notas</span>
-                    <textarea value={notas} onChange={(e) => setNotas(e.target.value)} style={{ width: "100%", padding: "8px" }} />
+                <label>
+                    <span>Notas</span>
+                    <textarea value={notas} onChange={(e) => setNotas(e.target.value)} />
                 </label>
 
-                <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
-                    <button type="submit" disabled={guardando}>
+                <div className="form-actions">
+                    <button type="submit" disabled={guardando} className="btn-primary">
                         {guardando ? "Creando..." : "Crear cotización (borrador)"}
                     </button>
                     <button type="button" onClick={() => navigate("/cotizaciones")}>Cancelar</button>

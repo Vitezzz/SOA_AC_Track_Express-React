@@ -3,9 +3,9 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const ESTILOS_ESTADO = {
-    pendiente: { color: "#b45309", background: "#fef3c7" },
-    pagado: { color: "#15803d", background: "#dcfce7" },
-    cancelado: { color: "#b91c1c", background: "#fee2e2" },
+    pendiente: "badge-warning",
+    pagado: "badge-success",
+    cancelado: "badge-danger",
 };
 
 const formatoMoneda = (valor) =>
@@ -48,7 +48,7 @@ const ListaPagos = () => {
         cargarDatos();
     }, []);
 
-    if (loading) return <p style={{ padding: "24px" }}>Cargando...</p>;
+    if (loading) return <p className="page">Cargando...</p>;
 
     const pagosConDatos = pagos.map((pago) => {
         const cliente = clientes.find((c) => c.id === pago.cli_id);
@@ -61,46 +61,48 @@ const ListaPagos = () => {
     });
 
     return (
-        <div style={{ padding: "24px" }}>
-            <Link to="/home">← Inicio</Link>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div className="page">
+            <Link to="/home" className="page-back">← Inicio</Link>
+            <div className="page-header">
                 <h2>Pagos</h2>
                 <Link to="/pagos/nuevo">
-                    <button>+ Registrar Pago</button>
+                    <button className="btn-primary">+ Registrar Pago</button>
                 </Link>
             </div>
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && <p className="error-text">{error}</p>}
 
             {pagosConDatos.length === 0 ? (
-                <p>Todavía no hay pagos registrados.</p>
+                <div className="panel empty-state">
+                    <p className="empty-state-title">Todavía no hay pagos registrados</p>
+                    <p className="empty-state-description">Los pagos que registres aparecerán aquí.</p>
+                </div>
             ) : (
-                <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "16px" }}>
+                <div className="table-wrap">
+                <table className="table">
                     <thead>
-                        <tr style={{ textAlign: "left", borderBottom: "2px solid #e5e7eb" }}>
-                            <th style={{ padding: "8px" }}>Orden</th>
-                            <th style={{ padding: "8px" }}>Cliente</th>
-                            <th style={{ padding: "8px" }}>Monto</th>
-                            <th style={{ padding: "8px" }}>Método</th>
-                            <th style={{ padding: "8px" }}>Estado</th>
-                            <th style={{ padding: "8px" }}>Fecha</th>
+                        <tr>
+                            <th>Orden</th>
+                            <th>Cliente</th>
+                            <th>Monto</th>
+                            <th>Método</th>
+                            <th>Estado</th>
+                            <th>Fecha</th>
                         </tr>
                     </thead>
                     <tbody>
                         {pagosConDatos.map((pago) => {
-                            const estilo = ESTILOS_ESTADO[pago.estado] || { color: "#374151", background: "#f3f4f6" };
+                            const clase = ESTILOS_ESTADO[pago.estado] || "badge-neutral";
                             return (
-                                <tr key={pago.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                                    <td style={{ padding: "8px" }}>{pago.folioOrden}</td>
-                                    <td style={{ padding: "8px" }}>{pago.nombreCliente}</td>
-                                    <td style={{ padding: "8px" }}>{formatoMoneda(pago.monto)}</td>
-                                    <td style={{ padding: "8px", textTransform: "capitalize" }}>{pago.metodo}</td>
-                                    <td style={{ padding: "8px" }}>
-                                        <span style={{ ...estilo, padding: "2px 8px", borderRadius: "999px", fontSize: "12px" }}>
-                                            {pago.estado}
-                                        </span>
+                                <tr key={pago.id}>
+                                    <td>{pago.folioOrden}</td>
+                                    <td>{pago.nombreCliente}</td>
+                                    <td>{formatoMoneda(pago.monto)}</td>
+                                    <td style={{ textTransform: "capitalize" }}>{pago.metodo}</td>
+                                    <td>
+                                        <span className={`badge ${clase}`}>{pago.estado}</span>
                                     </td>
-                                    <td style={{ padding: "8px" }}>
+                                    <td>
                                         {pago.created_at
                                             ? new Date(pago.created_at).toLocaleDateString("es-MX")
                                             : "—"}
@@ -110,6 +112,7 @@ const ListaPagos = () => {
                         })}
                     </tbody>
                 </table>
+                </div>
             )}
         </div>
     );

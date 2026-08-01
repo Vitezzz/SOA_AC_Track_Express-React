@@ -93,18 +93,18 @@ const FormularioMantenimiento = () => {
         }
     };
 
-    if (loading) return <p style={{ padding: "24px" }}>Cargando...</p>;
+    if (loading) return <p className="page">Cargando...</p>;
 
     return (
-        <div style={{ padding: "24px", maxWidth: "480px" }}>
+        <div className="page page-narrow">
             <h2>{esEdicion ? "Editar" : "Programar"} Mantenimiento</h2>
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && <p className="error-text">{error}</p>}
 
-            <form onSubmit={handleSubmit}>
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Cliente *</span>
-                    <select value={cliId} onChange={(e) => { setCliId(e.target.value); setEquId(""); }} style={{ width: "100%", padding: "8px" }}>
+            <form onSubmit={handleSubmit} className="form">
+                <label>
+                    <span>Cliente *</span>
+                    <select value={cliId} onChange={(e) => { setCliId(e.target.value); setEquId(""); }}>
                         <option value="">Selecciona un cliente</option>
                         {clientes.map((c) => (
                             <option key={c.id} value={c.id}>{c.nombre}</option>
@@ -112,9 +112,9 @@ const FormularioMantenimiento = () => {
                     </select>
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Equipo *</span>
-                    <select value={equId} onChange={(e) => setEquId(e.target.value)} style={{ width: "100%", padding: "8px" }} disabled={!cliId}>
+                <label>
+                    <span>Equipo *</span>
+                    <select value={equId} onChange={(e) => setEquId(e.target.value)} disabled={!cliId}>
                         <option value="">Selecciona un equipo</option>
                         {equiposDelCliente.map((eq) => (
                             <option key={eq.id} value={eq.id}>{eq.tipo} — {eq.modelo}</option>
@@ -122,34 +122,32 @@ const FormularioMantenimiento = () => {
                     </select>
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Frecuencia (días) *</span>
+                <label>
+                    <span>Frecuencia (días) *</span>
                     <input
                         type="number"
                         min="1"
                         value={frecuenciaDias}
                         onChange={(e) => setFrecuenciaDias(e.target.value)}
-                        style={{ width: "100%", padding: "8px" }}
                     />
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Próxima fecha *</span>
+                <label>
+                    <span>Próxima fecha *</span>
                     <input
                         type="date"
                         value={proximaFecha}
                         onChange={(e) => setProximaFecha(e.target.value)}
-                        style={{ width: "100%", padding: "8px" }}
                     />
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <input type="checkbox" checked={activo} onChange={(e) => setActivo(e.target.checked)} style={{ marginRight: "8px" }} />
+                <label>
+                    <input type="checkbox" checked={activo} onChange={(e) => setActivo(e.target.checked)} />
                     Activo
                 </label>
 
-                <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
-                    <button type="submit" disabled={guardando}>
+                <div className="form-actions">
+                    <button type="submit" disabled={guardando} className="btn-primary">
                         {guardando ? "Guardando..." : esEdicion ? "Guardar cambios" : "Programar"}
                     </button>
                     <button type="button" onClick={() => navigate("/mantenimiento")}>Cancelar</button>

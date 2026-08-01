@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
+import LoadingState from "../../components/LoadingState";
+import EmptyState from "../../components/EmptyState";
 
 const ESTILOS_ESTADO_PAGO = {
-    pendiente: "bg-yellow-100 text-yellow-700",
-    pagado: "bg-green-100 text-green-700",
-    cancelado: "bg-red-100 text-red-700",
+    pendiente: "badge-status-warning",
+    pagado: "badge-status-success",
+    cancelado: "badge-status-danger",
 };
 
 const formatoMoneda = (valor) =>
@@ -54,28 +56,32 @@ const Pagos = () => {
         cargarPagos();
     }, [])
 
-    if (loading) return <p className="text-center mt-10">Cargando...</p>
+    if (loading) return <LoadingState />
 
     return (
-        <div className="max-w-3xl mx-auto px-4 py-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-6">Mis Pagos</h2>
-            {error && <p className="text-red-500 text-sm text-center mb-4">{error}</p>}
+        <div className="page-container">
+            <h2 className="page-title">Mis Pagos</h2>
+            {error && <p className="form-error mb-4">{error}</p>}
 
             {pagos.length === 0 ? (
-                <p className="text-gray-500 text-center">Todavía no tienes pagos.</p>
+                <EmptyState
+                    icon="card"
+                    title="Todavía no tienes pagos"
+                    description="Cuando se registre un pago sobre alguna de tus órdenes, aparecerá aquí."
+                />
             ) : (
                 <div className="space-y-4">
                     {pagos.map((pag) => {
-                        const clase = ESTILOS_ESTADO_PAGO[pag.estado] || "bg-gray-100 text-gray-600";
+                        const clase = ESTILOS_ESTADO_PAGO[pag.estado] || "badge-status-neutral";
                         const folioOrden = ordenes.find((o) => o.id === pag.ord_id)?.folio;
 
                         return (
-                            <div key={pag.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                            <div key={pag.id} className="panel">
                                 <div className="flex justify-between items-start mb-3">
                                     <span className="font-semibold text-gray-900">
                                         Orden: {folioOrden || "—"}
                                     </span>
-                                    <span className={`text-xs font-medium px-3 py-1 rounded-full ${clase}`}>
+                                    <span className={`badge-status ${clase}`}>
                                         {pag.estado}
                                     </span>
                                 </div>

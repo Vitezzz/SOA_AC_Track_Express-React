@@ -1,9 +1,29 @@
-/* Botón principal: fondo oscuro, para la acción más importante de la pantalla */
+/* Botón principal: color de marca, para la acción más importante de la pantalla */
 .btn-primary {
-  @apply btn bg-gray-900 text-white hover:bg-gray-800 border-none rounded-lg;
+  @apply btn text-white border-none rounded-lg;
+  background-color: var(--color-accent);
+  transition: background-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-accent-hover);
+  box-shadow: var(--shadow-accent);
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
 }
 
 /* Botón secundario: fondo blanco con borde, para acciones alternativas/cancelar */
 .btn-secondary {
-  @apply btn bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 rounded-lg;
+  @apply btn bg-white text-gray-700 rounded-lg;
+  border: 1px solid var(--color-border-strong);
+  transition: border-color var(--transition-fast), color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.btn-secondary:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent-hover);
+  background-color: var(--color-accent-soft);
 }

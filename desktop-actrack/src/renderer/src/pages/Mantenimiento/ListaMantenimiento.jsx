@@ -39,7 +39,7 @@ const ListaMantenimiento = () => {
         cargarDatos();
     }, []);
 
-    if (loading) return <p style={{ padding: "24px" }}>Cargando...</p>;
+    if (loading) return <p className="page">Cargando...</p>;
 
     const mantenimientosConDatos = mantenimientos.map((m) => {
         const cliente = clientes.find((c) => c.id === m.cli_id);
@@ -52,50 +52,59 @@ const ListaMantenimiento = () => {
     });
 
     return (
-        <div style={{ padding: "24px" }}>
-            <Link to="/home">← Inicio</Link>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div className="page">
+            <Link to="/home" className="page-back">← Inicio</Link>
+            <div className="page-header">
                 <h2>Mantenimientos Preventivos</h2>
                 <Link to="/mantenimiento/nuevo">
-                    <button>+ Programar Mantenimiento</button>
+                    <button className="btn-primary">+ Programar Mantenimiento</button>
                 </Link>
             </div>
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && <p className="error-text">{error}</p>}
 
             {mantenimientosConDatos.length === 0 ? (
-                <p>Todavía no hay mantenimientos programados.</p>
+                <div className="panel empty-state">
+                    <p className="empty-state-title">Todavía no hay mantenimientos programados</p>
+                    <p className="empty-state-description">Programa una visita preventiva desde aquí.</p>
+                </div>
             ) : (
-                <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "16px" }}>
+                <div className="table-wrap">
+                <table className="table">
                     <thead>
-                        <tr style={{ textAlign: "left", borderBottom: "2px solid #e5e7eb" }}>
-                            <th style={{ padding: "8px" }}>Cliente</th>
-                            <th style={{ padding: "8px" }}>Equipo</th>
-                            <th style={{ padding: "8px" }}>Frecuencia</th>
-                            <th style={{ padding: "8px" }}>Próxima fecha</th>
-                            <th style={{ padding: "8px" }}>Activo</th>
-                            <th style={{ padding: "8px" }}>Acciones</th>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Equipo</th>
+                            <th>Frecuencia</th>
+                            <th>Próxima fecha</th>
+                            <th>Activo</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {mantenimientosConDatos.map((m) => (
-                            <tr key={m.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                                <td style={{ padding: "8px" }}>{m.nombreCliente}</td>
-                                <td style={{ padding: "8px" }}>{m.descripcionEquipo}</td>
-                                <td style={{ padding: "8px" }}>Cada {m.frecuencia_dias} días</td>
-                                <td style={{ padding: "8px" }}>
+                            <tr key={m.id}>
+                                <td>{m.nombreCliente}</td>
+                                <td>{m.descripcionEquipo}</td>
+                                <td>Cada {m.frecuencia_dias} días</td>
+                                <td>
                                     {new Date(m.proxima_fecha).toLocaleDateString("es-MX")}
                                 </td>
-                                <td style={{ padding: "8px" }}>{m.activo ? "Sí" : "No"}</td>
-                                <td style={{ padding: "8px" }}>
+                                <td>
+                                    <span className={`badge ${m.activo ? "badge-success" : "badge-neutral"}`}>
+                                        {m.activo ? "Sí" : "No"}
+                                    </span>
+                                </td>
+                                <td>
                                     <Link to={`/mantenimiento/${m.id}/editar`}>
-                                        <button>Editar</button>
+                                        <button className="btn-sm">Editar</button>
                                     </Link>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
+                </div>
             )}
         </div>
     );

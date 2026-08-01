@@ -1,23 +1,53 @@
+.site-nav {
+  @apply px-8 py-3;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.brand {
+  @apply flex items-center gap-2 font-semibold mr-4;
+  color: var(--color-text);
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+.brand-mark {
+  @apply flex items-center justify-center text-white font-bold;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-hover));
+  font-size: 0.85rem;
+}
+
 .nav-link {
-  color: #6b7280;
+  color: var(--color-text-muted);
+  transition: color var(--transition-fast), background-color var(--transition-fast);
 }
 
 .nav-link:hover {
-  color: #111827;
-  background-color: #f9fafb;
+  color: var(--color-text);
+  background-color: var(--color-bg);
 }
 
 .nav-link-active {
-  background-color: #f3f4f6;
-  color: #111827;
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent-hover);
   font-weight: 500;
 }
 
 /* Links del menú lateral del dashboard (mismo patrón que nav-link, distinto layout) */
 .side-nav-link {
-  @apply btn btn-ghost text-gray-500;
+  @apply btn btn-ghost justify-start;
+  color: var(--color-text-muted);
 }
 
 .side-nav-link-active {
-  @apply btn btn-soft bg-gray-100 text-gray-900;
+  @apply btn justify-start border-none;
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent-hover);
+  font-weight: 500;
 }

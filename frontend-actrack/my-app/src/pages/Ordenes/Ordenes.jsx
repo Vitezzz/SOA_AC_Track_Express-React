@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import LineaTiempoEstado from '../../components/LineaTiempoEstado.jsx';
 import { Link } from "react-router-dom";
+import LoadingState from "../../components/LoadingState.jsx";
+import EmptyState from "../../components/EmptyState.jsx";
 
 const Ordenes = () => {
     const [ordenes, setOrdenes] = useState([]);
@@ -41,7 +43,7 @@ const Ordenes = () => {
         cargarOrdenes();
     }, []);
 
-    if (loading) return <p className="text-center mt-10">Cargando...</p>;
+    if (loading) return <LoadingState />;
 
     return (
         <div className="page-container">
@@ -50,7 +52,11 @@ const Ordenes = () => {
             {error && <p className="form-error mb-4">{error}</p>}
 
             {ordenes.length === 0 ? (
-                <p className="text-gray-500 text-center">Todavía no tienes órdenes de servicio.</p>
+                <EmptyState
+                    icon="wrench"
+                    title="Todavía no tienes órdenes de servicio"
+                    description="Cuando solicites un servicio, aparecerá aquí con su estatus en tiempo real."
+                />
             ) : (
                 <div className="space-y-4">
                     {ordenes.map((orden) => (

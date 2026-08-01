@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
+import LoadingState from "../../components/LoadingState";
+import EmptyState from "../../components/EmptyState";
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     LineChart, Line, PieChart, Pie, Cell, Legend,
 } from "recharts";
 
-const COLORES_PASTEL = ["#111827", "#4b5563", "#9ca3af", "#d1d5db", "#6b7280"];
+const COLORES_PASTEL = ["#0e8a82", "#2563eb", "#f59e0b", "#6d28d9", "#9aa3b2"];
 
 const formatoMoneda = (valor) =>
     new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(valor);
@@ -57,7 +59,7 @@ const DashboardCliente = () => {
         cargarDatos();
     }, []);
 
-    if (loading) return <p className="text-center mt-10">Cargando...</p>;
+    if (loading) return <LoadingState />;
 
     // ---------- 1) Servicios completados por mes ----------
     // Solo contamos órdenes con estatus "completada" -- así esta gráfica
@@ -106,22 +108,24 @@ const DashboardCliente = () => {
     const totalGastado = pagosOrdenados.reduce((suma, p) => suma + Number(p.monto), 0);
 
     return (
-        <div className="max-w-5xl mx-auto px-4 py-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-1">Mi Dashboard</h2>
-            <p className="text-sm text-gray-500 mb-6">
+        <div className="page-container-wide">
+            <h2 className="page-title mb-1">Mi Dashboard</h2>
+            <p className="page-subtitle">
                 Resumen de tu actividad: {ordenes.length} solicitud(es) de servicio en total.
             </p>
 
-            {error && <p className="text-red-500 text-sm text-center mb-4">{error}</p>}
+            {error && <p className="form-error mb-4">{error}</p>}
 
             {ordenes.length === 0 ? (
-                <p className="text-gray-500 text-center">
-                    Todavía no tienes suficiente actividad para mostrar gráficas.
-                </p>
+                <EmptyState
+                    icon="spark"
+                    title="Todavía no hay suficiente actividad"
+                    description="Cuando tengas órdenes y pagos registrados, aquí verás tus estadísticas."
+                />
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Servicios completados por mes */}
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                    <div className="panel">
                         <p className="text-sm font-medium text-gray-700 mb-4">Servicios completados por mes</p>
                         {datosServiciosPorMes.length === 0 ? (
                             <p className="text-gray-400 text-sm">Todavía no tienes servicios completados.</p>
@@ -132,14 +136,14 @@ const DashboardCliente = () => {
                                     <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
                                     <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
                                     <Tooltip />
-                                    <Bar dataKey="cantidad" fill="#111827" radius={[6, 6, 0, 0]} />
+                                    <Bar dataKey="cantidad" fill="#0e8a82" radius={[6, 6, 0, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         )}
                     </div>
 
                     {/* Gasto acumulado */}
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                    <div className="panel">
                         <p className="text-sm font-medium text-gray-700 mb-1">Gasto acumulado</p>
                         <p className="text-lg font-semibold text-gray-900 mb-4">
                             {formatoMoneda(totalGastado)}
@@ -153,14 +157,14 @@ const DashboardCliente = () => {
                                     <XAxis dataKey="fecha" tick={{ fontSize: 12 }} />
                                     <YAxis tick={{ fontSize: 12 }} />
                                     <Tooltip formatter={(valor) => formatoMoneda(valor)} />
-                                    <Line type="monotone" dataKey="acumulado" stroke="#111827" strokeWidth={2} dot={false} />
+                                    <Line type="monotone" dataKey="acumulado" stroke="#0e8a82" strokeWidth={2} dot={false} />
                                 </LineChart>
                             </ResponsiveContainer>
                         )}
                     </div>
 
                     {/* Tipos de servicio más frecuentes */}
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:col-span-2">
+                    <div className="panel md:col-span-2">
                         <p className="text-sm font-medium text-gray-700 mb-4">Tipos de servicio más frecuentes</p>
                         <ResponsiveContainer width="100%" height={280}>
                             <PieChart>

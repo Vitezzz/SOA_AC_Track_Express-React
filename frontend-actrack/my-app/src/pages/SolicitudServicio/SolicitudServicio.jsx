@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Card } from "../../components/Card";
 import { useAuth } from "../../context/AuthContext";
+import Icon from "../../components/Icon";
+import LoadingState from "../../components/LoadingState";
 
 // Traducción de num_prioridad -> texto, según la convención del proyecto
 const NIVELES_PRIORIDAD = { 1: "baja", 2: "normal", 3: "alta", 4: "urgente" };
@@ -122,14 +124,15 @@ const SolicitudServicio = () => {
         }
     };
 
-    if (loading) return <p className="text-center mt-10">Cargando...</p>;
+    if (loading) return <LoadingState />;
 
     return (
         <div className="page-shell">
-            <Card>
-                <h1 className="page-title text-center">
-                    Solicitar Servicio
-                </h1>
+            <Card maxWidth="max-w-xl">
+                <div className="text-center mb-6">
+                    <h1 className="page-title mb-1">Solicitar servicio</h1>
+                    <p className="page-subtitle mb-0">Cuéntanos qué equipo necesita atención y cuándo te viene bien.</p>
+                </div>
 
                 {folioCreado && (
                     <p className="form-success mb-4">
@@ -138,30 +141,33 @@ const SolicitudServicio = () => {
                 )}
                 {error && <p className="form-error mb-4">{error}</p>}
 
-                <form onSubmit={handleSubmit} className="space-y-5">
-                    <label className="form-control w-full">
-                        <span className="form-label">Equipo</span>
-                        <select
-                            className="form-input"
-                            value={equipoId}
-                            onChange={(e) => setEquipoId(e.target.value)}
-                        >
-                            <option value="">Selecciona un equipo</option>
-                            <option value="otro">Otro / mi equipo no está en la lista</option>
-                            {equipos.map((eq) => (
-                                <option key={eq.id} value={eq.id}>
-                                    {eq.tipo} — {eq.modelo} ({eq.numero_serie})
-                                </option>
-                            ))}
-                        </select>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="form-section">
+                        <p className="form-section-title">
+                            <Icon name="wrench" /> Equipo
+                        </p>
+                        <label className="form-control w-full">
+                            <span className="form-label">Equipo a revisar</span>
+                            <select
+                                className="form-input"
+                                value={equipoId}
+                                onChange={(e) => setEquipoId(e.target.value)}
+                            >
+                                <option value="">Selecciona un equipo</option>
+                                <option value="otro">Otro / mi equipo no está en la lista</option>
+                                {equipos.map((eq) => (
+                                    <option key={eq.id} value={eq.id}>
+                                        {eq.tipo} — {eq.modelo} ({eq.numero_serie})
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
                         {
                             equipoId === "otro" && (
-                                <label className="form-control w-full">
-                                    <span className="text-sm font-medium text-gray-700 mb-1 block">
-                                        Describe tu equipo
-                                    </span>
+                                <label className="form-control w-full mt-4">
+                                    <span className="form-label">Describe tu equipo</span>
                                     <textarea
-                                        className="input input-bordered w-full rounded-lg border-gray-200 h-20"
+                                        className="form-input h-20"
                                         value={descripcionEquipo}
                                         onChange={(e) => setDescripcionEquipo(e.target.value)}
                                         placeholder="Ej. Split de pared Mirage, blanco, en la sala"
@@ -169,42 +175,54 @@ const SolicitudServicio = () => {
                                 </label>
                             )
                         }
-                    </label>
+                    </div>
 
-                    <label className="form-control w-full">
-                        <span className="form-label">Tipo de servicio</span>
-                        <select
-                            className="form-input"
-                            value={categoriaId}
-                            onChange={(e) => setCategoriaId(e.target.value)}
-                        >
-                            <option value="">Selecciona una categoría</option>
-                            {categorias.map((cat) => (
-                                <option key={cat.id} value={cat.id}>
-                                    {cat.nombre}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
+                    <div className="form-section">
+                        <p className="form-section-title">
+                            <Icon name="note" /> Detalles del servicio
+                        </p>
+                        <div className="space-y-4">
+                            <label className="form-control w-full">
+                                <span className="form-label">Tipo de servicio</span>
+                                <select
+                                    className="form-input"
+                                    value={categoriaId}
+                                    onChange={(e) => setCategoriaId(e.target.value)}
+                                >
+                                    <option value="">Selecciona una categoría</option>
+                                    {categorias.map((cat) => (
+                                        <option key={cat.id} value={cat.id}>
+                                            {cat.nombre}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
 
-                    <label className="form-control w-full">
-                        <span className="form-label">Descripción de la falla</span>
-                        <textarea
-                            className="form-input h-24"
-                            value={descripcion}
-                            onChange={(e) => setDescripcion(e.target.value)}
-                        />
-                    </label>
+                            <label className="form-control w-full">
+                                <span className="form-label">Descripción de la falla</span>
+                                <textarea
+                                    className="form-input h-24"
+                                    value={descripcion}
+                                    onChange={(e) => setDescripcion(e.target.value)}
+                                />
+                            </label>
+                        </div>
+                    </div>
 
-                    <label className="form-control w-full">
-                        <span className="form-label">Fecha preferida</span>
-                        <input
-                            type="datetime-local"
-                            className="form-input"
-                            value={fechaProgramada}
-                            onChange={(e) => setFechaProgramada(e.target.value)}
-                        />
-                    </label>
+                    <div className="form-section">
+                        <p className="form-section-title">
+                            <Icon name="calendar" /> Programación
+                        </p>
+                        <label className="form-control w-full">
+                            <span className="form-label">Fecha preferida</span>
+                            <input
+                                type="datetime-local"
+                                className="form-input"
+                                value={fechaProgramada}
+                                onChange={(e) => setFechaProgramada(e.target.value)}
+                            />
+                        </label>
+                    </div>
 
                     <button
                         type="submit"
@@ -214,7 +232,7 @@ const SolicitudServicio = () => {
                         {submitting ? (
                             <span className="loading loading-spinner loading-sm" />
                         ) : (
-                            "Enviar Solicitud"
+                            "Enviar solicitud"
                         )}
                     </button>
                 </form>

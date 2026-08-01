@@ -1,0 +1,171 @@
+/* Pantalla completa centrada, usada en login/signup/formularios sueltos */
+.page-shell {
+  @apply min-h-screen flex items-center justify-center px-4;
+  background:
+    radial-gradient(circle at 15% 10%, var(--color-accent-soft) 0%, transparent 45%),
+    radial-gradient(circle at 85% 90%, var(--color-accent-soft) 0%, transparent 40%),
+    var(--color-bg);
+}
+
+/* Contenedor angosto para listados (cotizaciones, órdenes, etc.) */
+.page-container {
+  @apply max-w-3xl mx-auto px-4 py-8;
+}
+
+.page-container-wide {
+  @apply max-w-5xl mx-auto px-4 py-8;
+}
+
+.page-title {
+  @apply text-2xl font-semibold mb-6;
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+}
+
+.page-subtitle {
+  @apply text-sm mb-6;
+  color: var(--color-text-muted);
+}
+
+/* Contenedor tipo "hero" para páginas de aterrizaje (Home, 404) */
+.hero-shell {
+  @apply max-w-4xl mx-auto px-8 py-16;
+}
+
+/* Pantalla partida para login/registro: panel de marca + panel de formulario */
+.auth-shell {
+  @apply grid min-h-[calc(100vh-64px)];
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 900px) {
+  .auth-shell {
+    grid-template-columns: 1fr 1.1fr;
+  }
+}
+
+.auth-brand {
+  @apply hidden flex-col justify-between p-12 text-white relative overflow-hidden;
+  background: linear-gradient(155deg, var(--color-accent-hover), var(--color-accent) 60%, #14b8ac);
+}
+
+@media (min-width: 900px) {
+  .auth-brand {
+    display: flex;
+  }
+}
+
+.auth-brand::before,
+.auth-brand::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.auth-brand::before {
+  width: 22rem;
+  height: 22rem;
+  top: -8rem;
+  right: -6rem;
+}
+
+.auth-brand::after {
+  width: 16rem;
+  height: 16rem;
+  bottom: -6rem;
+  left: -4rem;
+}
+
+.auth-brand-content {
+  @apply relative z-10 max-w-sm;
+}
+
+.auth-features {
+  @apply mt-10 space-y-4;
+}
+
+.auth-feature {
+  @apply flex items-start gap-3 text-sm;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.auth-feature-icon {
+  @apply flex items-center justify-center shrink-0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.auth-form-side {
+  @apply flex items-center justify-center p-6 sm:p-10;
+  background-color: var(--color-bg);
+}
+
+.auth-form-card {
+  @apply w-full p-8 sm:p-10;
+  max-width: 26rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.auth-divider {
+  @apply flex items-center gap-3 text-xs my-2;
+  color: var(--color-text-subtle);
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background-color: var(--color-border);
+}
+
+/* Encabezado de sección dentro de un formulario largo (SolicitudServicio, CompletarPerfil) */
+.form-section-title {
+  @apply flex items-center gap-2 text-xs font-semibold uppercase tracking-wide mb-4;
+  color: var(--color-text-subtle);
+}
+
+.form-section-title svg {
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-accent);
+}
+
+/* Cada sección deja su propio espacio debajo; la línea divisoria y el
+   espacio de arriba solo aparecen cuando sigue a otra sección (así
+   funciona igual mezclada con otro contenido o dentro de un <form>). */
+.form-section {
+  @apply pb-5;
+}
+
+.form-section + .form-section {
+  @apply pt-5 mt-0;
+  border-top: 1px solid var(--color-border);
+}
+
+/* Layout del dashboard con menú lateral */
+.dashboard-shell {
+  @apply flex gap-4 p-6;
+}
+
+.dashboard-sidebar {
+  @apply w-56 gap-1;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard-content {
+  @apply flex-1 p-6;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}

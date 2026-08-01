@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Card } from "../../components/Card";
 import { useAuth } from "../../context/AuthContext";
 import AddressAutocompleteInput from "../../components/AddressAutocompleteInput";
+import Icon from "../../components/Icon";
+import LoadingState from "../../components/LoadingState";
 
 const CompletarPerfil = () => {
 
@@ -63,7 +65,7 @@ const CompletarPerfil = () => {
         }
     };
 
-    if (loading) return <p className="text-center mt-10">Cargando...</p>;
+    if (loading) return <LoadingState />;
 
     // Nombre completo, uniendo solo las partes que sí existan --
     // si viene de Google/Facebook, paterno/materno son null y no aparecen.
@@ -73,7 +75,7 @@ const CompletarPerfil = () => {
 
     return (
         <div className="page-shell">
-            <Card maxWidth="max-w-lg">
+            <Card maxWidth="max-w-xl">
                 <div className="text-center mb-6">
                     <h1 className="page-title mb-1">Mi perfil</h1>
                     <p className="text-sm text-gray-500">
@@ -105,21 +107,27 @@ const CompletarPerfil = () => {
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <label className="form-control w-full">
                         <span className="form-label">Teléfono</span>
-                        <input
-                            type="tel"
-                            className="form-input"
-                            value={telefono}
-                            onChange={(e) => setTelefono(e.target.value)}
-                        />
+                        <div className="input-group">
+                            <Icon name="phone" className="input-icon" />
+                            <input
+                                type="tel"
+                                className="form-input"
+                                value={telefono}
+                                onChange={(e) => setTelefono(e.target.value)}
+                            />
+                        </div>
                     </label>
 
                     <label className="form-control w-full">
                         <span className="form-label">Dirección</span>
-                        <AddressAutocompleteInput
-                            className="form-input"
-                            value={direccion}
-                            onChange={setDireccion}
-                        />
+                        <div className="input-group">
+                            <Icon name="pin" className="input-icon" />
+                            <AddressAutocompleteInput
+                                className="form-input"
+                                value={direccion}
+                                onChange={setDireccion}
+                            />
+                        </div>
                     </label>
 
                     <button type="submit" className="btn-primary w-full py-3" disabled={submitting}>

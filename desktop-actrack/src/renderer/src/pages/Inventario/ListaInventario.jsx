@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import Icon from "../../components/Icon";
 
 const ListaInventario = () => {
     const [inventario, setInventario] = useState([]);
@@ -31,7 +32,7 @@ const ListaInventario = () => {
         cargarDatos();
     }, []);
 
-    if (loading) return <p style={{ padding: "24px" }}>Cargando...</p>;
+    if (loading) return <p className="page">Cargando...</p>;
 
     const inventarioConDatos = inventario.map((item) => {
         const categoria = categorias.find((c) => c.id === item.cat_id);
@@ -43,61 +44,63 @@ const ListaInventario = () => {
     });
 
     return (
-        <div style={{ padding: "24px" }}>
-            <Link to="/home">← Inicio</Link>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div className="page">
+            <Link to="/home" className="page-back">← Inicio</Link>
+            <div className="page-header">
                 <h2>Inventario y Almacén</h2>
-                <div style={{ display: "flex", gap: "8px" }}>
-                    <Link to="/inventario/nuevo"><button>+ Nuevo Artículo</button></Link>
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <Link to="/inventario/nuevo"><button className="btn-primary">+ Nuevo Artículo</button></Link>
                     <Link to="/inventario/movimiento"><button>Registrar Movimiento</button></Link>
                 </div>
             </div>
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && <p className="error-text">{error}</p>}
 
             {inventarioConDatos.length === 0 ? (
-                <p>Todavía no hay artículos registrados.</p>
+                <div className="panel empty-state">
+                    <p className="empty-state-title">Todavía no hay artículos registrados</p>
+                    <p className="empty-state-description">Agrega tu primer artículo de inventario.</p>
+                </div>
             ) : (
-                <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "16px" }}>
+                <div className="table-wrap">
+                <table className="table">
                     <thead>
-                        <tr style={{ textAlign: "left", borderBottom: "2px solid #e5e7eb" }}>
-                            <th style={{ padding: "8px" }}>Código</th>
-                            <th style={{ padding: "8px" }}>Nombre</th>
-                            <th style={{ padding: "8px" }}>Categoría</th>
-                            <th style={{ padding: "8px" }}>Stock actual</th>
-                            <th style={{ padding: "8px" }}>Stock mínimo</th>
-                            <th style={{ padding: "8px" }}>Precio</th>
-                            <th style={{ padding: "8px" }}>Acciones</th>
+                        <tr>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Categoría</th>
+                            <th>Stock actual</th>
+                            <th>Stock mínimo</th>
+                            <th>Precio</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {inventarioConDatos.map((item) => (
-                            <tr
-                                key={item.id}
-                                style={{
-                                    borderBottom: "1px solid #f3f4f6",
-                                    background: item.stockBajo ? "#fef2f2" : "transparent",
-                                }}
-                            >
-                                <td style={{ padding: "8px" }}>{item.codigo}</td>
-                                <td style={{ padding: "8px" }}>{item.nombre}</td>
-                                <td style={{ padding: "8px" }}>{item.nombreCategoria}</td>
-                                <td style={{ padding: "8px", color: item.stockBajo ? "#b91c1c" : "inherit", fontWeight: item.stockBajo ? "bold" : "normal" }}>
-                                    {item.stock_actual} {item.stockBajo && "⚠️"}
+                            <tr key={item.id} className={item.stockBajo ? "row-alert" : ""}>
+                                <td>{item.codigo}</td>
+                                <td>{item.nombre}</td>
+                                <td>{item.nombreCategoria}</td>
+                                <td style={{ color: item.stockBajo ? "var(--color-danger-text)" : "inherit", fontWeight: item.stockBajo ? "bold" : "normal" }}>
+                                    <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                                        {item.stock_actual}
+                                        {item.stockBajo && <Icon name="warning" className="icon-sm" style={{ color: "var(--color-danger-text)" }} />}
+                                    </span>
                                 </td>
-                                <td style={{ padding: "8px" }}>{item.stock_minimo}</td>
-                                <td style={{ padding: "8px" }}>
+                                <td>{item.stock_minimo}</td>
+                                <td>
                                     {new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(item.precio_venta)}
                                 </td>
-                                <td style={{ padding: "8px" }}>
+                                <td>
                                     <Link to={`/inventario/${item.id}/editar`}>
-                                        <button>Editar</button>
+                                        <button className="btn-sm">Editar</button>
                                     </Link>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
+                </div>
             )}
         </div>
     );

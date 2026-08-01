@@ -92,52 +92,52 @@ const EditarEquipo = () => {
         }
     };
 
-    if (loading) return <p style={{ padding: "24px" }}>Cargando...</p>;
+    if (loading) return <p className="page">Cargando...</p>;
 
     return (
-        <div style={{ padding: "24px", maxWidth: "480px" }}>
+        <div className="page page-narrow">
             <h2>Editar Equipo</h2>
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && <p className="error-text">{error}</p>}
 
-            <form onSubmit={handleSubmit}>
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Marca *</span>
-                    <select value={marId} onChange={(e) => setMarId(e.target.value)} style={{ width: "100%", padding: "8px" }}>
+            <form onSubmit={handleSubmit} className="form">
+                <label>
+                    <span>Marca *</span>
+                    <select value={marId} onChange={(e) => setMarId(e.target.value)}>
                         {marcas.map((m) => (
                             <option key={m.id} value={m.id}>{m.nombre}</option>
                         ))}
                     </select>
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Tipo *</span>
-                    <input value={tipo} onChange={(e) => setTipo(e.target.value)} style={{ width: "100%", padding: "8px" }} />
+                <label>
+                    <span>Tipo *</span>
+                    <input value={tipo} onChange={(e) => setTipo(e.target.value)} />
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Modelo *</span>
-                    <input value={modelo} onChange={(e) => setModelo(e.target.value)} style={{ width: "100%", padding: "8px" }} />
+                <label>
+                    <span>Modelo *</span>
+                    <input value={modelo} onChange={(e) => setModelo(e.target.value)} />
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Número de serie *</span>
-                    <input value={numeroSerie} onChange={(e) => setNumeroSerie(e.target.value)} style={{ width: "100%", padding: "8px" }} />
+                <label>
+                    <span>Número de serie *</span>
+                    <input value={numeroSerie} onChange={(e) => setNumeroSerie(e.target.value)} />
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Foto actual</span>
+                <label>
+                    <span>Foto actual</span>
                     {imagenActual ? (
                         <img src={imagenActual} alt={modelo} style={{ width: "120px", borderRadius: "8px", display: "block", marginBottom: "8px" }} />
                     ) : (
-                        <p style={{ color: "#9ca3af", fontSize: "13px" }}>Sin foto todavía</p>
+                        <p className="muted-text">Sin foto todavía</p>
                     )}
                     <input type="file" accept="image/*" onChange={(e) => setArchivoNuevo(e.target.files[0])} />
-                    <p style={{ color: "#6b7280", fontSize: "12px" }}>Deja este campo vacío para conservar la foto actual</p>
+                    <p className="hint-text">Deja este campo vacío para conservar la foto actual</p>
                 </label>
 
-                <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
-                    <button type="submit" disabled={guardando}>{guardando ? "Guardando..." : "Guardar cambios"}</button>
+                <div className="form-actions">
+                    <button type="submit" disabled={guardando} className="btn-primary">{guardando ? "Guardando..." : "Guardar cambios"}</button>
                     <button type="button" onClick={() => navigate(`/clientes/${cliId}`)}>Cancelar</button>
                 </div>
             </form>

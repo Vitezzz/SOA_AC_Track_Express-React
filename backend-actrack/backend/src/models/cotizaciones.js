@@ -53,3 +53,16 @@ export const generarSiguienteFolioCotizacion = async () => {
 
     return `COT-${anio}-${String(siguienteNumero).padStart(3, '0')}`;
 }
+
+// "client" es la conexión DENTRO de una transacción -- se usa junto con
+// insertar/editar/borrar un renglón de cotizacion_detalle, para que el
+// total quede sincronizado en la misma operación, nunca desfasado.
+export const recalcularTotalCotizacion = async (client, cot_id) => {
+    const result = await client.query(
+        `UPDATE cotizaciones SET total = (
+            SELECT COALESCE(SUM(subtotal), 0) FROM cotizacion_detalle WHERE cot_id = $1
+        ) WHERE id = $1 RETURNING *`,
+        [cot_id]
+    );
+    return result.rows[0];
+}

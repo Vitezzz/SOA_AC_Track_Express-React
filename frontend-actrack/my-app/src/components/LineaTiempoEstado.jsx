@@ -27,23 +27,26 @@ const LineaTiempoEstado = ({ estatus, historial = [] }) => {
                     <div key={etapa.key} className="flex items-center flex-1 last:flex-none">
                         <div className="flex flex-col items-center">
                             <div
-                                className={`w-3.5 h-3.5 rounded-full border-2 ${
-                                    alcanzada ? "bg-gray-900 border-gray-900" : "bg-white border-gray-300"
-                                }`}
+                                className="w-3.5 h-3.5 rounded-full border-2"
+                                style={
+                                    alcanzada
+                                        ? { backgroundColor: "var(--color-accent)", borderColor: "var(--color-accent)" }
+                                        : { backgroundColor: "#fff", borderColor: "#d1d5db" }
+                                }
                             />
                             <span
                                 className={`text-[11px] mt-1 whitespace-nowrap ${
-                                    alcanzada ? "text-gray-900 font-medium" : "text-gray-400"
+                                    alcanzada ? "font-medium" : "text-gray-400"
                                 }`}
+                                style={alcanzada ? { color: "var(--color-accent-hover)" } : undefined}
                             >
                                 {etapa.label}
                             </span>
                         </div>
                         {!esUltima && (
                             <div
-                                className={`flex-1 h-0.5 mx-1 mb-4 ${
-                                    alcanzada ? "bg-gray-900" : "bg-gray-200"
-                                }`}
+                                className="flex-1 h-0.5 mx-1 mb-4"
+                                style={{ backgroundColor: alcanzada ? "var(--color-accent)" : "#e5e7eb" }}
                             />
                         )}
                     </div>

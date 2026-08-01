@@ -87,18 +87,18 @@ const FormularioInventario = () => {
         }
     };
 
-    if (loading) return <p style={{ padding: "24px" }}>Cargando...</p>;
+    if (loading) return <p className="page">Cargando...</p>;
 
     return (
-        <div style={{ padding: "24px", maxWidth: "480px" }}>
+        <div className="page page-narrow">
             <h2>{esEdicion ? "Editar" : "Nuevo"} Artículo</h2>
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && <p className="error-text">{error}</p>}
 
-            <form onSubmit={handleSubmit}>
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Categoría *</span>
-                    <select value={catId} onChange={(e) => setCatId(e.target.value)} style={{ width: "100%", padding: "8px" }}>
+            <form onSubmit={handleSubmit} className="form">
+                <label>
+                    <span>Categoría *</span>
+                    <select value={catId} onChange={(e) => setCatId(e.target.value)}>
                         <option value="">Selecciona una categoría</option>
                         {categorias.map((c) => (
                             <option key={c.id} value={c.id}>{c.nombre}</option>
@@ -106,41 +106,41 @@ const FormularioInventario = () => {
                     </select>
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Código</span>
+                <label>
+                    <span>Código</span>
                     {esEdicion ? (
-                        <input value={codigo} disabled style={{ width: "100%", padding: "8px", background: "#f3f4f6" }} />
+                        <input value={codigo} disabled />
                     ) : (
-                        <p style={{ color: "#6b7280", fontSize: "13px" }}>Se genera automáticamente al guardar</p>
+                        <p className="hint-text">Se genera automáticamente al guardar</p>
                     )}
                 </label>
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Nombre *</span>
-                    <input value={nombre} onChange={(e) => setNombre(e.target.value)} style={{ width: "100%", padding: "8px" }} />
+                <label>
+                    <span>Nombre *</span>
+                    <input value={nombre} onChange={(e) => setNombre(e.target.value)} />
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Unidad de medida</span>
-                    <input value={unidadMedida} onChange={(e) => setUnidadMedida(e.target.value)} placeholder="pza, kg, litro..." style={{ width: "100%", padding: "8px" }} />
+                <label>
+                    <span>Unidad de medida</span>
+                    <input value={unidadMedida} onChange={(e) => setUnidadMedida(e.target.value)} placeholder="pza, kg, litro..." />
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Stock actual</span>
-                    <input type="number" min="0" value={stockActual} onChange={(e) => setStockActual(e.target.value)} style={{ width: "100%", padding: "8px" }} />
+                <label>
+                    <span>Stock actual</span>
+                    <input type="number" min="0" value={stockActual} onChange={(e) => setStockActual(e.target.value)} />
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Stock mínimo</span>
-                    <input type="number" min="0" value={stockMinimo} onChange={(e) => setStockMinimo(e.target.value)} style={{ width: "100%", padding: "8px" }} />
+                <label>
+                    <span>Stock mínimo</span>
+                    <input type="number" min="0" value={stockMinimo} onChange={(e) => setStockMinimo(e.target.value)} />
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Precio de venta</span>
-                    <input type="number" step="0.01" min="0" value={precioVenta} onChange={(e) => setPrecioVenta(e.target.value)} style={{ width: "100%", padding: "8px" }} />
+                <label>
+                    <span>Precio de venta</span>
+                    <input type="number" step="0.01" min="0" value={precioVenta} onChange={(e) => setPrecioVenta(e.target.value)} />
                 </label>
 
-                <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
-                    <button type="submit" disabled={guardando}>{guardando ? "Guardando..." : "Guardar"}</button>
+                <div className="form-actions">
+                    <button type="submit" disabled={guardando} className="btn-primary">{guardando ? "Guardando..." : "Guardar"}</button>
                     <button type="button" onClick={() => navigate("/inventario")}>Cancelar</button>
                 </div>
             </form>

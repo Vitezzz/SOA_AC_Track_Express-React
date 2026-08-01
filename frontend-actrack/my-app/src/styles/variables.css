@@ -1,0 +1,36 @@
+:root {
+  /* Superficie y texto */
+  --color-bg: #f6f8fa;
+  --color-surface: #ffffff;
+  --color-border: #e7eaee;
+  --color-border-strong: #d7dce3;
+  --color-text: #10131a;
+  --color-text-muted: #667085;
+  --color-text-subtle: #9aa3b2;
+
+  /* Marca: teal, distinto de los colores de estado */
+  --color-accent: #0e8a82;
+  --color-accent-hover: #0b6f68;
+  --color-accent-soft: #e3f5f3;
+  --color-accent-soft-strong: #c3ebe6;
+  --color-accent-contrast: #ffffff;
+
+  /* Radios */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+
+  /* Sombras */
+  --shadow-sm: 0 1px 2px rgba(16, 19, 26, 0.05);
+  --shadow-md: 0 6px 16px -4px rgba(16, 19, 26, 0.08);
+  --shadow-lg: 0 16px 40px -8px rgba(16, 19, 26, 0.14);
+  --shadow-accent: 0 8px 20px -6px rgba(14, 138, 130, 0.45);
+
+  /* Tipografía */
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Transiciones */
+  --transition-fast: 140ms ease;
+  --transition-base: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}

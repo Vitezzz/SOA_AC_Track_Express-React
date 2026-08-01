@@ -1,24 +1,34 @@
-/* Base de las etiquetas de estado (cotización, orden, etc.) */
+/* Base de las etiquetas de estado (cotización, orden, pago, equipo, etc.) */
 .badge-status {
-  @apply text-xs font-medium px-3 py-1 rounded-full;
+  @apply text-xs font-medium px-3 py-1 rounded-full inline-flex items-center gap-1.5 whitespace-nowrap;
 }
 
 .badge-status-neutral {
-  @apply bg-gray-100 text-gray-600;
+  background-color: #f1f2f4;
+  color: #4b5563;
 }
 
 .badge-status-info {
-  @apply bg-blue-100 text-blue-700;
+  background-color: #e0edff;
+  color: #1d4ed8;
 }
 
 .badge-status-success {
-  @apply bg-green-100 text-green-700;
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent-hover);
 }
 
 .badge-status-warning {
-  @apply bg-yellow-100 text-yellow-700;
+  background-color: #fef3c7;
+  color: #b45309;
 }
 
 .badge-status-danger {
-  @apply bg-red-100 text-red-700;
+  background-color: #fde2e1;
+  color: #b3261e;
+}
+
+.badge-status-purple {
+  background-color: #ede9fe;
+  color: #6d28d9;
 }

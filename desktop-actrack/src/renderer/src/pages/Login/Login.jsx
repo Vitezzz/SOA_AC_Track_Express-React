@@ -32,37 +32,40 @@ const Login = () => {
     };
 
     return (
-        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <form onSubmit={handleSubmit} style={{ width: "320px" }}>
-                <h1>AC Track — Escritorio</h1>
-                {error && <p style={{ color: "red" }}>{error}</p>}
+        <div className="auth-shell">
+            <div className="auth-card">
+                <div className="auth-brand-mark">AC</div>
+                <h1 style={{ fontSize: "1.25rem", marginBottom: "0.25rem" }}>AC Track — Escritorio</h1>
+                <p className="muted-text" style={{ marginBottom: "1.5rem" }}>Panel interno para el equipo de servicio.</p>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Email</span>
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        style={{ width: "100%", padding: "8px" }}
-                        required
-                    />
-                </label>
+                {error && <p className="error-text">{error}</p>}
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Contraseña</span>
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        style={{ width: "100%", padding: "8px" }}
-                        required
-                    />
-                </label>
+                <form onSubmit={handleSubmit} className="form">
+                    <label>
+                        <span>Email</span>
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                    </label>
 
-                <button type="submit" disabled={submitting} style={{ width: "100%", padding: "10px" }}>
-                    {submitting ? "Entrando..." : "Iniciar sesión"}
-                </button>
-            </form>
+                    <label>
+                        <span>Contraseña</span>
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </label>
+
+                    <button type="submit" disabled={submitting} className="btn-primary" style={{ width: "100%", marginTop: "0.5rem" }}>
+                        {submitting ? "Entrando..." : "Iniciar sesión"}
+                    </button>
+                </form>
+            </div>
         </div>
     );
 };

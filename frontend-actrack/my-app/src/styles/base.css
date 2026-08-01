@@ -1,5 +1,20 @@
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 body {
-  background-color: #f9fafb;
-  color: #111827;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
   min-height: 100vh;
+}
+
+::selection {
+  background-color: var(--color-accent-soft-strong);
+  color: var(--color-accent-hover);
+}
+
+a {
+  color: inherit;
 }

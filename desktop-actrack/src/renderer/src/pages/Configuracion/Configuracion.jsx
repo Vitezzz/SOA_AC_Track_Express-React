@@ -12,23 +12,16 @@ const Configuracion = () => {
     const puedeEditarChecklist = user?.rol_id === 2 || user?.rol_id === 5;
 
     return (
-        <div style={{ padding: "24px" }}>
-            <Link to="/home">← Inicio</Link>
+        <div className="page">
+            <Link to="/home" className="page-back">← Inicio</Link>
             <h2>Configuración</h2>
 
-            <div style={{ display: "flex", gap: "8px", margin: "16px 0", borderBottom: "1px solid #e5e7eb" }}>
+            <div className="tabs">
                 {PESTAÑAS.map((p) => (
                     <button
                         key={p}
                         onClick={() => setPestañaActiva(p)}
-                        style={{
-                            padding: "8px 16px",
-                            border: "none",
-                            borderBottom: pestañaActiva === p ? "2px solid #111827" : "2px solid transparent",
-                            background: "transparent",
-                            fontWeight: pestañaActiva === p ? "600" : "400",
-                            cursor: "pointer",
-                        }}
+                        className={pestañaActiva === p ? "tab active" : "tab"}
                     >
                         {p}
                     </button>
@@ -109,33 +102,32 @@ const CatalogoSimple = ({ endpoint, puedeEditar }) => {
         }
     };
 
-    if (loading) return <p>Cargando...</p>;
+    if (loading) return <p className="muted-text">Cargando...</p>;
 
     return (
         <div>
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && <p className="error-text">{error}</p>}
 
             {puedeEditar && (
-                <form onSubmit={handleAgregar} style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+                <form onSubmit={handleAgregar} className="form form-inline">
                     <input
                         value={nombreNuevo}
                         onChange={(e) => setNombreNuevo(e.target.value)}
                         placeholder="Nombre nuevo..."
-                        style={{ flex: 1, padding: "8px" }}
                     />
-                    <button type="submit">Agregar</button>
+                    <button type="submit" className="btn-primary">Agregar</button>
                 </form>
             )}
 
             {items.length === 0 ? (
-                <p>Sin elementos todavía.</p>
+                <p className="muted-text">Sin elementos todavía.</p>
             ) : (
-                <ul>
+                <ul className="panel" style={{ padding: "0.5rem 1rem" }}>
                     {items.map((item) => (
-                        <li key={item.id} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid #f3f4f6" }}>
+                        <li key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid var(--color-border)" }}>
                             {item.nombre}
                             {puedeEditar && (
-                                <button onClick={() => handleEliminar(item.id)} style={{ color: "red" }}>
+                                <button onClick={() => handleEliminar(item.id)} className="btn-sm btn-danger">
                                     Eliminar
                                 </button>
                             )}
@@ -203,7 +195,7 @@ const ChecklistPlantillas = ({ apiFetch, puedeEditar }) => {
         }
     };
 
-    if (loading) return <p>Cargando...</p>;
+    if (loading) return <p className="muted-text">Cargando...</p>;
 
     const plantillasConCategoria = plantillas.map((p) => {
         const categoria = categorias.find((c) => c.id === p.cat_id);
@@ -212,11 +204,11 @@ const ChecklistPlantillas = ({ apiFetch, puedeEditar }) => {
 
     return (
         <div>
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && <p className="error-text">{error}</p>}
 
             {puedeEditar && (
-                <form onSubmit={handleAgregar} style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
-                    <select value={catIdNuevo} onChange={(e) => setCatIdNuevo(e.target.value)} style={{ padding: "8px" }}>
+                <form onSubmit={handleAgregar} className="form form-inline">
+                    <select value={catIdNuevo} onChange={(e) => setCatIdNuevo(e.target.value)} style={{ flex: "0 0 auto", width: "auto" }}>
                         <option value="">Categoría...</option>
                         {categorias.map((c) => (
                             <option key={c.id} value={c.id}>{c.nombre}</option>
@@ -226,18 +218,17 @@ const ChecklistPlantillas = ({ apiFetch, puedeEditar }) => {
                         value={nombreNuevo}
                         onChange={(e) => setNombreNuevo(e.target.value)}
                         placeholder="Nombre del checklist..."
-                        style={{ flex: 1, padding: "8px" }}
                     />
-                    <button type="submit">Agregar</button>
+                    <button type="submit" className="btn-primary">Agregar</button>
                 </form>
             )}
 
             {plantillasConCategoria.length === 0 ? (
-                <p>Sin checklists todavía.</p>
+                <p className="muted-text">Sin checklists todavía.</p>
             ) : (
-                <ul>
+                <ul className="panel" style={{ padding: "0.5rem 1rem" }}>
                     {plantillasConCategoria.map((p) => (
-                        <li key={p.id} style={{ padding: "6px 0", borderBottom: "1px solid #f3f4f6" }}>
+                        <li key={p.id} style={{ padding: "0.5rem 0", borderBottom: "1px solid var(--color-border)" }}>
                             <strong>{p.nombre}</strong> — {p.nombreCategoria} {p.activo ? "" : "(inactivo)"}
                         </li>
                     ))}
@@ -264,12 +255,12 @@ const ListaRoles = ({ apiFetch }) => {
         cargar();
     }, [apiFetch]);
 
-    if (loading) return <p>Cargando...</p>;
+    if (loading) return <p className="muted-text">Cargando...</p>;
 
     return (
-        <ul>
+        <ul className="panel" style={{ padding: "0.5rem 1rem" }}>
             {roles.map((rol) => (
-                <li key={rol.id} style={{ padding: "6px 0", borderBottom: "1px solid #f3f4f6" }}>
+                <li key={rol.id} style={{ padding: "0.5rem 0", borderBottom: "1px solid var(--color-border)" }}>
                     {rol.nombre}
                 </li>
             ))}

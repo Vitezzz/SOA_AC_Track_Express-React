@@ -97,58 +97,57 @@ const DetalleCliente = () => {
         }
     };
 
-    if (loading) return <p style={{ padding: "24px" }}>Cargando...</p>;
+    if (loading) return <p className="page">Cargando...</p>;
 
     return (
-        <div style={{ padding: "24px", maxWidth: "700px" }}>
-            <Link to="/clientes">← Volver a Clientes</Link>
+        <div className="page page-medium">
+            <Link to="/clientes" className="page-back">← Volver a Clientes</Link>
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
-            {guardado && <p style={{ color: "green" }}>¡Cliente actualizado correctamente!</p>}
+            {error && <p className="error-text">{error}</p>}
+            {guardado && <p className="success-text">¡Cliente actualizado correctamente!</p>}
 
             {cliente && (
                 <>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "8px" }}>
+                    <div className="page-header">
                         <h2>{cliente.nombre}</h2>
-                        {!editando && <button onClick={() => setEditando(true)}>Editar</button>}
+                        {!editando && <button onClick={() => setEditando(true)} className="btn-sm">Editar</button>}
                     </div>
 
                     {!editando ? (
-                        <p style={{ color: "#6b7280" }}>
+                        <p className="muted-text">
                             {cliente.email} · {cliente.telefono || "Sin teléfono"} · {cliente.direccion || "Sin dirección"} ·{" "}
-                            {cliente.activo ? "Activo" : "Inactivo"}
+                            <span className={`badge ${cliente.activo ? "badge-success" : "badge-neutral"}`}>
+                                {cliente.activo ? "Activo" : "Inactivo"}
+                            </span>
                         </p>
                     ) : (
-                        <form onSubmit={handleGuardar} style={{ marginTop: "12px", maxWidth: "360px" }}>
-                            <label style={{ display: "block", marginBottom: "12px" }}>
-                                <span style={{ display: "block", marginBottom: "4px" }}>Teléfono</span>
+                        <form onSubmit={handleGuardar} className="form page-narrow" style={{ marginTop: "0.75rem" }}>
+                            <label>
+                                <span>Teléfono</span>
                                 <input
                                     type="tel"
                                     value={telefono}
                                     onChange={(e) => setTelefono(e.target.value)}
-                                    style={{ width: "100%", padding: "8px" }}
                                 />
                             </label>
-                            <label style={{ display: "block", marginBottom: "12px" }}>
-                                <span style={{ display: "block", marginBottom: "4px" }}>Dirección</span>
+                            <label>
+                                <span>Dirección</span>
                                 <input
                                     type="text"
                                     value={direccion}
                                     onChange={(e) => setDireccion(e.target.value)}
-                                    style={{ width: "100%", padding: "8px" }}
                                 />
                             </label>
-                            <label style={{ display: "block", marginBottom: "12px" }}>
+                            <label>
                                 <input
                                     type="checkbox"
                                     checked={activo}
                                     onChange={(e) => setActivo(e.target.checked)}
-                                    style={{ marginRight: "8px" }}
                                 />
                                 Cliente activo
                             </label>
-                            <div style={{ display: "flex", gap: "8px" }}>
-                                <button type="submit" disabled={guardando}>
+                            <div className="form-actions">
+                                <button type="submit" disabled={guardando} className="btn-primary">
                                     {guardando ? "Guardando..." : "Guardar cambios"}
                                 </button>
                                 <button type="button" onClick={() => setEditando(false)}>Cancelar</button>
@@ -156,15 +155,15 @@ const DetalleCliente = () => {
                         </form>
                     )}
 
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "24px" }}>
+                    <div className="page-header" style={{ marginTop: "1.75rem" }}>
                         <h3>Equipos registrados ({equipos.length})</h3>
-                        <Link to={`/clientes/${id}/equipos/nuevo`}><button>+ Registrar Equipo</button></Link>
+                        <Link to={`/clientes/${id}/equipos/nuevo`}><button className="btn-sm">+ Registrar Equipo</button></Link>
                     </div>
 
                     {equipos.length === 0 ? (
-                        <p style={{ color: "#9ca3af" }}>Este cliente no tiene equipos registrados.</p>
+                        <p className="muted-text">Este cliente no tiene equipos registrados.</p>
                     ) : (
-                        <ul style={{ listStyle: "none", padding: 0 }}>
+                        <ul className="panel" style={{ padding: "0.5rem 1rem" }}>
                             {equipos.map((eq) => (
                                 <li
                                     key={eq.id}
@@ -172,11 +171,11 @@ const DetalleCliente = () => {
                                         display: "flex",
                                         justifyContent: "space-between",
                                         alignItems: "center",
-                                        padding: "8px 0",
-                                        borderBottom: "1px solid #f3f4f6",
+                                        padding: "0.65rem 0",
+                                        borderBottom: "1px solid var(--color-border)",
                                     }}
                                 >
-                                    <span style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                    <span style={{ display: "flex", alignItems: "center", gap: "0.65rem" }}>
                                         {eq.imagen_url ? (
                                             <img
                                                 src={eq.imagen_url}
@@ -191,16 +190,16 @@ const DetalleCliente = () => {
                                             />
                                         ) : (
                                             <span
+                                                className="muted-text"
                                                 style={{
                                                     width: "48px",
                                                     height: "48px",
-                                                    background: "#f3f4f6",
+                                                    background: "var(--color-bg)",
                                                     borderRadius: "6px",
                                                     display: "flex",
                                                     alignItems: "center",
                                                     justifyContent: "center",
                                                     fontSize: "10px",
-                                                    color: "#9ca3af",
                                                     flexShrink: 0,
                                                 }}
                                             >
@@ -209,10 +208,10 @@ const DetalleCliente = () => {
                                         )}
                                         <span>{eq.tipo} — {eq.modelo} ({eq.numero_serie})</span>
                                     </span>
-                                    <span style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
-                                        <Link to={`/equipos/${eq.id}/editar`}><button>Editar</button></Link>
+                                    <span className="table-actions" style={{ flexShrink: 0 }}>
+                                        <Link to={`/equipos/${eq.id}/editar`}><button className="btn-sm">Editar</button></Link>
                                         {user?.rol_id === 2 && (
-                                            <button onClick={() => handleDesactivar(eq.id)} style={{ color: "red" }}>Desactivar</button>
+                                            <button onClick={() => handleDesactivar(eq.id)} className="btn-sm btn-danger">Desactivar</button>
                                         )}
                                     </span>
                                 </li>
@@ -220,13 +219,13 @@ const DetalleCliente = () => {
                         </ul>
                     )}
 
-                    <h3 style={{ marginTop: "24px" }}>Historial de órdenes ({ordenes.length})</h3>
+                    <h3 style={{ marginTop: "1.75rem", marginBottom: "0.5rem" }}>Historial de órdenes ({ordenes.length})</h3>
                     {ordenes.length === 0 ? (
-                        <p style={{ color: "#9ca3af" }}>Este cliente no tiene órdenes registradas.</p>
+                        <p className="muted-text">Este cliente no tiene órdenes registradas.</p>
                     ) : (
-                        <ul>
+                        <ul className="panel" style={{ padding: "0.5rem 1rem" }}>
                             {ordenes.map((orden) => (
-                                <li key={orden.id} style={{ padding: "4px 0" }}>
+                                <li key={orden.id} style={{ padding: "0.35rem 0" }}>
                                     <Link to={`/ordenes/${orden.id}/editar`}>
                                         {orden.folio} — {orden.estatus}
                                     </Link>

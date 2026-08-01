@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 import LineaTiempoEstado from "../../components/LineaTiempoEstado.jsx";
+import LoadingState from "../../components/LoadingState.jsx";
+import Icon from "../../components/Icon.jsx";
 
 const formatoMoneda = (valor) =>
     new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(valor);
@@ -54,7 +56,7 @@ const OrdenDetalle = () => {
         cargarDatos();
     }, [id]);
 
-    if (loading) return <p className="text-center mt-10">Cargando...</p>;
+    if (loading) return <LoadingState />;
     if (error) return <p className="form-error text-center mt-10">{error}</p>;
     if (!orden) return null;
 
@@ -82,8 +84,8 @@ const OrdenDetalle = () => {
                 </div>
 
                 {equipo && (
-                    <div className="border-t border-gray-100 pt-4 mt-4">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Equipo</p>
+                    <div className="form-section">
+                        <p className="form-section-title"><Icon name="wrench" /> Equipo</p>
                         <div className="flex items-center gap-3">
                             {equipo.imagen_url && (
                                 <img src={equipo.imagen_url} alt={equipo.modelo} className="w-16 h-16 object-cover rounded-lg" />
@@ -93,14 +95,14 @@ const OrdenDetalle = () => {
                     </div>
                 )}
 
-                <div className="border-t border-gray-100 pt-4 mt-4">
-                    <p className="text-sm font-medium text-gray-700 mb-2">Descripción de la falla</p>
+                <div className="form-section">
+                    <p className="form-section-title"><Icon name="note" /> Descripción de la falla</p>
                     <p className="text-sm text-gray-600 whitespace-pre-line">{orden.descripcion}</p>
                 </div>
 
                 {cotizacion && (
-                    <div className="border-t border-gray-100 pt-4 mt-4">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Cotización</p>
+                    <div className="form-section">
+                        <p className="form-section-title"><Icon name="tag" /> Cotización</p>
                         <p className="text-sm text-gray-600">
                             {cotizacion.folio} — {formatoMoneda(cotizacion.total)} — <span className="capitalize">{cotizacion.estado}</span>
                         </p>
@@ -108,8 +110,8 @@ const OrdenDetalle = () => {
                 )}
 
                 {pago && (
-                    <div className="border-t border-gray-100 pt-4 mt-4">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Pago</p>
+                    <div className="form-section">
+                        <p className="form-section-title"><Icon name="card" /> Pago</p>
                         <p className="text-sm text-gray-600">
                             {formatoMoneda(pago.monto)} — <span className="capitalize">{pago.metodo}</span> — <span className="capitalize">{pago.estado}</span>
                         </p>
@@ -117,8 +119,8 @@ const OrdenDetalle = () => {
                 )}
 
                 {bitacora.length > 0 && (
-                    <div className="border-t border-gray-100 pt-4 mt-4">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Historial de cambios</p>
+                    <div className="form-section">
+                        <p className="form-section-title"><Icon name="calendar" /> Historial de cambios</p>
                         <ul className="space-y-1">
                             {bitacora.map((registro) => (
                                 <li key={registro.id} className="text-xs text-gray-500">

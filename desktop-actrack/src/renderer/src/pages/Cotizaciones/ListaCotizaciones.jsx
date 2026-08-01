@@ -3,10 +3,10 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const ESTILOS_ESTADO = {
-    borrador: { color: "#6b7280", background: "#f3f4f6" },
-    enviada: { color: "#1d4ed8", background: "#dbeafe" },
-    aprobada: { color: "#15803d", background: "#dcfce7" },
-    rechazada: { color: "#b91c1c", background: "#fee2e2" },
+    borrador: "badge-neutral",
+    enviada: "badge-info",
+    aprobada: "badge-success",
+    rechazada: "badge-danger",
 };
 
 const formatoMoneda = (valor) =>
@@ -70,7 +70,7 @@ const ListaCotizaciones = () => {
         }
     };
 
-    if (loading) return <p style={{ padding: "24px" }}>Cargando...</p>;
+    if (loading) return <p className="page">Cargando...</p>;
 
     const cotizacionesConNombre = cotizaciones.map((cot) => {
         const cliente = clientes.find((c) => c.id === cot.cli_id);
@@ -78,56 +78,61 @@ const ListaCotizaciones = () => {
     });
 
     return (
-        <div style={{ padding: "24px" }}>
-            <Link to="/home">← Inicio</Link>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div className="page">
+            <Link to="/home" className="page-back">← Inicio</Link>
+            <div className="page-header">
                 <h2>Cotizaciones</h2>
                 <Link to="/cotizaciones/nueva">
-                    <button>+ Nueva Cotización</button>
+                    <button className="btn-primary">+ Nueva Cotización</button>
                 </Link>
             </div>
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && <p className="error-text">{error}</p>}
 
             {cotizacionesConNombre.length === 0 ? (
-                <p>Todavía no hay cotizaciones.</p>
+                <div className="panel empty-state">
+                    <p className="empty-state-title">Todavía no hay cotizaciones</p>
+                    <p className="empty-state-description">Créalas desde una orden de servicio ya registrada.</p>
+                </div>
             ) : (
-                <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "16px" }}>
+                <div className="table-wrap">
+                <table className="table">
                     <thead>
-                        <tr style={{ textAlign: "left", borderBottom: "2px solid #e5e7eb" }}>
-                            <th style={{ padding: "8px" }}>Folio</th>
-                            <th style={{ padding: "8px" }}>Cliente</th>
-                            <th style={{ padding: "8px" }}>Total</th>
-                            <th style={{ padding: "8px" }}>Estado</th>
-                            <th style={{ padding: "8px" }}>Acciones</th>
+                        <tr>
+                            <th>Folio</th>
+                            <th>Cliente</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {cotizacionesConNombre.map((cot) => {
-                            const estilo = ESTILOS_ESTADO[cot.estado] || { color: "#374151", background: "#f3f4f6" };
+                            const clase = ESTILOS_ESTADO[cot.estado] || "badge-neutral";
                             return (
-                                <tr key={cot.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                                    <td style={{ padding: "8px" }}>{cot.folio}</td>
-                                    <td style={{ padding: "8px" }}>{cot.nombreCliente}</td>
-                                    <td style={{ padding: "8px" }}>{formatoMoneda(cot.total)}</td>
-                                    <td style={{ padding: "8px" }}>
-                                        <span style={{ ...estilo, padding: "2px 8px", borderRadius: "999px", fontSize: "12px" }}>
-                                            {cot.estado}
-                                        </span>
+                                <tr key={cot.id}>
+                                    <td>{cot.folio}</td>
+                                    <td>{cot.nombreCliente}</td>
+                                    <td>{formatoMoneda(cot.total)}</td>
+                                    <td>
+                                        <span className={`badge ${clase}`}>{cot.estado}</span>
                                     </td>
-                                    <td style={{ padding: "8px", display: "flex", gap: "6px" }}>
-                                        <Link to={`/cotizaciones/${cot.id}/editar`}><button>Editar</button></Link>
-                                        {cot.estado === "borrador" && (
-                                            <button onClick={() => marcarComoEnviada(cot)} disabled={actualizandoId === cot.id}>
-                                                {actualizandoId === cot.id ? "Enviando..." : "Enviar al cliente"}
-                                            </button>
-                                        )}
+                                    <td>
+                                        <div className="table-actions">
+                                            <Link to={`/cotizaciones/${cot.id}/editar`}><button className="btn-sm">Editar</button></Link>
+                                            {cot.estado === "borrador" && (
+                                                <button onClick={() => marcarComoEnviada(cot)} disabled={actualizandoId === cot.id} className="btn-sm">
+                                                    {actualizandoId === cot.id ? "Enviando..." : "Enviar al cliente"}
+                                                </button>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             );
                         })}
                     </tbody>
                 </table>
+                </div>
             )}
         </div>
     );

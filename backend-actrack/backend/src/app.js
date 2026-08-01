@@ -27,6 +27,7 @@ import oauthCuentasRouter from './routes/oauth_cuentas.router.js'
 import notificacionesRouter from './routes/notificaciones.router.js'
 import rutasRouter from './routes/rutas.router.js'
 import rutaParadasRouter from './routes/rutaParadas.router.js'
+import inventarioVehiculoRoutes from './routes/inventarioVehiculoRouter.js';
 import './config/passport.js'
 import passport from 'passport';
 import cors from 'cors';
@@ -77,5 +78,6 @@ app.use('/api/oauth_cuentas', oauthCuentasRouter);
 app.use('/api/notificaciones', notificacionesRouter);
 app.use('/api/rutas', rutasRouter);
 app.use('/api/ruta_paradas', rutaParadasRouter);
+app.use('/api/inventario_vehiculo', inventarioVehiculoRoutes);
 
 export default app;

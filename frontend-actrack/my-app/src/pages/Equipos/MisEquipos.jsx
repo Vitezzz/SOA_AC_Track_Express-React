@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { Link } from "react-router-dom";
+import LoadingState from "../../components/LoadingState.jsx";
+import EmptyState from "../../components/EmptyState.jsx";
 
 const ESTILOS_ESTADO = {
-    pendiente: "bg-yellow-100 text-yellow-700",
-    en_proceso: "bg-blue-100 text-blue-700",
-    completada: "bg-green-100 text-green-700",
-    cancelada: "bg-red-100 text-red-700",
+    pendiente: "badge-status-warning",
+    en_proceso: "badge-status-info",
+    completada: "badge-status-success",
+    cancelada: "badge-status-danger",
 };
 
 const formatearFecha = (fecha) =>
@@ -59,16 +61,20 @@ const MisEquipos = () => {
         cargarDatos();
     }, []);
 
-    if (loading) return <p className="text-center mt-10">Cargando...</p>;
+    if (loading) return <LoadingState />;
 
     return (
-        <div className="max-w-4xl mx-auto px-4 py-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-6">Mis Equipos</h2>
+        <div className="page-container-wide">
+            <h2 className="page-title">Mis Equipos</h2>
 
-            {error && <p className="text-red-500 text-sm text-center mb-4">{error}</p>}
+            {error && <p className="form-error mb-4">{error}</p>}
 
             {equipos.length === 0 ? (
-                <p className="text-gray-500 text-center">Todavía no tienes equipos registrados.</p>
+                <EmptyState
+                    icon="box"
+                    title="Todavía no tienes equipos registrados"
+                    description="Tus equipos aparecerán aquí junto con su historial de órdenes y mantenimiento."
+                />
             ) : (
                 <div className="space-y-6">
                     {equipos.map((eq) => {
@@ -79,14 +85,13 @@ const MisEquipos = () => {
                         const mantenimiento = mantenimientos.find((m) => m.equ_id === eq.id);
 
                         return (
-                            <Link key={eq.id} to={`/equipos/${eq.id}`} className="block bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-shadow">
+                            <Link key={eq.id} to={`/equipos/${eq.id}`} className="panel block">
                                 <div className="flex justify-between items-start mb-1">
                                     <span className="font-semibold text-gray-900">
                                         {eq.tipo} — {eq.modelo}
                                     </span>
                                     <span
-                                        className={`text-xs font-medium px-3 py-1 rounded-full ${eq.activo ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
-                                            }`}
+                                        className={`badge-status ${eq.activo ? "badge-status-success" : "badge-status-neutral"}`}
                                     >
                                         {eq.activo ? "Activo" : "Inactivo"}
                                     </span>
@@ -112,8 +117,7 @@ const MisEquipos = () => {
                                                         {orden.folio} — {formatearFecha(orden.fecha_programada)}
                                                     </span>
                                                     <span
-                                                        className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${ESTILOS_ESTADO[orden.estatus] || "bg-gray-100 text-gray-600"
-                                                            }`}
+                                                        className={`badge-status ${ESTILOS_ESTADO[orden.estatus] || "badge-status-neutral"}`}
                                                     >
                                                         {orden.estatus}
                                                     </span>
@@ -123,7 +127,7 @@ const MisEquipos = () => {
                                     )}
                                 </div>
                                 {eq.imagen_url && (
-                                    <img src={eq.imagen_url} alt={eq.modelo} style={{ width: "100%", borderRadius: "12px", marginBottom: "8px" }} />
+                                    <img src={eq.imagen_url} alt={eq.modelo} className="w-full rounded-xl mb-2 object-cover" />
                                 )}
                             </Link>
                         );

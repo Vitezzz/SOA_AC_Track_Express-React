@@ -8,40 +8,52 @@ const ESTILOS_ESTADO = {
     rechazada: "badge-status-danger",
 };
 
-// Intl.NumberFormat: herramienta nativa de JS para formatear números como
-// dinero, respetando el formato de la región (comas, símbolo de moneda, etc.)
 const formatoMoneda = (valor) =>
     new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(valor);
 
 const Cotizaciones = () => {
     const [cotizaciones, setCotizaciones] = useState([]);
+    const [detalles, setDetalles] = useState([]);
+    const [inventario, setInventario] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [procesandoId, setProcesandoId] = useState(null); // para deshabilitar botones mientras se envía
+    const [procesandoId, setProcesandoId] = useState(null);
 
     const { apiFetch } = useAuth();
 
     useEffect(() => {
-        const cargarCotizaciones = async () => {
+        const cargarDatos = async () => {
             try {
-                const res = await apiFetch("/api/cotizaciones");
+                const [resCotizaciones, resDetalles, resInventario] = await Promise.all([
+                    apiFetch("/api/cotizaciones"),
+                    apiFetch("/api/cotizacionDetalle"),
+                    apiFetch("/api/inventario"),
+                ]);
 
-                // Caso especial de este endpoint: 404 = "no tienes cotizaciones",
-                // no es un error real, así que no lo tratamos como tal.
-                if (res.status === 404) {
+                if (resCotizaciones.status === 404) {
                     setCotizaciones([]);
-                    return;
+                } else if (!resCotizaciones.ok) {
+                    throw new Error("No se pudieron cargar tus cotizaciones");
+                } else {
+                    setCotizaciones(await resCotizaciones.json());
                 }
 
-                if (!res.ok) throw new Error("No se pudieron cargar tus cotizaciones");
-                setCotizaciones(await res.json());
+                // cotizacionDetalle también puede dar 404 si todavía no
+                // tienes ningún renglón agregado -- mismo patrón de siempre.
+                if (resDetalles.status === 404) {
+                    setDetalles([]);
+                } else if (resDetalles.ok) {
+                    setDetalles(await resDetalles.json());
+                }
+
+                if (resInventario.ok) setInventario(await resInventario.json());
             } catch (err) {
                 setError(err.message);
             } finally {
                 setLoading(false);
             }
         };
-        cargarCotizaciones();
+        cargarDatos();
     }, []);
 
     const responder = async (cotizacion, nuevoEstado) => {
@@ -65,8 +77,6 @@ const Cotizaciones = () => {
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || "No se pudo actualizar la cotización");
 
-            // Actualizamos solo esa cotización en el estado local, sin
-            // tener que volver a pedir la lista completa al backend.
             setCotizaciones((prev) =>
                 prev.map((c) => (c.id === cotizacion.id ? { ...c, estado: nuevoEstado } : c))
             );
@@ -91,6 +101,11 @@ const Cotizaciones = () => {
                 <div className="space-y-4">
                     {cotizaciones.map((cot) => {
                         const clase = ESTILOS_ESTADO[cot.estado] || "badge-status-neutral";
+
+                        // Los renglones (piezas/mano de obra) que pertenecen
+                        // a esta cotización específica.
+                        const renglones = detalles.filter((d) => d.cot_id === cot.id);
+
                         return (
                             <div key={cot.id} className="panel">
                                 <div className="flex justify-between items-start mb-2">
@@ -104,9 +119,26 @@ const Cotizaciones = () => {
                                 </p>
                                 {cot.notas && <p className="text-gray-600 text-sm mb-4">{cot.notas}</p>}
 
-                                {/* Solo mostramos los botones si la cotización está
-                                    esperando respuesta del cliente. Si ya está en
-                                    'borrador', 'aprobada' o 'rechazada', no aplica. */}
+                                {renglones.length > 0 && (
+                                    <div className="border-t border-gray-100 pt-3 mb-4">
+                                        <p className="text-sm font-medium text-gray-700 mb-2">Desglose</p>
+                                        <ul className="space-y-1">
+                                            {renglones.map((r) => {
+                                                const articulo = inventario.find((i) => i.id === r.inv_id);
+                                                return (
+                                                    <li key={r.id} className="flex justify-between text-sm text-gray-600">
+                                                        <span>
+                                                            {r.es_mano_obra ? "Mano de obra" : (articulo?.nombre || "Artículo")}
+                                                            {" "}× {r.cantidad}
+                                                        </span>
+                                                        <span>{formatoMoneda(r.subtotal)}</span>
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
+                                    </div>
+                                )}
+
                                 {cot.estado === "enviada" && (
                                     <div className="flex gap-3">
                                         <button

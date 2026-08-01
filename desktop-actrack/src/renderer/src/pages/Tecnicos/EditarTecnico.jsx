@@ -70,37 +70,36 @@ const EditarTecnico = () => {
         }
     };
 
-    if (loading) return <p style={{ padding: "24px" }}>Cargando...</p>;
+    if (loading) return <p className="page">Cargando...</p>;
 
     return (
-        <div style={{ padding: "24px", maxWidth: "480px" }}>
+        <div className="page page-narrow">
             <h2>Editar Técnico #{tecnico?.usu_id}</h2>
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
-            {guardado && <p style={{ color: "green" }}>¡Técnico actualizado correctamente!</p>}
+            {error && <p className="error-text">{error}</p>}
+            {guardado && <p className="success-text">¡Técnico actualizado correctamente!</p>}
 
-            <form onSubmit={handleSubmit}>
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Especialidad</span>
-                    <select value={espId} onChange={(e) => setEspId(e.target.value)} style={{ width: "100%", padding: "8px" }}>
+            <form onSubmit={handleSubmit} className="form">
+                <label>
+                    <span>Especialidad</span>
+                    <select value={espId} onChange={(e) => setEspId(e.target.value)}>
                         {especialidades.map((e) => (
                             <option key={e.id} value={e.id}>{e.nombre}</option>
                         ))}
                     </select>
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
+                <label>
                     <input
                         type="checkbox"
                         checked={disponible}
                         onChange={(e) => setDisponible(e.target.checked)}
-                        style={{ marginRight: "8px" }}
                     />
                     Disponible para asignación
                 </label>
 
-                <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
-                    <button type="submit" disabled={guardando}>
+                <div className="form-actions">
+                    <button type="submit" disabled={guardando} className="btn-primary">
                         {guardando ? "Guardando..." : "Guardar cambios"}
                     </button>
                     <button type="button" onClick={() => navigate("/tecnicos")}>Volver</button>

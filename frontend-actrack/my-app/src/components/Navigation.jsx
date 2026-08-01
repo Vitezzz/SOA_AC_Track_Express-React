@@ -13,9 +13,13 @@ const Navigation = () => {
   }
 
   return (
-    <nav className="bg-white border-b border-gray-200 px-8 py-2 mb-6">
-      <div className="flex items-center justify-between max-w-7xl mx-auto">
-        <div className="flex items-center gap-1">
+    <nav className="site-nav mb-6">
+      <div className="flex items-center max-w-7xl mx-auto">
+        <NavLink to="/home" className="brand">
+          <span className="brand-mark">AC</span>
+          AC Track
+        </NavLink>
+        <div className="flex items-center gap-1 flex-1">
           <NavLink
             to="/home"
             className={({ isActive }) =>

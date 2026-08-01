@@ -63,38 +63,38 @@ const CrearTecnico = () => {
         }
     };
 
-    if (loading) return <p style={{ padding: "24px" }}>Cargando...</p>;
+    if (loading) return <p className="page">Cargando...</p>;
 
     return (
-        <div style={{ padding: "24px", maxWidth: "480px" }}>
+        <div className="page page-narrow">
             <h2>Nuevo Técnico</h2>
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && <p className="error-text">{error}</p>}
 
-            <form onSubmit={handleSubmit}>
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Nombre *</span>
-                    <input value={nombre} onChange={(e) => setNombre(e.target.value)} style={{ width: "100%", padding: "8px" }} />
+            <form onSubmit={handleSubmit} className="form">
+                <label>
+                    <span>Nombre *</span>
+                    <input value={nombre} onChange={(e) => setNombre(e.target.value)} />
                 </label>
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Apellido paterno</span>
-                    <input value={paterno} onChange={(e) => setPaterno(e.target.value)} style={{ width: "100%", padding: "8px" }} />
+                <label>
+                    <span>Apellido paterno</span>
+                    <input value={paterno} onChange={(e) => setPaterno(e.target.value)} />
                 </label>
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Apellido materno</span>
-                    <input value={materno} onChange={(e) => setMaterno(e.target.value)} style={{ width: "100%", padding: "8px" }} />
+                <label>
+                    <span>Apellido materno</span>
+                    <input value={materno} onChange={(e) => setMaterno(e.target.value)} />
                 </label>
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Email (será su usuario de acceso) *</span>
-                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} style={{ width: "100%", padding: "8px" }} />
+                <label>
+                    <span>Email (será su usuario de acceso) *</span>
+                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                 </label>
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Contraseña temporal *</span>
-                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: "100%", padding: "8px" }} />
+                <label>
+                    <span>Contraseña temporal *</span>
+                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
                 </label>
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Especialidad *</span>
-                    <select value={espId} onChange={(e) => setEspId(e.target.value)} style={{ width: "100%", padding: "8px" }}>
+                <label>
+                    <span>Especialidad *</span>
+                    <select value={espId} onChange={(e) => setEspId(e.target.value)}>
                         <option value="">Selecciona una especialidad</option>
                         {especialidades.map((e) => (
                             <option key={e.id} value={e.id}>{e.nombre}</option>
@@ -102,8 +102,8 @@ const CrearTecnico = () => {
                     </select>
                 </label>
 
-                <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
-                    <button type="submit" disabled={guardando}>
+                <div className="form-actions">
+                    <button type="submit" disabled={guardando} className="btn-primary">
                         {guardando ? "Creando..." : "Crear técnico"}
                     </button>
                     <button type="button" onClick={() => navigate("/tecnicos")}>Cancelar</button>

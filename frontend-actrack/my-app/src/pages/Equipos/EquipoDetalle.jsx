@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
+import LoadingState from "../../components/LoadingState.jsx";
+import Icon from "../../components/Icon.jsx";
 
 const ESTILOS_ESTADO = {
-    pendiente: "bg-yellow-100 text-yellow-700",
-    en_proceso: "bg-blue-100 text-blue-700",
-    completada: "bg-green-100 text-green-700",
-    pagada: "bg-purple-100 text-purple-700",
-    cancelada: "bg-red-100 text-red-700",
+    pendiente: "badge-status-warning",
+    en_proceso: "badge-status-info",
+    completada: "badge-status-success",
+    pagada: "badge-status-purple",
+    cancelada: "badge-status-danger",
 };
 
 const formatearFecha = (fecha) =>
@@ -54,7 +56,7 @@ const EquipoDetalle = () => {
         cargarDatos();
     }, [id]);
 
-    if (loading) return <p className="text-center mt-10">Cargando...</p>;
+    if (loading) return <LoadingState />;
     if (error) return <p className="form-error text-center mt-10">{error}</p>;
     if (!equipo) return null;
 
@@ -72,7 +74,7 @@ const EquipoDetalle = () => {
 
                 <div className="flex justify-between items-start mb-1">
                     <h2 className="page-title" style={{ margin: 0 }}>{equipo.tipo} — {equipo.modelo}</h2>
-                    <span className={`text-xs font-medium px-3 py-1 rounded-full ${equipo.activo ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                    <span className={`badge-status ${equipo.activo ? "badge-status-success" : "badge-status-neutral"}`}>
                         {equipo.activo ? "Activo" : "Inactivo"}
                     </span>
                 </div>
@@ -82,8 +84,8 @@ const EquipoDetalle = () => {
                     <p><span className="text-gray-400">N.º de serie:</span> <span className="text-gray-700">{equipo.numero_serie}</span></p>
                 </div>
 
-                <div className="border-t border-gray-100 pt-4 mt-4">
-                    <p className="text-sm font-medium text-gray-700 mb-2">Mantenimiento preventivo</p>
+                <div className="form-section">
+                    <p className="form-section-title"><Icon name="calendar" /> Mantenimiento preventivo</p>
                     {mantenimiento ? (
                         <p className="text-sm text-gray-600">
                             Cada {mantenimiento.frecuencia_dias} días — próxima visita: {formatearFecha(mantenimiento.proxima_fecha)}
@@ -93,8 +95,8 @@ const EquipoDetalle = () => {
                     )}
                 </div>
 
-                <div className="border-t border-gray-100 pt-4 mt-4">
-                    <p className="text-sm font-medium text-gray-700 mb-2">Historial de órdenes ({historial.length})</p>
+                <div className="form-section">
+                    <p className="form-section-title"><Icon name="wrench" /> Historial de órdenes ({historial.length})</p>
                     {historial.length === 0 ? (
                         <p className="text-sm text-gray-400">Sin órdenes registradas.</p>
                     ) : (
@@ -103,7 +105,7 @@ const EquipoDetalle = () => {
                                 <li key={orden.id}>
                                     <Link to={`/ordenes/${orden.id}`} className="flex justify-between items-center text-sm hover:underline">
                                         <span className="text-gray-600">{orden.folio} — {formatearFecha(orden.fecha_programada)}</span>
-                                        <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${ESTILOS_ESTADO[orden.estatus] || "bg-gray-100 text-gray-600"}`}>
+                                        <span className={`badge-status ${ESTILOS_ESTADO[orden.estatus] || "badge-status-neutral"}`}>
                                             {orden.estatus}
                                         </span>
                                     </Link>

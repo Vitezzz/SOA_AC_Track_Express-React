@@ -2,8 +2,8 @@ import { NavLink, Outlet } from "react-router-dom";
 
 const DashboardLayout = () => {
   return (
-    <div className="flex gap-4 p-6">
-      <ul className="menu bg-white rounded-xl border border-gray-200 w-56 gap-1 shadow-sm">
+    <div className="dashboard-shell">
+      <ul className="menu dashboard-sidebar">
         <li>
           <NavLink
             to="/dashboard"
@@ -26,7 +26,7 @@ const DashboardLayout = () => {
           </NavLink>
         </li>
       </ul>
-      <div className="flex-1 bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+      <div className="dashboard-content">
         <Outlet />
       </div>
     </div>

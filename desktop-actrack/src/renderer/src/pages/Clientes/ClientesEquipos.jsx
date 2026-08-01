@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import Icon from "../../components/Icon";
 
 const ClientesEquipos = () => {
     const [clientes, setClientes] = useState([]);
@@ -30,7 +31,7 @@ const ClientesEquipos = () => {
         cargarClientes();
     }, []);
 
-    if (loading) return <p style={{ padding: "24px" }}>Cargando...</p>;
+    if (loading) return <p className="page">Cargando...</p>;
 
     const clientesFiltrados = clientes.filter(
         (c) =>
@@ -39,60 +40,61 @@ const ClientesEquipos = () => {
     );
 
     return (
-        <div style={{ padding: "24px" }}>
+        <div className="page">
             <h2>Clientes y Equipos</h2>
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && <p className="error-text">{error}</p>}
 
-            <input
-                type="text"
-                placeholder="Buscar por nombre o correo..."
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-                style={{ width: "100%", padding: "8px", margin: "16px 0" }}
-            />
+            <div className="toolbar">
+                <div className="search-field">
+                    <Icon name="search" className="icon-sm" />
+                    <input
+                        type="text"
+                        placeholder="Buscar por nombre o correo..."
+                        value={busqueda}
+                        onChange={(e) => setBusqueda(e.target.value)}
+                    />
+                </div>
+            </div>
 
             {clientesFiltrados.length === 0 ? (
-                <p>No se encontraron clientes.</p>
+                <div className="panel empty-state">
+                    <p className="empty-state-title">No se encontraron clientes</p>
+                    <p className="empty-state-description">Prueba con otro nombre o correo.</p>
+                </div>
             ) : (
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <div className="table-wrap">
+                <table className="table">
                     <thead>
-                        <tr style={{ textAlign: "left", borderBottom: "2px solid #e5e7eb" }}>
-                            <th style={{ padding: "8px" }}>Nombre</th>
-                            <th style={{ padding: "8px" }}>Correo</th>
-                            <th style={{ padding: "8px" }}>Teléfono</th>
-                            <th style={{ padding: "8px" }}>Estado</th>
-                            <th style={{ padding: "8px" }}>Acciones</th>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Correo</th>
+                            <th>Teléfono</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {clientesFiltrados.map((cliente) => (
-                            <tr key={cliente.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                                <td style={{ padding: "8px" }}>{cliente.nombre}</td>
-                                <td style={{ padding: "8px" }}>{cliente.email}</td>
-                                <td style={{ padding: "8px" }}>{cliente.telefono || "—"}</td>
-                                <td style={{ padding: "8px" }}>
-                                    <span
-                                        style={{
-                                            padding: "2px 8px",
-                                            borderRadius: "999px",
-                                            fontSize: "12px",
-                                            background: cliente.activo ? "#dcfce7" : "#f3f4f6",
-                                            color: cliente.activo ? "#15803d" : "#6b7280",
-                                        }}
-                                    >
+                            <tr key={cliente.id}>
+                                <td>{cliente.nombre}</td>
+                                <td>{cliente.email}</td>
+                                <td>{cliente.telefono || "—"}</td>
+                                <td>
+                                    <span className={`badge ${cliente.activo ? "badge-success" : "badge-neutral"}`}>
                                         {cliente.activo ? "Activo" : "Inactivo"}
                                     </span>
                                 </td>
-                                <td style={{ padding: "8px" }}>
+                                <td>
                                     <Link to={`/clientes/${cliente.id}`}>
-                                        <button>Ver detalle</button>
+                                        <button className="btn-sm">Ver detalle</button>
                                     </Link>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
+                </div>
             )}
         </div>
     );

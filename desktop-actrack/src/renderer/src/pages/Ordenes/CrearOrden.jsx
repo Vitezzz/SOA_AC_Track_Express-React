@@ -115,18 +115,18 @@ const CrearOrden = () => {
         }
     };
 
-    if (loading) return <p style={{ padding: "24px" }}>Cargando...</p>;
+    if (loading) return <p className="page">Cargando...</p>;
 
     return (
-        <div style={{ padding: "24px", maxWidth: "480px" }}>
+        <div className="page page-narrow">
             <h2>Nueva Orden de Servicio</h2>
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && <p className="error-text">{error}</p>}
 
-            <form onSubmit={handleSubmit}>
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Cliente *</span>
-                    <select value={cliId} onChange={(e) => { setCliId(e.target.value); setEquId(""); }} style={{ width: "100%", padding: "8px" }}>
+            <form onSubmit={handleSubmit} className="form">
+                <label>
+                    <span>Cliente *</span>
+                    <select value={cliId} onChange={(e) => { setCliId(e.target.value); setEquId(""); }}>
                         <option value="">Selecciona un cliente</option>
                         {clientes.map((c) => (
                             <option key={c.id} value={c.id}>{c.nombre}</option>
@@ -134,9 +134,9 @@ const CrearOrden = () => {
                     </select>
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Equipo (opcional)</span>
-                    <select value={equId} onChange={(e) => setEquId(e.target.value)} style={{ width: "100%", padding: "8px" }} disabled={!cliId}>
+                <label>
+                    <span>Equipo (opcional)</span>
+                    <select value={equId} onChange={(e) => setEquId(e.target.value)} disabled={!cliId}>
                         <option value="">Sin equipo registrado</option>
                         {equiposDelCliente.map((eq) => (
                             <option key={eq.id} value={eq.id}>{eq.tipo} — {eq.modelo}</option>
@@ -144,9 +144,9 @@ const CrearOrden = () => {
                     </select>
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Categoría de servicio *</span>
-                    <select value={catId} onChange={(e) => setCatId(e.target.value)} style={{ width: "100%", padding: "8px" }}>
+                <label>
+                    <span>Categoría de servicio *</span>
+                    <select value={catId} onChange={(e) => setCatId(e.target.value)}>
                         <option value="">Selecciona una categoría</option>
                         {categorias.map((cat) => (
                             <option key={cat.id} value={cat.id}>{cat.nombre}</option>
@@ -154,19 +154,19 @@ const CrearOrden = () => {
                     </select>
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Descripción de la falla *</span>
-                    <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} style={{ width: "100%", padding: "8px" }} />
+                <label>
+                    <span>Descripción de la falla *</span>
+                    <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Fecha programada *</span>
-                    <input type="datetime-local" value={fechaProgramada} onChange={(e) => setFechaProgramada(e.target.value)} style={{ width: "100%", padding: "8px" }} />
+                <label>
+                    <span>Fecha programada *</span>
+                    <input type="datetime-local" value={fechaProgramada} onChange={(e) => setFechaProgramada(e.target.value)} />
                 </label>
 
-                <label style={{ display: "block", marginBottom: "12px" }}>
-                    <span style={{ display: "block", marginBottom: "4px" }}>Técnico (opcional, asignar ahora)</span>
-                    <select value={tecId} onChange={(e) => setTecId(e.target.value)} style={{ width: "100%", padding: "8px" }}>
+                <label>
+                    <span>Técnico (opcional, asignar ahora)</span>
+                    <select value={tecId} onChange={(e) => setTecId(e.target.value)}>
                         <option value="">Sin asignar</option>
                         {tecnicos.map((tec) => (
                             <option key={tec.id} value={tec.id} disabled={disponibilidad[tec.id]}>
@@ -176,8 +176,8 @@ const CrearOrden = () => {
                     </select>
                 </label>
 
-                <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
-                    <button type="submit" disabled={guardando}>
+                <div className="form-actions">
+                    <button type="submit" disabled={guardando} className="btn-primary">
                         {guardando ? "Creando..." : "Crear orden"}
                     </button>
                     <button type="button" onClick={() => navigate("/ordenes")}>Cancelar</button>

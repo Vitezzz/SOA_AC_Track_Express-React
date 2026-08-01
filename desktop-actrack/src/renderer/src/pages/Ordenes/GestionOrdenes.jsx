@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import Icon from "../../components/Icon";
 
 const ESTILOS_ESTADO = {
-    pendiente: { color: "#b45309", background: "#fef3c7" },
-    en_proceso: { color: "#1d4ed8", background: "#dbeafe" },
-    pagada: { color: "#7c3aed", background: "#ede9fe" },
-    completada: { color: "#15803d", background: "#dcfce7" },
-    cancelada: { color: "#b91c1c", background: "#fee2e2" },
+    pendiente: "badge-warning",
+    en_proceso: "badge-info",
+    pagada: "badge-purple",
+    completada: "badge-success",
+    cancelada: "badge-danger",
 };
 
 const GestionOrdenes = () => {
@@ -48,7 +49,7 @@ const GestionOrdenes = () => {
         cargarDatos();
     }, []);
 
-    if (loading) return <p style={{ padding: "24px" }}>Cargando...</p>;
+    if (loading) return <p className="page">Cargando...</p>;
 
     const ordenesConNombre = ordenes.map((orden) => {
         const cliente = clientes.find((c) => c.id === orden.cli_id);
@@ -72,29 +73,31 @@ const GestionOrdenes = () => {
     });
 
     return (
-        <div style={{ padding: "24px" }}>
-            <h2>Gestión de Órdenes</h2>
+        <div className="page">
+            <div className="page-header">
+                <h2>Gestión de Órdenes</h2>
+                {puedeCrear && (
+                    <Link to="/ordenes/nueva">
+                        <button className="btn-primary">+ Nueva Orden</button>
+                    </Link>
+                )}
+            </div>
 
-            {puedeCrear && (
-                <Link to="/ordenes/nueva">
-                    <button style={{ marginBottom: "12px" }}>+ Nueva Orden</button>
-                </Link>
-            )}
+            {error && <p className="error-text">{error}</p>}
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
-
-            <div style={{ display: "flex", gap: "12px", margin: "16px 0" }}>
-                <input
-                    type="text"
-                    placeholder="Buscar por folio o cliente..."
-                    value={busqueda}
-                    onChange={(e) => setBusqueda(e.target.value)}
-                    style={{ flex: 1, padding: "8px" }}
-                />
+            <div className="toolbar">
+                <div className="search-field">
+                    <Icon name="search" className="icon-sm" />
+                    <input
+                        type="text"
+                        placeholder="Buscar por folio o cliente..."
+                        value={busqueda}
+                        onChange={(e) => setBusqueda(e.target.value)}
+                    />
+                </div>
                 <select
                     value={filtroEstatus}
                     onChange={(e) => setFiltroEstatus(e.target.value)}
-                    style={{ padding: "8px" }}
                 >
                     <option value="todos">Todos los estatus</option>
                     <option value="pendiente">Pendiente</option>
@@ -105,40 +108,42 @@ const GestionOrdenes = () => {
             </div>
 
             {ordenesOrdenadas.length === 0 ? (
-                <p>No se encontraron órdenes con esos filtros.</p>
+                <div className="panel empty-state">
+                    <p className="empty-state-title">No se encontraron órdenes</p>
+                    <p className="empty-state-description">Prueba con otro folio, cliente o filtro de estatus.</p>
+                </div>
             ) : (
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <div className="table-wrap">
+                <table className="table">
                     <thead>
-                        <tr style={{ textAlign: "left", borderBottom: "2px solid #e5e7eb" }}>
-                            <th style={{ padding: "8px" }}>Folio</th>
-                            <th style={{ padding: "8px" }}>Cliente</th>
-                            <th style={{ padding: "8px" }}>Técnico</th>
-                            <th style={{ padding: "8px" }}>Estatus</th>
-                            <th style={{ padding: "8px" }}>Fecha</th>
-                            <th style={{ padding: "8px" }}>Acciones</th>
+                        <tr>
+                            <th>Folio</th>
+                            <th>Cliente</th>
+                            <th>Técnico</th>
+                            <th>Estatus</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {ordenesOrdenadas.map((orden) => {
-                            const estilo = ESTILOS_ESTADO[orden.estatus] || { color: "#374151", background: "#f3f4f6" };
+                            const clase = ESTILOS_ESTADO[orden.estatus] || "badge-neutral";
                             return (
-                                <tr key={orden.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                                    <td style={{ padding: "8px" }}>{orden.folio || "—"}</td>
-                                    <td style={{ padding: "8px" }}>{orden.nombreCliente}</td>
-                                    <td style={{ padding: "8px" }}>{orden.tec_id || "Sin asignar"}</td>
-                                    <td style={{ padding: "8px" }}>
-                                        <span style={{ ...estilo, padding: "2px 8px", borderRadius: "999px", fontSize: "12px" }}>
-                                            {orden.estatus}
-                                        </span>
+                                <tr key={orden.id}>
+                                    <td>{orden.folio || "—"}</td>
+                                    <td>{orden.nombreCliente}</td>
+                                    <td>{orden.tec_id || "Sin asignar"}</td>
+                                    <td>
+                                        <span className={`badge ${clase}`}>{orden.estatus}</span>
                                     </td>
-                                    <td style={{ padding: "8px" }}>
+                                    <td>
                                         {orden.fecha_programada
                                             ? new Date(orden.fecha_programada).toLocaleDateString("es-MX")
                                             : "Sin fecha"}
                                     </td>
-                                    <td style={{ padding: "8px" }}>
+                                    <td>
                                         <Link to={`/ordenes/${orden.id}/editar`}>
-                                            <button>Editar</button>
+                                            <button className="btn-sm">Editar</button>
                                         </Link>
                                     </td>
                                 </tr>
@@ -146,6 +151,7 @@ const GestionOrdenes = () => {
                         })}
                     </tbody>
                 </table>
+                </div>
             )}
         </div>
     );
