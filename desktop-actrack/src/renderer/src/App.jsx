@@ -25,6 +25,8 @@ import Configuracion from "./pages/Configuracion/Configuracion";
 import CrearEquipo from "./pages/Clientes/CrearEquipo";
 import EditarEquipo from "./pages/Clientes/EditarEquipo";
 import EditarCotizacion from "./pages/Cotizaciones/EditarCotizacion";
+import InventarioVehiculo from "./pages/Inventario/InventarioVehiculo";
+import HistorialPagosTecnicos from "./pages/Pagos/HistorialPagosTecnicos";
 
 function App() {
   return (
@@ -55,10 +57,12 @@ function App() {
               <Route path="/inventario/nuevo" element={<ProtectedRoute><FormularioInventario /></ProtectedRoute>} />
               <Route path="/inventario/:id/editar" element={<ProtectedRoute><FormularioInventario /></ProtectedRoute>} />
               <Route path="/inventario/movimiento" element={<ProtectedRoute><RegistrarMovimiento /></ProtectedRoute>} />
+              <Route path="/inventario/vehiculos" element={<ProtectedRoute><InventarioVehiculo /></ProtectedRoute>} />
               <Route path="/configuracion" element={<ProtectedRoute><Configuracion /></ProtectedRoute>} />
               <Route path="/clientes/:id/equipos/nuevo" element={<ProtectedRoute><CrearEquipo /></ProtectedRoute>} />
               <Route path="/equipos/:id/editar" element={<ProtectedRoute><EditarEquipo /></ProtectedRoute>} />
               <Route path="/cotizaciones/:id/editar" element={<ProtectedRoute><EditarCotizacion /></ProtectedRoute>} />
+              <Route path="/pagos/tecnicos" element={<ProtectedRoute><HistorialPagosTecnicos /></ProtectedRoute>} />
             </Routes>
           </main>
         </div>

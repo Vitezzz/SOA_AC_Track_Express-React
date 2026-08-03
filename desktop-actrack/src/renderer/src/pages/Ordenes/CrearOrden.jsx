@@ -22,6 +22,7 @@ const CrearOrden = () => {
     const [tecId, setTecId] = useState("");
     const [descripcion, setDescripcion] = useState("");
     const [fechaProgramada, setFechaProgramada] = useState("");
+    const [duracionEstimada, setDuracionEstimada] = useState("2");
 
     const [loading, setLoading] = useState(true);
     const [guardando, setGuardando] = useState(false);
@@ -30,7 +31,9 @@ const CrearOrden = () => {
     useEffect(() => {
         if (!fechaProgramada) return;
         const consultarDisponibilidad = async () => {
-            const res = await apiFetch(`/api/tecnicos/disponibilidad?fecha=${fechaProgramada}`);
+            const res = await apiFetch(
+                `/api/tecnicos/disponibilidad?fecha=${fechaProgramada}&duracion=${duracionEstimada || 2}`
+            );
             if (res.ok) {
                 const datos = await res.json();
                 const mapa = {};
@@ -39,7 +42,7 @@ const CrearOrden = () => {
             }
         };
         consultarDisponibilidad();
-    }, [fechaProgramada]);
+    }, [fechaProgramada, duracionEstimada]);
 
     useEffect(() => {
         const cargarCatalogos = async () => {
@@ -101,6 +104,7 @@ const CrearOrden = () => {
                     fecha_programada: fechaProgramada,
                     fecha_cierre: null,
                     tec_id: tecId ? Number(tecId) : null,
+                    duracion_estimada_horas: Number(duracionEstimada) || 2,
                 }),
             });
 
@@ -165,12 +169,23 @@ const CrearOrden = () => {
                 </label>
 
                 <label>
+                    <span>Duración estimada (horas) *</span>
+                    <input
+                        type="number"
+                        min="0.5"
+                        step="0.5"
+                        value={duracionEstimada}
+                        onChange={(e) => setDuracionEstimada(e.target.value)}
+                    />
+                </label>
+
+                <label>
                     <span>Técnico (opcional, asignar ahora)</span>
                     <select value={tecId} onChange={(e) => setTecId(e.target.value)}>
                         <option value="">Sin asignar</option>
                         {tecnicos.map((tec) => (
                             <option key={tec.id} value={tec.id} disabled={disponibilidad[tec.id]}>
-                                Técnico #{tec.usu_id} {disponibilidad[tec.id] ? "— Ocupado en esta fecha" : ""}
+                                Técnico #{tec.usu_id} {disponibilidad[tec.id] ? "— Ocupado en ese horario" : ""}
                             </option>
                         ))}
                     </select>

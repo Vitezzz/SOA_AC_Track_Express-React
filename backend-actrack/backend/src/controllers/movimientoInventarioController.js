@@ -45,12 +45,16 @@ const postMovimientosInventario = async (req, res) => {
     try {
         const { inv_id, ord_id, usu_id, tip_id, cantidad } = req.body;
 
-        if (!inv_id || !ord_id || !usu_id || !tip_id || !cantidad) {
+        // ord_id ya NO es obligatorio -- hay movimientos (entradas de
+        // compra, ajustes de conteo) que no están ligados a ninguna orden.
+        if (!inv_id || !usu_id || !tip_id || !cantidad) {
             return res.status(400).json({ message: "Campos faltantes" })
         }
 
-        const ordenesServicioExiste = await selectOrdenesServicioById(ord_id);
-        if (!ordenesServicioExiste) return res.status(404).json({ message: 'Orden servicio no encontrada' });
+        if (ord_id) {
+            const ordenesServicioExiste = await selectOrdenesServicioById(ord_id);
+            if (!ordenesServicioExiste) return res.status(404).json({ message: 'Orden servicio no encontrada' });
+        }
 
         const usuarioExiste = await findUserById(usu_id)
         if (!usuarioExiste) return res.status(404).json({ message: 'Usuario no encontrado' })
@@ -61,13 +65,16 @@ const postMovimientosInventario = async (req, res) => {
         const item = await selectInventarioId(inv_id);
         if (!item) return res.status(404).json({ message: 'Item no encontrado' });
 
-        if (tipoMov.nombre === "Salida" && item.stock_actual < cantidad) {
+        // Ya no comparamos el nombre del tipo -- cada tipo declara su
+        // propia dirección con "es_entrada", así funciona sin importar
+        // cuántos tipos nuevos agregues después (Ajustes, Devoluciones, etc.)
+        if (!tipoMov.es_entrada && Number(item.stock_actual) < Number(cantidad)) {
             return res.status(400).json({ message: "Stock insuficiente" })
         }
 
-        const nuevoMovimientoInventario = await insertMovimientosInventario({ inv_id, ord_id, usu_id, tip_id, cantidad });
+        const nuevoMovimientoInventario = await insertMovimientosInventario({ inv_id, ord_id: ord_id || null, usu_id, tip_id, cantidad });
 
-        const nuevoStock = tipoMov.nombre === 'Entrada'
+        const nuevoStock = tipoMov.es_entrada
             ? Number(item.stock_actual) + Number(cantidad)
             : Number(item.stock_actual) - Number(cantidad)
 
@@ -92,15 +99,16 @@ const putMovimientosInventario = async (req, res) => {
 
         const { id } = req.params;
 
-        
         if (!id) {
             return res.status(400).json({ message: "Id no encontrado" })
         }
 
         const { inv_id, ord_id, usu_id, tip_id, cantidad } = req.body;
 
-        const ordenesServicioExiste = await selectOrdenesServicioById(ord_id);
-        if (!ordenesServicioExiste) return res.status(404).json({ message: 'Orden servicio no encontrada' });
+        if (ord_id) {
+            const ordenesServicioExiste = await selectOrdenesServicioById(ord_id);
+            if (!ordenesServicioExiste) return res.status(404).json({ message: 'Orden servicio no encontrada' });
+        }
 
         const usuarioExiste = await findUserById(usu_id)
         if (!usuarioExiste) return res.status(404).json({ message: 'Usuario no encontrado' })
@@ -111,8 +119,7 @@ const putMovimientosInventario = async (req, res) => {
         const item = await selectInventarioId(inv_id);
         if (!item) return res.status(404).json({ message: 'Item no encontrado' });
 
-
-        const updtMovimientosInventario = await updateMovimientosInventario(id, { inv_id, ord_id, usu_id, tip_id, cantidad });
+        const updtMovimientosInventario = await updateMovimientosInventario(id, { inv_id, ord_id: ord_id || null, usu_id, tip_id, cantidad });
 
         res.status(200).json({
             id: updtMovimientosInventario.id,

@@ -1,12 +1,12 @@
 import {
-    selectPagos, selectPagosById, selectPagosByCliente, insertPagos,
+    selectPagos, selectPagosById, selectPagosByCliente, selectPagosByTecnico, insertPagos,
     updatePagos, deletePagos
 } from "../models/pagos.js";
 import { puedeVerTodo } from "../utils/roleUtils.js";
 import { selectCotizacionesByCliente, selectCotizacionesById } from "../models/cotizaciones.js";
 import { selectOrdenesServicioById } from "../models/ordenes_servicio.js";
 import { getClienteById } from "../models/clientes.js";
-import { getClienteIdByUserId } from '../utils/lookupUtils.js'
+import { getClienteIdByUserId, getTecnicoIdByUserId } from '../utils/lookupUtils.js'
 import * as pagosService from '../services/pagosService.js'
 
 const getPagos = async (req, res) => {
@@ -20,6 +20,10 @@ const getPagos = async (req, res) => {
             const cli_id = await getClienteIdByUserId(req.user.id);
             if(!cli_id) return res.status(404).json({ message : 'Cliente no encontrado'});
             listaPagos = await selectPagosByCliente(cli_id)
+        } else if (req.user.rol_id === 4) {
+            const tec_id = await getTecnicoIdByUserId(req.user.id);
+            if (!tec_id) return res.status(404).json({ message: 'Tecnico no encontrado' });
+            listaPagos = await selectPagosByTecnico(tec_id)
         } else {
             return res.status(403).json({ message: "No tienes acceso" })
         }
@@ -58,35 +62,6 @@ const getPagosById = async (req, res) => {
     }
 }
 
-
-/*
-const postPagos = async (req, res) => {
-    try {
-
-        const { cot_id, ord_id, cli_id, metodo, monto, estado = "pendiente" } = req.body;
-
-        if (!ord_id || !cli_id || !metodo || !monto || !estado) {
-            return res.status(400).json({ message: "campos faltante" });
-        }
-
-        const nuevoPago = await insertPagos({ cot_id, ord_id, cli_id, metodo, monto, estado });
-
-        return res.status(201).json({
-            id: nuevoPago.id,
-            cot_id: nuevoPago.cot_id,
-            ord_id: nuevoPago.ord_id,
-            cli_id: nuevoPago.cli_id,
-            monto: nuevoPago.monto,
-            metodo: nuevoPago.metodo,
-            estado: nuevoPago.estado
-        })
-
-    } catch (error) {
-        console.error('Error: ', error)
-        res.status(500).json({ message: "Error del servidor" })
-    }
-}
- */
 
 const postPagos = async(req,res) => {
 
@@ -147,6 +122,17 @@ const putPagos = async (req, res) => {
     }
 }
 
+const confirmarPagoController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pagoConfirmado = await pagosService.confirmarPago(id, req.user);
+        res.status(200).json(pagoConfirmado);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(error.status || 500).json({ message: error.message || 'Error del servidor' });
+    }
+}
+
 
 const dltPagos = async (req, res) => {
     try {
@@ -171,4 +157,4 @@ const dltPagos = async (req, res) => {
     }
 }
 
-export { getPagos, getPagosById, postPagos, putPagos, dltPagos }
+export { getPagos, getPagosById, postPagos, putPagos, dltPagos, confirmarPagoController }

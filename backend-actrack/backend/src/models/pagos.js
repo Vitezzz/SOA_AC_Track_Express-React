@@ -10,9 +10,19 @@ export const selectPagosById = async (id) => {
     return result.rows[0]
 }
 
-export const selectPagosByCliente = async(cli_id) => {
-    const result = await pool.query(`SELECT * FROM pagos WHERE cli_id = $1`, 
+export const selectPagosByCliente = async (cli_id) => {
+    const result = await pool.query(`SELECT * FROM pagos WHERE cli_id = $1`,
         [cli_id]);
+    return result.rows;
+}
+
+export const selectPagosByTecnico = async (tec_id) => {
+    const result = await pool.query(
+        `SELECT p.* FROM pagos p
+         JOIN ordenes_servicio o ON p.ord_id = o.id
+         WHERE o.tec_id = $1`,
+        [tec_id]
+    );
     return result.rows;
 }
 
@@ -35,4 +45,9 @@ export const updatePagos = async (id, { cot_id, ord_id, cli_id, metodo, monto, e
 export const deletePagos = async (id) => {
     const result = await pool.query(`DELETE FROM pagos WHERE id = $1 RETURNING *`, [id]);
     return result.rows[0];
+}
+
+export const selectPagosPorOrden = async (ord_id) => {
+    const result = await pool.query(`SELECT * FROM pagos WHERE ord_id = $1`, [ord_id]);
+    return result.rows;
 }

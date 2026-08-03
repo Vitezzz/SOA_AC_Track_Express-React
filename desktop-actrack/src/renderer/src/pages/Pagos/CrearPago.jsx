@@ -2,36 +2,62 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
+const formatoMoneda = (valor) =>
+    new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(valor);
+
 const CrearPago = () => {
     const navigate = useNavigate();
-    const { apiFetch } = useAuth();
+    const { apiFetch, user } = useAuth();
 
     const [ordenes, setOrdenes] = useState([]);
     const [clientes, setClientes] = useState([]);
+    const [cotizaciones, setCotizaciones] = useState([]);
+    const [pagos, setPagos] = useState([]);
 
     const [ordId, setOrdId] = useState("");
     const [metodo, setMetodo] = useState("efectivo");
     const [monto, setMonto] = useState("");
+    const [estadoManual, setEstadoManual] = useState("pagado");
 
     const [loading, setLoading] = useState(true);
     const [guardando, setGuardando] = useState(false);
     const [error, setError] = useState("");
 
+    const esTecnico = user?.rol_id === 4;
+
     useEffect(() => {
         const cargarCatalogos = async () => {
             try {
-                const [resOrdenes, resClientes] = await Promise.all([
+                const [resOrdenes, resClientes, resCotizaciones, resPagos] = await Promise.all([
                     apiFetch("/api/ordenes_servicio"),
                     apiFetch("/api/clientes/"),
+                    apiFetch("/api/cotizaciones"),
+                    apiFetch("/api/pagos"),
                 ]);
+
+                if (resClientes.ok) setClientes(await resClientes.json());
+
+                let cotizacionesData = [];
+                if (resCotizaciones.status !== 404 && resCotizaciones.ok) {
+                    cotizacionesData = await resCotizaciones.json();
+                    setCotizaciones(cotizacionesData);
+                }
 
                 if (resOrdenes.ok) {
                     const todas = await resOrdenes.json();
-                    // No tiene sentido registrar pago de órdenes ya pagadas
-                    // o canceladas -- el backend también lo bloquearía.
-                    setOrdenes(todas.filter((o) => o.estatus !== "pagada" && o.estatus !== "cancelada"));
+                    // Solo mostramos órdenes que: (1) todavía deben algo
+                    // (ni canceladas, ni ya pagadas) Y (2) YA tienen una
+                    // cotización aprobada -- si nadie la ha cotizado
+                    // todavía, ni siquiera tiene sentido que aparezca aquí.
+                    const ordenesConCotizacionAprobada = todas.filter((orden) => {
+                        const noDebeNada = orden.estatus === "cancelada" || orden.estatus === "pagada";
+                        if (noDebeNada) return false;
+                        return cotizacionesData.some((c) => c.ord_id === orden.id && c.estado === "aprobada");
+                    });
+                    setOrdenes(ordenesConCotizacionAprobada);
                 }
-                if (resClientes.ok) setClientes(await resClientes.json());
+
+                if (resPagos.status !== 404 && resPagos.ok) setPagos(await resPagos.json());
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -42,6 +68,12 @@ const CrearPago = () => {
     }, []);
 
     const ordenSeleccionada = ordenes.find((o) => String(o.id) === ordId);
+
+    const cotizacionAprobada = cotizaciones.find((c) => c.ord_id === Number(ordId) && c.estado === "aprobada");
+    const sumaYaPagada = pagos
+        .filter((p) => p.ord_id === Number(ordId) && p.estado === "pagado")
+        .reduce((suma, p) => suma + Number(p.monto), 0);
+    const saldoPendiente = cotizacionAprobada ? Number(cotizacionAprobada.total) - sumaYaPagada : null;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -62,7 +94,7 @@ const CrearPago = () => {
                     cli_id: ordenSeleccionada.cli_id,
                     metodo,
                     monto: Number(monto),
-                    estado: "pendiente",
+                    estado: esTecnico ? "pagado" : estadoManual,
                 }),
             });
 
@@ -81,7 +113,7 @@ const CrearPago = () => {
 
     return (
         <div className="page page-narrow">
-            <h2>Registrar Pago</h2>
+            <h2>{esTecnico ? "Confirmar Pago Recibido" : "Registrar Pago"}</h2>
 
             {error && <p className="error-text">{error}</p>}
 
@@ -99,7 +131,28 @@ const CrearPago = () => {
                             );
                         })}
                     </select>
+                    {ordenes.length === 0 && (
+                        <p className="hint-text">No hay órdenes con saldo pendiente de cobro.</p>
+                    )}
                 </label>
+
+                {ordId && (
+                    <div style={{ background: "#f9fafb", borderRadius: "8px", padding: "12px", fontSize: "14px" }}>
+                        {!cotizacionAprobada ? (
+                            <p style={{ color: "#b45309" }}>
+                                ⚠️ Esta orden no tiene una cotización aprobada — no se puede registrar un pago todavía.
+                            </p>
+                        ) : (
+                            <>
+                                <p>Total cotizado: <strong>{formatoMoneda(cotizacionAprobada.total)}</strong></p>
+                                <p>Ya cobrado: <strong>{formatoMoneda(sumaYaPagada)}</strong></p>
+                                <p>Saldo pendiente: <strong style={{ color: saldoPendiente > 0 ? "#b91c1c" : "#15803d" }}>
+                                    {formatoMoneda(saldoPendiente)}
+                                </strong></p>
+                            </>
+                        )}
+                    </div>
+                )}
 
                 <label>
                     <span>Método de pago *</span>
@@ -117,18 +170,31 @@ const CrearPago = () => {
                         type="number"
                         step="0.01"
                         min="0"
+                        max={saldoPendiente || undefined}
                         value={monto}
                         onChange={(e) => setMonto(e.target.value)}
                     />
                 </label>
 
+                {!esTecnico && (
+                    <label>
+                        <span>¿Ya se recibió este pago? *</span>
+                        <select value={estadoManual} onChange={(e) => setEstadoManual(e.target.value)}>
+                            <option value="pagado">Sí, ya se cobró</option>
+                            <option value="pendiente">No, sigue pendiente (solo registro de expectativa)</option>
+                        </select>
+                    </label>
+                )}
+
                 <p className="hint-text" style={{ marginBottom: "0.75rem" }}>
-                    Nota: al registrar este pago, la orden se marcará automáticamente como <strong>"pagada"</strong>.
+                    {esTecnico
+                        ? "Estás confirmando que el cliente ya te pagó, en el momento del servicio."
+                        : "Si el monto no cubre el total de la cotización, la orden NO se marcará como pagada -- podrás registrar más abonos después."}
                 </p>
 
                 <div className="form-actions" style={{ marginTop: 0 }}>
-                    <button type="submit" disabled={guardando} className="btn-primary">
-                        {guardando ? "Registrando..." : "Registrar pago"}
+                    <button type="submit" disabled={guardando || !cotizacionAprobada} className="btn-primary">
+                        {guardando ? "Registrando..." : esTecnico ? "Confirmar cobro" : "Registrar pago"}
                     </button>
                     <button type="button" onClick={() => navigate("/pagos")}>Cancelar</button>
                 </div>

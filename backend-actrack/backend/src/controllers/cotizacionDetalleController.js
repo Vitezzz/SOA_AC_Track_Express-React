@@ -77,22 +77,28 @@ const getCotizacionDetalleById = async (req, res) => {
 
 const postCotizacionDetalleById = async (req, res) => {
     try {
-        const { inv_id, cot_id, cantidad, precio_unitario, es_mano_obra } = req.body;
+        const { inv_id, cot_id, cantidad, precio_unitario, es_mano_obra, concepto } = req.body;
 
-        if (!inv_id || !cot_id || !cantidad || !precio_unitario) {
+        if (!cot_id || !cantidad || !precio_unitario) {
             return res.status(400).json({ message: "Faltan campos" })
         }
 
-        const inventarioExiste = await selectInventarioId(inv_id);
-        if (!inventarioExiste) return res.status(404).json({ message: 'Inventario no encontrado' });
+        if (!es_mano_obra && !inv_id) {
+            return res.status(400).json({ message: "Selecciona un artículo, o marca 'es mano de obra'" })
+        }
+
+        if (es_mano_obra && !concepto) {
+            return res.status(400).json({ message: "Describe en qué consistió la mano de obra" })
+        }
 
         const cotizacionExiste = await selectCotizacionesById(cot_id);
         if (!cotizacionExiste) return res.status(404).json({ message: 'Cotizacion no encontrada' })
 
-        // Si es una pieza física (no mano de obra), debe salir del stock que
-        // el técnico responsable YA trae en su camioneta -- la transferencia
-        // almacén -> vehículo ya debió haber pasado antes, por separado.
+        let inventarioExiste = null;
         if (!es_mano_obra) {
+            inventarioExiste = await selectInventarioId(inv_id);
+            if (!inventarioExiste) return res.status(404).json({ message: 'Inventario no encontrado' });
+
             if (!cotizacionExiste.tec_id) {
                 return res.status(400).json({ message: 'Esta cotización no tiene técnico asignado; no se puede descontar stock de vehículo' });
             }
@@ -100,7 +106,7 @@ const postCotizacionDetalleById = async (req, res) => {
             const stockVehiculo = await selectInventarioVehiculoPorTecnicoYArticulo(cotizacionExiste.tec_id, inv_id);
             if (!stockVehiculo || Number(stockVehiculo.cantidad) < Number(cantidad)) {
                 return res.status(400).json({
-                    message: `El técnico no tiene suficiente stock de "${inventarioExiste.nombre}" en su vehículo (disponible: ${stockVehiculo?.cantidad || 0})`
+                    message: `El técnico no tiene suficiente stock de "${inventarioExiste?.nombre}" en su vehículo (disponible: ${stockVehiculo?.cantidad || 0})`
                 });
             }
         }
@@ -111,9 +117,9 @@ const postCotizacionDetalleById = async (req, res) => {
 
             const subtotal = cantidad * precio_unitario;
             const resultDetalle = await client.query(
-                `INSERT INTO cotizacion_detalle (inv_id, cot_id, cantidad, precio_unitario, subtotal, es_mano_obra)
-                 VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-                [inv_id, cot_id, cantidad, precio_unitario, subtotal, es_mano_obra]
+                `INSERT INTO cotizacion_detalle (inv_id, cot_id, cantidad, precio_unitario, subtotal, es_mano_obra, concepto)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+                [inv_id || null, cot_id, cantidad, precio_unitario, subtotal, es_mano_obra, concepto || null]
             );
             const nuevaCotizacionDetalle = resultDetalle.rows[0];
 
@@ -132,7 +138,8 @@ const postCotizacionDetalleById = async (req, res) => {
                 cantidad: nuevaCotizacionDetalle.cantidad,
                 precio_unitario: nuevaCotizacionDetalle.precio_unitario,
                 subtotal: nuevaCotizacionDetalle.subtotal,
-                es_mano_obra: nuevaCotizacionDetalle.es_mano_obra
+                es_mano_obra: nuevaCotizacionDetalle.es_mano_obra,
+                concepto: nuevaCotizacionDetalle.concepto
             });
         } catch (error) {
             await client.query('ROLLBACK');
@@ -149,7 +156,7 @@ const postCotizacionDetalleById = async (req, res) => {
 const putCotizacionDetalleById = async (req, res) => {
     try {
         const { id } = req.params;
-        const { inv_id, cot_id, cantidad, precio_unitario, es_mano_obra } = req.body;
+        const { inv_id, cot_id, cantidad, precio_unitario, es_mano_obra, concepto } = req.body;
 
         if (!id) {
             return res.status(400).json({ message: "Id no encontrado" })
@@ -158,8 +165,18 @@ const putCotizacionDetalleById = async (req, res) => {
         const detalleAnterior = await selectCotizacionDetalleId(id);
         if (!detalleAnterior) return res.status(404).json({ message: "Id de cotizacion detalle no encontrado" });
 
-        const inventarioExiste = await selectInventarioId(inv_id);
-        if (!inventarioExiste) return res.status(404).json({ message: 'Inventario no encontrado' });
+        if (!es_mano_obra && !inv_id) {
+            return res.status(400).json({ message: "Selecciona un artículo, o marca 'es mano de obra'" })
+        }
+
+        if (es_mano_obra && !concepto) {
+            return res.status(400).json({ message: "Describe en qué consistió la mano de obra" })
+        }
+
+        if (!es_mano_obra) {
+            const inventarioExiste = await selectInventarioId(inv_id);
+            if (!inventarioExiste) return res.status(404).json({ message: 'Inventario no encontrado' });
+        }
 
         const cotizacionExiste = await selectCotizacionesById(cot_id);
         if (!cotizacionExiste) return res.status(404).json({ message: 'Cotizacion no encontrada' })
@@ -168,8 +185,6 @@ const putCotizacionDetalleById = async (req, res) => {
         try {
             await client.query('BEGIN');
 
-            // Primero "deshacemos" el efecto anterior en el stock del
-            // vehículo (si era una pieza física), luego aplicamos el nuevo.
             if (!detalleAnterior.es_mano_obra && cotizacionExiste.tec_id) {
                 await client.query(
                     `UPDATE inventario_vehiculo SET cantidad = cantidad + $1 WHERE tec_id = $2 AND inv_id = $3`,
@@ -198,8 +213,8 @@ const putCotizacionDetalleById = async (req, res) => {
             const subtotal = cantidad * precio_unitario;
             const resultUpdate = await client.query(
                 `UPDATE cotizacion_detalle SET inv_id = $1, cot_id = $2, cantidad = $3,
-                 precio_unitario = $4, subtotal = $5, es_mano_obra = $6 WHERE id = $7 RETURNING *`,
-                [inv_id, cot_id, cantidad, precio_unitario, subtotal, es_mano_obra, id]
+                 precio_unitario = $4, subtotal = $5, es_mano_obra = $6, concepto = $7 WHERE id = $8 RETURNING *`,
+                [inv_id || null, cot_id, cantidad, precio_unitario, subtotal, es_mano_obra, concepto || null, id]
             );
 
             await recalcularTotalCotizacion(client, cot_id);
@@ -214,7 +229,8 @@ const putCotizacionDetalleById = async (req, res) => {
                 cantidad: cotizacionDetalleUpdt.cantidad,
                 precio_unitario: cotizacionDetalleUpdt.precio_unitario,
                 subtotal: cotizacionDetalleUpdt.subtotal,
-                es_mano_obra: cotizacionDetalleUpdt.es_mano_obra
+                es_mano_obra: cotizacionDetalleUpdt.es_mano_obra,
+                concepto: cotizacionDetalleUpdt.concepto
             });
         } catch (error) {
             await client.query('ROLLBACK');
@@ -250,8 +266,6 @@ const dltCotizacionDetalle = async (req, res) => {
                 [id]
             );
 
-            // Si era una pieza física, regresamos la cantidad al vehículo
-            // del técnico -- estamos "deshaciendo" ese consumo.
             if (!detalleExistente.es_mano_obra && cotizacion?.tec_id) {
                 await client.query(
                     `UPDATE inventario_vehiculo SET cantidad = cantidad + $1 WHERE tec_id = $2 AND inv_id = $3`,

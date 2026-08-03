@@ -15,6 +15,7 @@ const EditarOrden = () => {
 
     const [estatus, setEstatus] = useState("");
     const [tecId, setTecId] = useState("");
+    const [duracionEstimada, setDuracionEstimada] = useState("2");
 
     const [loading, setLoading] = useState(true);
     const [guardando, setGuardando] = useState(false);
@@ -34,6 +35,7 @@ const EditarOrden = () => {
                 setOrden(dataOrden);
                 setEstatus(dataOrden.estatus);
                 setTecId(dataOrden.tec_id || "");
+                setDuracionEstimada(String(dataOrden.duracion_estimada_horas ?? 2));
 
                 if (resTecnicos.status === 404) {
                     setTecnicos([]);
@@ -54,7 +56,7 @@ const EditarOrden = () => {
 
         const consultarDisponibilidad = async () => {
             const res = await apiFetch(
-                `/api/tecnicos/disponibilidad?fecha=${orden.fecha_programada}&excluir=${id}`
+                `/api/tecnicos/disponibilidad?fecha=${orden.fecha_programada}&duracion=${duracionEstimada || 2}&excluir=${id}`
             );
             if (res.ok) {
                 const datos = await res.json();
@@ -64,7 +66,7 @@ const EditarOrden = () => {
             }
         };
         consultarDisponibilidad();
-    }, [orden?.fecha_programada, id]);
+    }, [orden?.fecha_programada, duracionEstimada, id]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -88,6 +90,7 @@ const EditarOrden = () => {
                     fecha_programada: orden.fecha_programada,
                     fecha_cierre: orden.fecha_cierre,
                     tec_id: tecId ? Number(tecId) : null,
+                    duracion_estimada_horas: Number(duracionEstimada) || 2,
                 }),
             });
 
@@ -125,6 +128,17 @@ const EditarOrden = () => {
                 </label>
 
                 <label>
+                    <span>Duración estimada (horas)</span>
+                    <input
+                        type="number"
+                        min="0.5"
+                        step="0.5"
+                        value={duracionEstimada}
+                        onChange={(e) => setDuracionEstimada(e.target.value)}
+                    />
+                </label>
+
+                <label>
                     <span>Técnico asignado</span>
                     <select
                         value={tecId}
@@ -133,7 +147,7 @@ const EditarOrden = () => {
                         <option value="">Sin asignar</option>
                         {tecnicos.map((tec) => (
                             <option key={tec.id} value={tec.id} disabled={disponibilidad[tec.id]}>
-                                Técnico #{tec.usu_id} {disponibilidad[tec.id] ? "— Ocupado en esta fecha" : ""}
+                                Técnico #{tec.usu_id} {disponibilidad[tec.id] ? "— Ocupado en ese horario" : ""}
                             </option>
                         ))}
                     </select>

@@ -163,10 +163,10 @@ const getTecnicosTodos = async (req, res) => {
 
 const getDisponibilidadTecnicos = async (req, res) => {
     try {
-        const { fecha, excluir } = req.query;
+        const { fecha, duracion, excluir } = req.query;
         if (!fecha) return res.status(400).json({ message: "Falta la fecha a consultar" });
 
-        const tecnicos = await selectTecnicosConDisponibilidad(fecha, excluir || null);
+        const tecnicos = await selectTecnicosConDisponibilidad(fecha, duracion || 2, excluir || null);
         res.status(200).json(tecnicos);
     } catch (error) {
         console.error("Error:", error);

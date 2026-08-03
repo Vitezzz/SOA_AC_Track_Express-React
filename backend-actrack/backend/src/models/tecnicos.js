@@ -32,7 +32,7 @@ export const selectTecnicosTodos = async () => {
     return result.rows;
 }
 
-export const selectTecnicosConDisponibilidad = async (fecha_programada, idExcluir = null, horasVentana = 2) => {
+export const selectTecnicosConDisponibilidad = async (fecha_programada, duracionHoras = 2, idExcluir = null) => {
     const result = await pool.query(
         `SELECT t.*,
             EXISTS (
@@ -40,13 +40,11 @@ export const selectTecnicosConDisponibilidad = async (fecha_programada, idExclui
                 WHERE o.tec_id = t.id
                   AND o.estatus != 'cancelada'
                   AND ($2::int IS NULL OR o.id != $2)
-                  AND o.fecha_programada BETWEEN
-                      ($1::timestamp - ($3 || ' hours')::interval)
-                      AND
-                      ($1::timestamp + ($3 || ' hours')::interval)
+                  AND $1::timestamp < (o.fecha_programada + (o.duracion_estimada_horas || ' hours')::interval)
+                  AND o.fecha_programada < ($1::timestamp + ($3 || ' hours')::interval)
             ) AS ocupado
          FROM tecnicos t`,
-        [fecha_programada, idExcluir, horasVentana]
+        [fecha_programada, idExcluir, duracionHoras]
     );
     return result.rows;
 }

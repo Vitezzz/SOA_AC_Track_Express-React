@@ -1,6 +1,6 @@
 import express from 'express'
 import { getPagos, getPagosById, postPagos,
-    putPagos,dltPagos
+    putPagos, dltPagos, confirmarPagoController
  } from '../controllers/pagosController.js'
  import { protect } from '../middlewares/authMiddleware.js';
  import { authorize } from '../middlewares/roleMiddleware.js';
@@ -9,8 +9,9 @@ import { getPagos, getPagosById, postPagos,
 
  router.get('/', protect,getPagos);
  router.get('/:id', protect,getPagosById);
- router.post('/', protect,authorize(2,5),postPagos);
- router.put('/:id',protect, authorize(2,5),putPagos);
+ router.post('/', protect,authorize(2,4,5),postPagos);
+ router.put('/:id',protect, authorize(2,4,5),putPagos);
+ router.put('/:id/confirmar', protect, authorize(2,4,5), confirmarPagoController);
  router.delete('/:id', protect,authorize(2),dltPagos);
 
  export default router;

@@ -51,6 +51,7 @@ const ListaInventario = () => {
                 <div style={{ display: "flex", gap: "0.5rem" }}>
                     <Link to="/inventario/nuevo"><button className="btn-primary">+ Nuevo Artículo</button></Link>
                     <Link to="/inventario/movimiento"><button>Registrar Movimiento</button></Link>
+                    <Link to="/inventario/vehiculos"><button>Inventario en Vehículos</button></Link>
                 </div>
             </div>
 
@@ -63,43 +64,43 @@ const ListaInventario = () => {
                 </div>
             ) : (
                 <div className="table-wrap">
-                <table className="table">
-                    <thead>
-                        <tr>
-                            <th>Código</th>
-                            <th>Nombre</th>
-                            <th>Categoría</th>
-                            <th>Stock actual</th>
-                            <th>Stock mínimo</th>
-                            <th>Precio</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {inventarioConDatos.map((item) => (
-                            <tr key={item.id} className={item.stockBajo ? "row-alert" : ""}>
-                                <td>{item.codigo}</td>
-                                <td>{item.nombre}</td>
-                                <td>{item.nombreCategoria}</td>
-                                <td style={{ color: item.stockBajo ? "var(--color-danger-text)" : "inherit", fontWeight: item.stockBajo ? "bold" : "normal" }}>
-                                    <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
-                                        {item.stock_actual}
-                                        {item.stockBajo && <Icon name="warning" className="icon-sm" style={{ color: "var(--color-danger-text)" }} />}
-                                    </span>
-                                </td>
-                                <td>{item.stock_minimo}</td>
-                                <td>
-                                    {new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(item.precio_venta)}
-                                </td>
-                                <td>
-                                    <Link to={`/inventario/${item.id}/editar`}>
-                                        <button className="btn-sm">Editar</button>
-                                    </Link>
-                                </td>
+                    <table className="table">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th>Categoría</th>
+                                <th>Stock actual</th>
+                                <th>Stock mínimo</th>
+                                <th>Precio</th>
+                                <th>Acciones</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {inventarioConDatos.map((item) => (
+                                <tr key={item.id} className={item.stockBajo ? "row-alert" : ""}>
+                                    <td>{item.codigo}</td>
+                                    <td>{item.nombre}</td>
+                                    <td>{item.nombreCategoria}</td>
+                                    <td style={{ color: item.stockBajo ? "var(--color-danger-text)" : "inherit", fontWeight: item.stockBajo ? "bold" : "normal" }}>
+                                        <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                                            {item.stock_actual}
+                                            {item.stockBajo && <Icon name="warning" className="icon-sm" style={{ color: "var(--color-danger-text)" }} />}
+                                        </span>
+                                    </td>
+                                    <td>{item.stock_minimo}</td>
+                                    <td>
+                                        {new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(item.precio_venta)}
+                                    </td>
+                                    <td>
+                                        <Link to={`/inventario/${item.id}/editar`}>
+                                            <button className="btn-sm">Editar</button>
+                                        </Link>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             )}
         </div>

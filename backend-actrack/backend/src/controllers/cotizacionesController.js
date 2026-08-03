@@ -68,7 +68,7 @@ const postCotizacione = async (req, res) => {
         const { ord_id, tec_id, cli_id, estado, total,
             notas } = req.body;
 
-        if (!ord_id || !tec_id || !cli_id || !estado || !total) {
+        if (!ord_id || !tec_id || !cli_id || !estado || total === undefined || total === null) {
             return res.status(400).json({ message: "Faltan campos" })
         }
 
@@ -111,6 +111,10 @@ const putCotizaciones = async (req, res) => {
         const { ord_id, tec_id, cli_id, folio, estado, total, notas } = req.body;
         if (!id) {
             return res.status(400).json({ message: "id no encontrado" });
+        }
+
+        if (estado === 'enviada' && Number(total) <= 0) {
+            return res.status(400).json({ message: 'No puedes enviar una cotización sin piezas o mano de obra agregada (el total es $0)' });
         }
 
         const clienteExiste = await getClienteById(cli_id);

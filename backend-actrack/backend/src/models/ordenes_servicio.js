@@ -16,23 +16,23 @@ export const selectOrdenesByCliente = async (cli_id) => {
 }
 
 export const insertOrdenesServicio = async ({ cli_id, equ_id, cat_id, pri_id, folio,
-    prioridad, estatus, descripcion, fecha_programada, fecha_cierre, tec_id }) => {
+    prioridad, estatus, descripcion, fecha_programada, fecha_cierre, tec_id, duracion_estimada_horas }) => {
 
     const result = await pool.query(`INSERT INTO ordenes_servicio (cli_id, equ_id, cat_id, pri_id, folio,
-    prioridad, estatus, descripcion, fecha_programada, fecha_cierre, tec_id) VALUES(
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`, [cli_id, equ_id, cat_id, pri_id, folio,
-        prioridad, estatus, descripcion, fecha_programada, fecha_cierre, tec_id]);
+    prioridad, estatus, descripcion, fecha_programada, fecha_cierre, tec_id, duracion_estimada_horas) VALUES(
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`, [cli_id, equ_id, cat_id, pri_id, folio,
+        prioridad, estatus, descripcion, fecha_programada, fecha_cierre, tec_id, duracion_estimada_horas ?? 2]);
 
     return result.rows[0];
 }
 
 export const updateOrdenesServicio = async (id, { cli_id, equ_id, cat_id, pri_id, folio,
-    prioridad, estatus, descripcion, fecha_programada, fecha_cierre, tec_id }) => {
+    prioridad, estatus, descripcion, fecha_programada, fecha_cierre, tec_id, duracion_estimada_horas }) => {
     const result = await pool.query(`UPDATE ordenes_servicio SET cli_id = $1, equ_id = $2, cat_id = $3, pri_id = $4, folio = $5,
     prioridad = $6, estatus = $7, descripcion = $8, fecha_programada = $9, fecha_cierre = $10,
-    tec_id = $11 WHERE id = $12 
+    tec_id = $11, duracion_estimada_horas = $12 WHERE id = $13 
     RETURNING *`, [cli_id, equ_id, cat_id, pri_id, folio,
-        prioridad, estatus, descripcion, fecha_programada, fecha_cierre, tec_id, id]);
+        prioridad, estatus, descripcion, fecha_programada, fecha_cierre, tec_id, duracion_estimada_horas ?? 2, id]);
 
     return result.rows[0];
 }
@@ -61,16 +61,18 @@ export const generarSiguienteFolio = async () => {
     return `OS-${anio}-${String(siguienteNumero).padStart(3, '0')}`;
 }
 
-export const getOrdenesPorTecnicoEnVentana = async (tec_id, fecha_programada, idExcluir, horasVentana = 2) => {
+// Ya no usamos un margen fijo de horas -- comparamos el RANGO real de
+// cada trabajo (inicio + su propia duración) contra el rango del nuevo
+// trabajo. 2 rangos chocan si: inicio1 < fin2 Y inicio2 < fin1.
+export const getOrdenesPorTecnicoEnConflicto = async (tec_id, fechaNueva, duracionNueva, idExcluir) => {
     const result = await pool.query(
         `SELECT * FROM ordenes_servicio
          WHERE tec_id = $1
-           AND estatus != 'cancelada' AND ($2::int IS NULL OR id != $2)
-           AND fecha_programada BETWEEN
-               ($3::timestamp - ($4 || ' hours')::interval)
-               AND
-               ($3::timestamp + ($4 || ' hours')::interval)`,
-        [tec_id, idExcluir, fecha_programada, horasVentana]
+           AND estatus != 'cancelada'
+           AND ($2::int IS NULL OR id != $2)
+           AND $3::timestamp < (fecha_programada + (duracion_estimada_horas || ' hours')::interval)
+           AND fecha_programada < ($3::timestamp + ($4 || ' hours')::interval)`,
+        [tec_id, idExcluir, fechaNueva, duracionNueva]
     );
     return result.rows;
 }

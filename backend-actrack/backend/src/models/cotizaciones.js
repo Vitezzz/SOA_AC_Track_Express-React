@@ -66,3 +66,11 @@ export const recalcularTotalCotizacion = async (client, cot_id) => {
     );
     return result.rows[0];
 }
+
+export const selectCotizacionAprobadaPorOrden = async (ord_id) => {
+    const result = await pool.query(
+        `SELECT * FROM cotizaciones WHERE ord_id = $1 AND estado = 'aprobada' ORDER BY id DESC LIMIT 1`,
+        [ord_id]
+    );
+    return result.rows[0];
+}

@@ -26,7 +26,7 @@ const Cotizaciones = () => {
             try {
                 const [resCotizaciones, resDetalles, resInventario] = await Promise.all([
                     apiFetch("/api/cotizaciones"),
-                    apiFetch("/api/cotizacionDetalle"),
+                    apiFetch("/api/cotizacion_detalle"),
                     apiFetch("/api/inventario"),
                 ]);
 
@@ -38,8 +38,6 @@ const Cotizaciones = () => {
                     setCotizaciones(await resCotizaciones.json());
                 }
 
-                // cotizacionDetalle también puede dar 404 si todavía no
-                // tienes ningún renglón agregado -- mismo patrón de siempre.
                 if (resDetalles.status === 404) {
                     setDetalles([]);
                 } else if (resDetalles.ok) {
@@ -101,9 +99,6 @@ const Cotizaciones = () => {
                 <div className="space-y-4">
                     {cotizaciones.map((cot) => {
                         const clase = ESTILOS_ESTADO[cot.estado] || "badge-status-neutral";
-
-                        // Los renglones (piezas/mano de obra) que pertenecen
-                        // a esta cotización específica.
                         const renglones = detalles.filter((d) => d.cot_id === cot.id);
 
                         return (
@@ -128,7 +123,7 @@ const Cotizaciones = () => {
                                                 return (
                                                     <li key={r.id} className="flex justify-between text-sm text-gray-600">
                                                         <span>
-                                                            {r.es_mano_obra ? "Mano de obra" : (articulo?.nombre || "Artículo")}
+                                                            {r.es_mano_obra ? (r.concepto || "Mano de obra") : (articulo?.nombre || "Artículo")}
                                                             {" "}× {r.cantidad}
                                                         </span>
                                                         <span>{formatoMoneda(r.subtotal)}</span>

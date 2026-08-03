@@ -44,8 +44,8 @@ const RegistrarMovimiento = () => {
         e.preventDefault();
         setError("");
 
-        if (!invId || !ordId || !tipId || !cantidad) {
-            setError("Completa todos los campos");
+        if (!invId || !tipId || !cantidad) {
+            setError("Completa todos los campos obligatorios");
             return;
         }
 
@@ -56,7 +56,7 @@ const RegistrarMovimiento = () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     inv_id: Number(invId),
-                    ord_id: Number(ordId),
+                    ord_id: ordId ? Number(ordId) : null,
                     usu_id: user.id,
                     tip_id: Number(tipId),
                     cantidad: Number(cantidad),
@@ -74,18 +74,18 @@ const RegistrarMovimiento = () => {
         }
     };
 
-    if (loading) return <p className="page">Cargando...</p>;
+    if (loading) return <p style={{ padding: "24px" }}>Cargando...</p>;
 
     return (
-        <div className="page page-narrow">
+        <div style={{ padding: "24px", maxWidth: "480px" }}>
             <h2>Registrar Movimiento de Inventario</h2>
 
-            {error && <p className="error-text">{error}</p>}
+            {error && <p style={{ color: "red" }}>{error}</p>}
 
-            <form onSubmit={handleSubmit} className="form">
-                <label>
-                    <span>Artículo *</span>
-                    <select value={invId} onChange={(e) => setInvId(e.target.value)}>
+            <form onSubmit={handleSubmit}>
+                <label style={{ display: "block", marginBottom: "12px" }}>
+                    <span style={{ display: "block", marginBottom: "4px" }}>Artículo *</span>
+                    <select value={invId} onChange={(e) => setInvId(e.target.value)} style={{ width: "100%", padding: "8px" }}>
                         <option value="">Selecciona un artículo</option>
                         {inventario.map((item) => (
                             <option key={item.id} value={item.id}>
@@ -95,19 +95,19 @@ const RegistrarMovimiento = () => {
                     </select>
                 </label>
 
-                <label>
-                    <span>Orden de servicio relacionada *</span>
-                    <select value={ordId} onChange={(e) => setOrdId(e.target.value)}>
-                        <option value="">Selecciona una orden</option>
+                <label style={{ display: "block", marginBottom: "12px" }}>
+                    <span style={{ display: "block", marginBottom: "4px" }}>Orden de servicio relacionada (opcional)</span>
+                    <select value={ordId} onChange={(e) => setOrdId(e.target.value)} style={{ width: "100%", padding: "8px" }}>
+                        <option value="">Sin orden asociada</option>
                         {ordenes.map((orden) => (
                             <option key={orden.id} value={orden.id}>{orden.folio}</option>
                         ))}
                     </select>
                 </label>
 
-                <label>
-                    <span>Tipo de movimiento *</span>
-                    <select value={tipId} onChange={(e) => setTipId(e.target.value)}>
+                <label style={{ display: "block", marginBottom: "12px" }}>
+                    <span style={{ display: "block", marginBottom: "4px" }}>Tipo de movimiento *</span>
+                    <select value={tipId} onChange={(e) => setTipId(e.target.value)} style={{ width: "100%", padding: "8px" }}>
                         <option value="">Selecciona un tipo</option>
                         {tipos.map((tipo) => (
                             <option key={tipo.id} value={tipo.id}>{tipo.nombre}</option>
@@ -115,13 +115,13 @@ const RegistrarMovimiento = () => {
                     </select>
                 </label>
 
-                <label>
-                    <span>Cantidad *</span>
-                    <input type="number" min="1" value={cantidad} onChange={(e) => setCantidad(e.target.value)} />
+                <label style={{ display: "block", marginBottom: "12px" }}>
+                    <span style={{ display: "block", marginBottom: "4px" }}>Cantidad *</span>
+                    <input type="number" min="1" value={cantidad} onChange={(e) => setCantidad(e.target.value)} style={{ width: "100%", padding: "8px" }} />
                 </label>
 
-                <div className="form-actions">
-                    <button type="submit" disabled={guardando} className="btn-primary">{guardando ? "Registrando..." : "Registrar"}</button>
+                <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
+                    <button type="submit" disabled={guardando}>{guardando ? "Registrando..." : "Registrar"}</button>
                     <button type="button" onClick={() => navigate("/inventario")}>Cancelar</button>
                 </div>
             </form>

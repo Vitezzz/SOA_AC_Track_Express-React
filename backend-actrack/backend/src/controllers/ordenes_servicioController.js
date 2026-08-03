@@ -1,6 +1,6 @@
 import {
     selectOrdenesServicio, selectOrdenesServicioById, selectOrdenesByCliente, insertOrdenesServicio, selectOrdenesByTecnico,
-    updateOrdenesServicio, deleteOrdenesServicio, generarSiguienteFolio, getOrdenesPorTecnicoEnVentana
+    updateOrdenesServicio, deleteOrdenesServicio, generarSiguienteFolio, getOrdenesPorTecnicoEnConflicto
 } from "../models/ordenes_servicio.js";
 import { insertBitacoraEstados } from "../models/bitacora_estados.js";
 import { puedeVerTodo } from "../utils/roleUtils.js";
@@ -79,7 +79,7 @@ const getOrdenesServicioById = async (req, res) => {
 const postOrdenesServicio = async (req, res) => {
     try {
         const { equ_id, cat_id, pri_id,
-            prioridad, estatus, descripcion, fecha_programada, fecha_cierre, tec_id } = req.body;
+            prioridad, estatus, descripcion, fecha_programada, fecha_cierre, tec_id, duracion_estimada_horas } = req.body;
 
         let cli_id = req.body.cli_id;
 
@@ -104,10 +104,10 @@ const postOrdenesServicio = async (req, res) => {
             const tecnicoExiste = await selectTecnicoById(tec_id);
             if (!tecnicoExiste) return res.status(404).json({ message: 'Tecnico no encontrado' })
 
-            const conflictos = await getOrdenesPorTecnicoEnVentana(tec_id, fecha_programada, null);
+            const conflictos = await getOrdenesPorTecnicoEnConflicto(tec_id, fecha_programada, duracion_estimada_horas || 2, null);
             if (conflictos.length > 0) {
                 return res.status(409).json({
-                    message: `Ese técnico ya tiene la orden ${conflictos[0].folio} programada cerca de esa fecha/hora (dentro de 2 horas). Elige otro horario o técnico.`
+                    message: `Ese técnico ya tiene la orden ${conflictos[0].folio} programada en un horario que se traslapa. Elige otro horario o técnico.`
                 });
             }
         }
@@ -123,7 +123,7 @@ const postOrdenesServicio = async (req, res) => {
         const nuevaOrdenServicio = await insertOrdenesServicio({
             cli_id, equ_id, cat_id, pri_id, folio,
             prioridad, estatus, descripcion, fecha_programada, fecha_cierre,
-            tec_id
+            tec_id, duracion_estimada_horas: duracion_estimada_horas || 2
         })
 
         if (tec_id) {
@@ -167,7 +167,8 @@ const postOrdenesServicio = async (req, res) => {
             estatus: nuevaOrdenServicio.estatus,
             descripcion: nuevaOrdenServicio.descripcion,
             fecha_programada: nuevaOrdenServicio.fecha_programada,
-            fecha_cierre: nuevaOrdenServicio.fecha_cierre
+            fecha_cierre: nuevaOrdenServicio.fecha_cierre,
+            duracion_estimada_horas: nuevaOrdenServicio.duracion_estimada_horas
         });
     } catch (error) {
         console.error("Error: ", error)
@@ -180,7 +181,7 @@ const putOrdenesServicio = async (req, res) => {
         const { id } = req.params;
         const { cli_id, equ_id, cat_id, pri_id, folio,
             prioridad, estatus, descripcion, fecha_programada, fecha_cierre,
-            tec_id } = req.body;
+            tec_id, duracion_estimada_horas } = req.body;
 
         if (!id) {
             return res.status(400).json({ message: 'Id no encontrado' })
@@ -196,10 +197,10 @@ const putOrdenesServicio = async (req, res) => {
             const tecnicoExiste = await selectTecnicoById(tec_id);
             if (!tecnicoExiste) return res.status(404).json({ message: 'Tecnico no encontrado' })
 
-            const conflictos = await getOrdenesPorTecnicoEnVentana(tec_id, fecha_programada, id);
+            const conflictos = await getOrdenesPorTecnicoEnConflicto(tec_id, fecha_programada, duracion_estimada_horas || 2, id);
             if (conflictos.length > 0) {
                 return res.status(409).json({
-                    message: `Ese técnico ya tiene la orden ${conflictos[0].folio} programada cerca de esa fecha/hora (dentro de 2 horas). Elige otro horario o técnico.`
+                    message: `Ese técnico ya tiene la orden ${conflictos[0].folio} programada en un horario que se traslapa. Elige otro horario o técnico.`
                 });
             }
         }
@@ -209,7 +210,7 @@ const putOrdenesServicio = async (req, res) => {
         const actualizadaOrdenServicio = await updateOrdenesServicio(id, {
             cli_id, equ_id, cat_id, pri_id, folio,
             prioridad, estatus, descripcion, fecha_programada, fecha_cierre,
-            tec_id
+            tec_id, duracion_estimada_horas: duracion_estimada_horas || 2
         });
 
         if (tec_id) {
@@ -256,7 +257,8 @@ const putOrdenesServicio = async (req, res) => {
                 estatus: actualizadaOrdenServicio.estatus,
                 descripcion: actualizadaOrdenServicio.descripcion,
                 fecha_programada: actualizadaOrdenServicio.fecha_programada,
-                fecha_cierre: actualizadaOrdenServicio.fecha_cierre
+                fecha_cierre: actualizadaOrdenServicio.fecha_cierre,
+                duracion_estimada_horas: actualizadaOrdenServicio.duracion_estimada_horas
             }
         )
 
