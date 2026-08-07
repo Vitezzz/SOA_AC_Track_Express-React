@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card } from "../../components/Card";
 import { useAuth } from "../../context/AuthContext";
-import AddressAutocompleteInput from "../../components/AddressAutocompleteInput";
+import SelectorDireccion from "../../components/SelectorDireccion";
 import Icon from "../../components/Icon";
 import LoadingState from "../../components/LoadingState";
 
@@ -9,6 +9,8 @@ const CompletarPerfil = () => {
 
     const [telefono, setTelefono] = useState("");
     const [direccion, setDireccion] = useState("");
+    const [lat, setLat] = useState(null);
+    const [lng, setLng] = useState(null);
     const [infoCliente, setInfoCliente] = useState(null);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(true);
@@ -25,6 +27,10 @@ const CompletarPerfil = () => {
                 const data = await res.json();
                 setTelefono(data.telefono || "");
                 setDireccion(data.direccion || "");
+                if (data.latitud && data.longitud) {
+                    setLat(Number(data.latitud));
+                    setLng(Number(data.longitud));
+                }
                 setInfoCliente(data);
             } catch (err) {
                 setError(err.message);
@@ -50,7 +56,7 @@ const CompletarPerfil = () => {
             const res = await apiFetch("/api/clientes/perfil", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ telefono, direccion }),
+                body: JSON.stringify({ telefono, direccion, latitud: lat, longitud: lng }),
             });
 
             const data = await res.json();
@@ -67,8 +73,6 @@ const CompletarPerfil = () => {
 
     if (loading) return <LoadingState />;
 
-    // Nombre completo, uniendo solo las partes que sí existan --
-    // si viene de Google/Facebook, paterno/materno son null y no aparecen.
     const nombreCompleto = [infoCliente?.nombre, infoCliente?.paterno, infoCliente?.materno]
         .filter(Boolean)
         .join(" ");
@@ -120,14 +124,13 @@ const CompletarPerfil = () => {
 
                     <label className="form-control w-full">
                         <span className="form-label">Dirección</span>
-                        <div className="input-group">
-                            <Icon name="pin" className="input-icon" />
-                            <AddressAutocompleteInput
-                                className="form-input"
-                                value={direccion}
-                                onChange={setDireccion}
-                            />
-                        </div>
+                        <SelectorDireccion
+                            direccion={direccion}
+                            onChange={setDireccion}
+                            lat={lat}
+                            lng={lng}
+                            onCoordenadas={(nuevaLat, nuevaLng) => { setLat(nuevaLat); setLng(nuevaLng); }}
+                        />
                     </label>
 
                     <button type="submit" className="btn-primary w-full py-3" disabled={submitting}>

@@ -124,8 +124,14 @@ const OrdenDetalle = () => {
                         <ul className="space-y-1">
                             {bitacora.map((registro) => (
                                 <li key={registro.id} className="text-xs text-gray-500">
-                                    {registro.estado_anterior ? `${registro.estado_anterior} → ` : "Creada como "}
-                                    <span className="capitalize">{registro.estado_nuevo}</span>
+                                    {registro.estado_nuevo === "tecnico_en_camino" && "🚗 Técnico en camino"}
+                                    {registro.estado_nuevo === "tecnico_llego" && "📍 Técnico llegó al domicilio"}
+                                    {!["tecnico_en_camino", "tecnico_llego"].includes(registro.estado_nuevo) && (
+                                        <>
+                                            {registro.estado_anterior ? `${registro.estado_anterior} → ` : "Creada como "}
+                                            <span className="capitalize">{registro.estado_nuevo}</span>
+                                        </>
+                                    )}
                                     {registro.created_at && ` · ${formatearFechaHora(registro.created_at)}`}
                                 </li>
                             ))}

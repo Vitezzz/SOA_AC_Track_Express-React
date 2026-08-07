@@ -8,6 +8,6 @@ const router = express.Router();
 router.get('/',protect ,getBitacoraEstados);
  router.get('/orden/:ord_id', protect, getBitacoraPorOrden);
 router.get('/:id',protect ,getBitacoraEstadosById);
-router.post('/',protect ,authorize(2),postBitacoraEstados);
+router.post('/',protect ,authorize(2,4,5),postBitacoraEstados);
 
 export default router;

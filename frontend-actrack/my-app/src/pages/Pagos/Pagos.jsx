@@ -16,6 +16,8 @@ const Pagos = () => {
 
     const [pagos, setPagos] = useState([]);
     const [ordenes, setOrdenes] = useState([]);
+    const [categorias, setCategorias] = useState([]);
+    const [equipos, setEquipos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -26,19 +28,23 @@ const Pagos = () => {
         const cargarPagos = async () => {
             try {
 
-                const [resPagos, resOrdenes] = await Promise.all([
+                const [resPagos, resOrdenes, resCategorias, resEquipos] = await Promise.all([
                     apiFetch("/api/pagos"),
-                    apiFetch("/api/ordenes_servicio")
+                    apiFetch("/api/ordenes_servicio"),
+                    apiFetch("/api/categoriaServicio"),
+                    apiFetch("/api/equipos/"),
                 ]);
 
                 if (resOrdenes.status === 404) {
                     setOrdenes([]);
-                    return;
+                } else if (!resOrdenes.ok) {
+                    throw new Error('No se pudieron cargar las ordenes');
+                } else {
+                    setOrdenes(await resOrdenes.json());
                 }
 
-                if (!resOrdenes.ok) throw new Error('No se pudieron cargar las ordenes');
-                setOrdenes(await resOrdenes.json());
-
+                if (resCategorias.ok) setCategorias(await resCategorias.json());
+                if (resEquipos.ok) setEquipos(await resEquipos.json());
 
                 if (resPagos.status === 404) {
                     setPagos([])
@@ -73,18 +79,29 @@ const Pagos = () => {
                 <div className="space-y-4">
                     {pagos.map((pag) => {
                         const clase = ESTILOS_ESTADO_PAGO[pag.estado] || "badge-status-neutral";
-                        const folioOrden = ordenes.find((o) => o.id === pag.ord_id)?.folio;
+                        const orden = ordenes.find((o) => o.id === pag.ord_id);
+                        const categoria = categorias.find((c) => c.id === orden?.cat_id);
+                        const equipo = equipos.find((e) => e.id === orden?.equ_id);
 
                         return (
                             <div key={pag.id} className="panel">
-                                <div className="flex justify-between items-start mb-3">
+                                <div className="flex justify-between items-start mb-1">
                                     <span className="font-semibold text-gray-900">
-                                        Orden: {folioOrden || "—"}
+                                        {categoria?.nombre || "Pago de servicio"}
                                     </span>
                                     <span className={`badge-status ${clase}`}>
                                         {pag.estado}
                                     </span>
                                 </div>
+
+                                <p className="text-gray-500 text-sm mb-3">
+                                    Orden: {orden?.folio || "—"}
+                                    {equipo && ` · Equipo: ${equipo.tipo}${equipo.modelo ? ` (${equipo.modelo})` : ""}`}
+                                </p>
+
+                                {orden?.descripcion && (
+                                    <p className="text-gray-600 text-sm mb-3">{orden.descripcion}</p>
+                                )}
 
                                 <p className="text-gray-900 text-lg font-semibold mb-1">
                                     {formatoMoneda(pag.monto)}

@@ -8,19 +8,27 @@ import { ROLES } from '../utils/roleUtils.js'
 import pool from '../config/database.js'
 import { getClienteIdByUserId } from '../utils/lookupUtils.js';
 import { getClienteById } from '../models/clientes.js';
+import { validarTelefonoMX } from '../utils/validaciones.js';
 
 const register = async (req, res) => {
 
-    const { rol_id, nombre, paterno, materno, email, password, telefono, direccion } = req.body;
+    // Este endpoint es público (sin "protect") a propósito -- es el registro
+    // libre de clientes desde la web. Por eso el rol_id NUNCA se toma del
+    // body: si se respetara lo que manda el cliente, cualquiera podría
+    // registrarse como admin/supervisor/técnico mandando rol_id en el POST.
+    // Admin/supervisor se crean por fuera (DB directa); técnico se crea
+    // desde "Nuevo Técnico" en desktop (POST /api/tecnicos, admin-only).
+    const rol_id = ROLES.CLIENTE;
+    const { nombre, paterno, materno, email, password, telefono, direccion, latitud, longitud } = req.body;
 
     if (!nombre || !email || !password) {
         return res.status(400).json({ message: 'Favor de proporcionar todos los campos' })
     }
 
-    //Si va a ser cliente , telefono y dirección también son obligatorios
+    //Cliente siempre necesita teléfono y dirección
     //(La tabla clientes los necesita para operar : notificar por SMS, ubicarlo, etc.)
-    if (Number(rol_id) === ROLES.CLIENTE && (!telefono || !direccion)) {
-        return res.status(400).json({ message: 'Teléfono y dirección sonr equeridos' })
+    if (!telefono || !direccion) {
+        return res.status(400).json({ message: 'Teléfono y dirección son requeridos' })
     }
 
     const usuarioExiste = await findUserByEmail(email)
@@ -53,22 +61,35 @@ const register = async (req, res) => {
         //2) Si es cliente, creamos también su perfil en la misma transacción
         if (Number(rol_id) === ROLES.CLIENTE) {
             await client.query(
-                `INSERT INTO clientes (usu_id, nombre, email, telefono, direccion, activo)
-                VALUES ($1, $2, $3, $4, $5, $6)`,
-                [nuevoUsuario.id, nombre, email, telefono, direccion, true]
+                `INSERT INTO clientes (usu_id, nombre, email, telefono, direccion, activo, latitud, longitud)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+                [nuevoUsuario.id, nombre, email, telefono, direccion, true, latitud || null, longitud || null]
             );
+        }
+
+        if (Number(rol_id) === ROLES.CLIENTE && !validarTelefonoMX(telefono)) {
+            return res.status(400).json({ message: 'El teléfono debe tener 10 dígitos' })
         }
 
         await client.query('COMMIT');
 
         const token = generateAccessToken(nuevoUsuario.id);
+        // Sin esto, el cliente recién registrado se queda sin refresh token
+        // guardado -- a la hora de vida del access token se le cierra la
+        // sesión de golpe, sin poder renovarla sola como sí pasa al hacer
+        // login normal.
+        const refreshToken = generateRefreshToken(nuevoUsuario.id);
+        const expira = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        await insertSesiones(nuevoUsuario.id, refreshToken, expira);
 
         res.cookie('token', token, cookieOptions);
 
         res.status(201).json({
             id: nuevoUsuario.id,
             nombre: nuevoUsuario.nombre,
-            email: nuevoUsuario.email
+            email: nuevoUsuario.email,
+            accessToken: token,
+            refreshToken
         })
 
     } catch (error) {

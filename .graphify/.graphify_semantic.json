@@ -1,0 +1,123 @@
+{
+  "nodes": [
+    {
+      "id": "desktop_readme_setup",
+      "label": "Desktop README (setup docs)",
+      "file_type": "document",
+      "source_file": "desktop-actrack/README.md",
+      "source_location": "L1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": null
+    },
+    {
+      "id": "webapp_readme_setup",
+      "label": "Web app README (Vite template)",
+      "file_type": "document",
+      "source_file": "frontend-actrack/my-app/README.md",
+      "source_location": "L1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": null
+    },
+    {
+      "id": "frontend_md_vite_proxy",
+      "label": "Vite dev proxy note (frontend.md)",
+      "file_type": "document",
+      "source_file": "frontend.md",
+      "source_location": "L1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Explica por que Vite (5173) reenvia /api al backend Express (3000) en desarrollo, para evitar bloqueo de CORS/puertos del navegador."
+    },
+    {
+      "id": "electron_builder_yml_build_config",
+      "label": "Electron Builder config",
+      "file_type": "document",
+      "source_file": "desktop-actrack/electron-builder.yml",
+      "source_location": "L1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": null
+    },
+    {
+      "id": "desktop_index_html_csp_map_apis",
+      "label": "Desktop renderer CSP (OSM + OSRM whitelisted)",
+      "file_type": "document",
+      "source_file": "desktop-actrack/src/renderer/index.html",
+      "source_location": "L8",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "La Content-Security-Policy solo permite imagenes de tile.openstreetmap.org y conexiones a router.project-osrm.org: confirma que Desktop usa Leaflet+OSM+OSRM, no Google Maps."
+    },
+    {
+      "id": "webapp_index_html_google_maps",
+      "label": "Web app entry HTML (Google Maps JS API)",
+      "file_type": "document",
+      "source_file": "frontend-actrack/my-app/index.html",
+      "source_location": "L14",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Carga maps.googleapis.com con VITE_GOOGLE_MAPS_API_KEY: el Web app usa Google Maps, un proveedor de mapas distinto al de Desktop (Leaflet/OSM)."
+    },
+    {
+      "id": "cookies_txt_captured_session",
+      "label": "Archivo de cookies capturado (formato Netscape)",
+      "file_type": "document",
+      "source_file": "cookies.txt",
+      "source_location": "L5",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Contiene un JWT de sesion real capturado con curl (--cookie-jar). Este archivo esta rastreado por git (aparece modificado en git status): es un secreto/token de auth commiteado al repo, no solo un artefacto de prueba local."
+    }
+  ],
+  "edges": [
+    {
+      "source": "desktop_index_html_csp_map_apis",
+      "target": "webapp_index_html_google_maps",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.65,
+      "source_file": "desktop-actrack/src/renderer/index.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "electron_builder_yml_build_config",
+      "target": "desktop_readme_setup",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.7,
+      "source_file": "desktop-actrack/electron-builder.yml",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_md_vite_proxy",
+      "target": "webapp_readme_setup",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.6,
+      "source_file": "frontend.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

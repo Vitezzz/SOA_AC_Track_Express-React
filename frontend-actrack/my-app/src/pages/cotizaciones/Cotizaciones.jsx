@@ -15,6 +15,10 @@ const Cotizaciones = () => {
     const [cotizaciones, setCotizaciones] = useState([]);
     const [detalles, setDetalles] = useState([]);
     const [inventario, setInventario] = useState([]);
+    const [ordenes, setOrdenes] = useState([]);
+    const [categorias, setCategorias] = useState([]);
+    const [equipos, setEquipos] = useState([]);
+    const [tecnicos, setTecnicos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [procesandoId, setProcesandoId] = useState(null);
@@ -24,10 +28,17 @@ const Cotizaciones = () => {
     useEffect(() => {
         const cargarDatos = async () => {
             try {
-                const [resCotizaciones, resDetalles, resInventario] = await Promise.all([
+                const [
+                    resCotizaciones, resDetalles, resInventario,
+                    resOrdenes, resCategorias, resEquipos, resTecnicos,
+                ] = await Promise.all([
                     apiFetch("/api/cotizaciones"),
                     apiFetch("/api/cotizacion_detalle"),
                     apiFetch("/api/inventario"),
+                    apiFetch("/api/ordenes_servicio"),
+                    apiFetch("/api/categoriaServicio"),
+                    apiFetch("/api/equipos/"),
+                    apiFetch("/api/tecnicos/todos"),
                 ]);
 
                 if (resCotizaciones.status === 404) {
@@ -45,6 +56,10 @@ const Cotizaciones = () => {
                 }
 
                 if (resInventario.ok) setInventario(await resInventario.json());
+                if (resOrdenes.ok) setOrdenes(await resOrdenes.json());
+                if (resCategorias.ok) setCategorias(await resCategorias.json());
+                if (resEquipos.ok) setEquipos(await resEquipos.json());
+                if (resTecnicos.status !== 404 && resTecnicos.ok) setTecnicos(await resTecnicos.json());
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -101,14 +116,35 @@ const Cotizaciones = () => {
                         const clase = ESTILOS_ESTADO[cot.estado] || "badge-status-neutral";
                         const renglones = detalles.filter((d) => d.cot_id === cot.id);
 
+                        const orden = ordenes.find((o) => o.id === cot.ord_id);
+                        const categoria = categorias.find((c) => c.id === orden?.cat_id);
+                        const equipo = equipos.find((e) => e.id === orden?.equ_id);
+                        const tecnico = tecnicos.find((t) => t.id === cot.tec_id);
+
                         return (
                             <div key={cot.id} className="panel">
-                                <div className="flex justify-between items-start mb-2">
-                                    <span className="font-semibold text-gray-900">Folio: {cot.folio}</span>
+                                <div className="flex justify-between items-start mb-1">
+                                    <span className="text-gray-900 text-lg font-semibold">
+                                        {categoria?.nombre || "Cotización de servicio"}
+                                    </span>
                                     <span className={`badge-status ${clase}`}>
                                         {cot.estado}
                                     </span>
                                 </div>
+                                <p className="text-gray-500 text-sm mb-3">
+                                    Folio: {cot.folio}
+                                    {orden && ` · Orden: ${orden.folio}`}
+                                    {equipo && ` · Equipo: ${equipo.tipo}${equipo.modelo ? ` (${equipo.modelo})` : ""}`}
+                                </p>
+                                {orden?.descripcion && (
+                                    <p className="text-gray-600 text-sm mb-2">{orden.descripcion}</p>
+                                )}
+                                <p className="text-gray-400 text-xs mb-3">
+                                    {tecnico && `Elaborada por ${tecnico.nombre || `Técnico #${tecnico.usu_id}`}`}
+                                    {tecnico && orden?.fecha_programada && " · "}
+                                    {orden?.fecha_programada &&
+                                        `Fecha de servicio: ${new Date(orden.fecha_programada).toLocaleDateString("es-MX")}`}
+                                </p>
                                 <p className="text-gray-900 text-lg font-semibold mb-1">
                                     {formatoMoneda(cot.total)}
                                 </p>

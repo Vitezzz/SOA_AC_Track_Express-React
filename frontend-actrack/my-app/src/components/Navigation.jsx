@@ -7,6 +7,11 @@ const Navigation = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
+  // Sin sesión no hay nada útil que navegar (todos los links son por rol
+  // o rebotan por ProtectedRoute) -- así que en Login/SignUp no se muestra
+  // la barra en absoluto, en vez de una versión vacía a medias.
+  if (!user) return null;
+
   const handleLogout = async () => {
     await logout()
     navigate("/")
@@ -48,18 +53,6 @@ const Navigation = () => {
               Mi Dashboard
             </NavLink>
           )}
-          {
-            [2, 4, 5].includes(user?.rol_id) && (
-              <NavLink
-                to="/dashboard"
-                className={({ isActive }) =>
-                  isActive ? "btn btn-ghost nav-link-active" : "btn btn-ghost nav-link"
-                }
-              >
-                Dashboard
-              </NavLink>
-            )
-          }
           {
             user?.rol_id === 3 && (
               <NavLink

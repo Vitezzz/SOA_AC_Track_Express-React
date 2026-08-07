@@ -24,3 +24,14 @@ export const findUserById = async ( id ) => {
       return result.rows[0]
 }
 
+// Solo datos personales -- password tiene su propio flujo (verificar
+// contraseña actual, hash, etc.), no se toca aquí.
+export const updateUsuario = async (id, { nombre, paterno, materno, email }) => {
+    const result = await pool.query(
+        `UPDATE usuarios SET nombre = $1, paterno = $2, materno = $3, email = $4 WHERE id = $5
+         RETURNING id, nombre, paterno, materno, email, rol_id`,
+        [nombre, paterno, materno, email, id]
+    );
+    return result.rows[0];
+}
+

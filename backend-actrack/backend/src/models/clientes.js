@@ -39,10 +39,10 @@ export const deleteCliente = async (id) => {
     return result.rows[0];
 }
 
-export const completarPerfilCliente = async(id, {telefono, direccion}) =>{
-    const result = await pool.query(`UPDATE clientes SET telefono = $1, direccion = $2, perfil_completo = true WHERE id = $3 RETURNING *`,
-        [telefono, direccion , id]
+export const completarPerfilCliente = async(id, {telefono, direccion, latitud, longitud}) =>{
+    const result = await pool.query(`UPDATE clientes SET telefono = $1, direccion = $2, perfil_completo = true,
+        latitud = $3, longitud = $4 WHERE id = $5 RETURNING *`,
+        [telefono, direccion, latitud || null, longitud || null, id]
     )
     return result.rows[0];
 }
-

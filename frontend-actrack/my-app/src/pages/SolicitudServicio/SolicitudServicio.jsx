@@ -71,7 +71,9 @@ const SolicitudServicio = () => {
             return
         }
 
-        if (!equipoId || !categoriaId || !descripcion || !fechaProgramada) {
+        // La descripción de la falla es opcional -- no todos los servicios
+        // parten de un problema (p.ej. mantenimiento preventivo programado).
+        if (!equipoId || !categoriaId || !fechaProgramada) {
             setError("Completa todos los campos antes de continuar");
             return;
         }
@@ -199,11 +201,12 @@ const SolicitudServicio = () => {
                             </label>
 
                             <label className="form-control w-full">
-                                <span className="form-label">Descripción de la falla</span>
+                                <span className="form-label">Descripción de la falla (opcional)</span>
                                 <textarea
                                     className="form-input h-24"
                                     value={descripcion}
                                     onChange={(e) => setDescripcion(e.target.value)}
+                                    placeholder="Si es mantenimiento programado y no hay ninguna falla, puedes dejarlo en blanco"
                                 />
                             </label>
                         </div>

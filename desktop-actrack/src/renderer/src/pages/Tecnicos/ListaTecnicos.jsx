@@ -12,7 +12,8 @@ const ListaTecnicos = () => {
     const [busqueda, setBusqueda] = useState("");
     const [filtroDisponibilidad, setFiltroDisponibilidad] = useState("todos");
 
-    const { apiFetch } = useAuth();
+    const { apiFetch, user } = useAuth();
+    const esAdmin = user?.rol_id === 2;
 
     useEffect(() => {
         const cargarDatos = async () => {
@@ -65,9 +66,11 @@ const ListaTecnicos = () => {
             <Link to="/home" className="page-back">← Inicio</Link>
             <div className="page-header">
                 <h2>Gestión de Técnicos</h2>
-                <Link to="/tecnicos/nuevo">
-                    <button className="btn-primary">+ Nuevo Técnico</button>
-                </Link>
+                {esAdmin && (
+                    <Link to="/tecnicos/nuevo">
+                        <button className="btn-primary">+ Nuevo Técnico</button>
+                    </Link>
+                )}
             </div>
 
             {error && <p className="error-text">{error}</p>}

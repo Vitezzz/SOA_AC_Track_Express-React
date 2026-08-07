@@ -27,6 +27,11 @@ import EditarEquipo from "./pages/Clientes/EditarEquipo";
 import EditarCotizacion from "./pages/Cotizaciones/EditarCotizacion";
 import InventarioVehiculo from "./pages/Inventario/InventarioVehiculo";
 import HistorialPagosTecnicos from "./pages/Pagos/HistorialPagosTecnicos";
+import MapaEnVivo from "./pages/Rutas/MapaEnVivo";
+import PlanificarRuta from "./pages/Rutas/PlanificarRuta";
+import DashboardKPIs from "./pages/Reportes/DashboardKPIs";
+import Reportes from "./pages/Reportes/Reportes";
+
 
 function App() {
   return (
@@ -48,7 +53,7 @@ function App() {
               <Route path="/pagos" element={<ProtectedRoute><ListaPagos /></ProtectedRoute>} />
               <Route path="/pagos/nuevo" element={<ProtectedRoute><CrearPago /></ProtectedRoute>} />
               <Route path="/tecnicos" element={<ProtectedRoute><ListaTecnicos /></ProtectedRoute>} />
-              <Route path="/tecnicos/nuevo" element={<ProtectedRoute><CrearTecnico /></ProtectedRoute>} />
+              <Route path="/tecnicos/nuevo" element={<ProtectedRoute roles={[2]}><CrearTecnico /></ProtectedRoute>} />
               <Route path="/tecnicos/:id/editar" element={<ProtectedRoute><EditarTecnico /></ProtectedRoute>} />
               <Route path="/mantenimiento" element={<ProtectedRoute><ListaMantenimiento /></ProtectedRoute>} />
               <Route path="/mantenimiento/nuevo" element={<ProtectedRoute><FormularioMantenimiento /></ProtectedRoute>} />
@@ -63,6 +68,10 @@ function App() {
               <Route path="/equipos/:id/editar" element={<ProtectedRoute><EditarEquipo /></ProtectedRoute>} />
               <Route path="/cotizaciones/:id/editar" element={<ProtectedRoute><EditarCotizacion /></ProtectedRoute>} />
               <Route path="/pagos/tecnicos" element={<ProtectedRoute><HistorialPagosTecnicos /></ProtectedRoute>} />
+              <Route path="/rutas/mapa" element={<ProtectedRoute><MapaEnVivo /></ProtectedRoute>} />
+              <Route path="/rutas/planificar" element={<ProtectedRoute><PlanificarRuta /></ProtectedRoute>} />
+              <Route path="/reportes/dashboard" element={<ProtectedRoute><DashboardKPIs /></ProtectedRoute>} />
+              <Route path="/reportes" element={<ProtectedRoute><Reportes /></ProtectedRoute>} />
             </Routes>
           </main>
         </div>

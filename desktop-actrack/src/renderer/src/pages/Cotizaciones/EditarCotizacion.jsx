@@ -8,7 +8,8 @@ const formatoMoneda = (valor) =>
 const EditarCotizacion = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { apiFetch } = useAuth();
+    const { apiFetch, user } = useAuth();
+    const esAdmin = user?.rol_id === 2;
 
     const [cotizacion, setCotizacion] = useState(null);
     const [tecnicos, setTecnicos] = useState([]);
@@ -236,7 +237,9 @@ const EditarCotizacion = () => {
                                     <td>{formatoMoneda(r.precio_unitario)}</td>
                                     <td>{formatoMoneda(r.subtotal)}</td>
                                     <td>
-                                        <button onClick={() => handleEliminarRenglon(r.id)} style={{ color: "red" }}>Quitar</button>
+                                        {esAdmin && (
+                                            <button onClick={() => handleEliminarRenglon(r.id)} style={{ color: "red" }}>Quitar</button>
+                                        )}
                                     </td>
                                 </tr>
                             );

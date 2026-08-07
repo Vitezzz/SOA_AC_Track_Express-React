@@ -95,11 +95,16 @@ create table CHECKLIST_EJECUCION (
    ID                   INT2                 not null,
    CHE_ID               INT2                 null,
    ORD_ID               INT2                 null,
+   ITEM_ID              INT2                 null,
    COMPLETADO           bool                 null,
    ITEM_DESC            VARCHAR(50)          null,
    TOTAL                NUMERIC              null,
    NOTAS                TEXT                 null,
-   constraint PK_CHECKLIST_EJECUCION primary key (ID)
+   constraint PK_CHECKLIST_EJECUCION primary key (ID),
+   constraint CHK_CHECKLIST_EJECUCION_ITEM_XOR_DESC check (
+      (ITEM_ID is not null and ITEM_DESC is null)
+      or (ITEM_ID is null and ITEM_DESC is not null)
+   )
 );
 
 /*==============================================================*/
@@ -402,6 +407,11 @@ alter table CHECKLIST_EJECUCION
 alter table CHECKLIST_EJECUCION
    add constraint FK_CHECKLIS_REFERENCE_ORDENES_ foreign key (ORD_ID)
       references ORDENES_SERVICIO (ID)
+      on delete restrict on update restrict;
+
+alter table CHECKLIST_EJECUCION
+   add constraint FK_CHECKLIST_EJECUCION_ITEM foreign key (ITEM_ID)
+      references CHECKLIST_ITEMS_PLANTILLA (ID)
       on delete restrict on update restrict;
 
 alter table CHECKLIST_ITEMS_PLANTILLA

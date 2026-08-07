@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { useNavigate, Link } from "react-router-dom";
 import Icon from "../../components/Icon.jsx";
+import SelectorDireccion from "../../components/SelectorDireccion.jsx";
 
 const SignUp = () => {
 
@@ -15,6 +16,8 @@ const SignUp = () => {
     direccion: "",
     rol_id: 3,
   })
+  const [lat, setLat] = useState(null);
+  const [lng, setLng] = useState(null);
 
   const [error, setError] = useState("")
   const { register } = useAuth();
@@ -30,7 +33,7 @@ const SignUp = () => {
     setError("")
 
     try {
-      await register(formData)
+      await register({ ...formData, latitud: lat, longitud: lng })
       navigate("/")
     } catch (err) {
       setError(err.message)
@@ -155,7 +158,7 @@ const SignUp = () => {
               <p className="form-section-title">
                 <Icon name="pin" /> Contacto
               </p>
-              <div className="form-grid-2">
+              <div className="space-y-4">
                 <label className="form-control w-full">
                   <span className="form-label">Teléfono</span>
                   <div className="input-group">
@@ -172,17 +175,13 @@ const SignUp = () => {
                 </label>
                 <label className="form-control w-full">
                   <span className="form-label">Dirección</span>
-                  <div className="input-group">
-                    <Icon name="pin" className="input-icon" />
-                    <input
-                      type="text"
-                      name="direccion"
-                      className="form-input"
-                      value={formData.direccion}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
+                  <SelectorDireccion
+                    direccion={formData.direccion}
+                    onChange={(valor) => setFormData({ ...formData, direccion: valor })}
+                    lat={lat}
+                    lng={lng}
+                    onCoordenadas={(nuevaLat, nuevaLng) => { setLat(nuevaLat); setLng(nuevaLng); }}
+                  />
                 </label>
               </div>
             </div>

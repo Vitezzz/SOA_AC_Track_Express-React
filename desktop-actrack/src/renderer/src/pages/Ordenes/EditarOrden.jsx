@@ -7,7 +7,7 @@ const ESTADOS_POSIBLES = ["pendiente", "en_proceso", "pagada", "completada", "ca
 const EditarOrden = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { apiFetch } = useAuth();
+    const { apiFetch,user  } = useAuth();
 
     const [orden, setOrden] = useState(null);
     const [tecnicos, setTecnicos] = useState([]);
@@ -21,6 +21,33 @@ const EditarOrden = () => {
     const [guardando, setGuardando] = useState(false);
     const [error, setError] = useState("");
     const [guardado, setGuardado] = useState(false);
+
+    const [marcandoEvento, setMarcandoEvento] = useState(false);
+    const [mensajeEvento, setMensajeEvento] = useState("");
+
+    const marcarEvento = async (tipoEvento) => {
+        setMarcandoEvento(true);
+        setMensajeEvento("");
+        try {
+            const res = await apiFetch("/api/bitacora_estados", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    ord_id: Number(id),
+                    usu_id: user.id,
+                    estado_anterior: null,
+                    estado_nuevo: tipoEvento,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "No se pudo registrar el evento");
+            setMensajeEvento(tipoEvento === "tecnico_en_camino" ? "Marcado: técnico en camino" : "Marcado: técnico llegó");
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setMarcandoEvento(false);
+        }
+    };
 
     useEffect(() => {
         const cargarDatos = async () => {
@@ -147,11 +174,21 @@ const EditarOrden = () => {
                         <option value="">Sin asignar</option>
                         {tecnicos.map((tec) => (
                             <option key={tec.id} value={tec.id} disabled={disponibilidad[tec.id]}>
-                                Técnico #{tec.usu_id} {disponibilidad[tec.id] ? "— Ocupado en ese horario" : ""}
+                                {tec.nombre || `Técnico #${tec.usu_id}`} {disponibilidad[tec.id] ? "— Ocupado en ese horario" : ""}
                             </option>
                         ))}
                     </select>
                 </label>
+
+                <div style={{ marginTop: "12px", display: "flex", gap: "8px" }}>
+                    <button type="button" onClick={() => marcarEvento("tecnico_en_camino")} disabled={marcandoEvento}>
+                        🚗 Marcar en camino
+                    </button>
+                    <button type="button" onClick={() => marcarEvento("tecnico_llego")} disabled={marcandoEvento}>
+                        📍 Marcar llegada
+                    </button>
+                </div>
+                {mensajeEvento && <p style={{ color: "green", fontSize: "13px" }}>{mensajeEvento}</p>}
 
                 <div className="form-actions">
                     <button type="submit" disabled={guardando} className="btn-primary">

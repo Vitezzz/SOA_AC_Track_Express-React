@@ -2,6 +2,7 @@ import { getClientes, getClienteById, getClienteByEmail, createCliente, updateCl
 import { findUserById } from "../models/usuarios.js";
 import { getClienteIdByUserId } from "../utils/lookupUtils.js";
 import { completarPerfilCliente } from "../models/clientes.js";
+import { validarTelefonoMX } from '../utils/validaciones.js';
 
 const allClientes = async (req, res) => {
     try {
@@ -58,6 +59,8 @@ const crearCliente = async (req, res) => {
             usu_id, nombre, email, telefono, direccion, activo: true
         });
 
+        if (!validarTelefonoMX(telefono)) return res.status(400).json({ message: 'El teléfono debe tener 10 dígitos' });
+
         res.status(201).json({
             id: nuevoCliente.id,
             usu_id: nuevoCliente.usu_id,
@@ -87,6 +90,10 @@ const clienteUpdate = async (req, res) => {
             if (!usuarioExiste) return res.status(404).json({ message: 'Usuario no encontrado' })
         }
 
+
+        if (telefono && !validarTelefonoMX(telefono)) {
+            return res.status(400).json({ message: 'El teléfono debe tener 10 dígitos' });
+        }
         const actualizarCliente = await updateCliente(id, { usu_id, nombre, email, telefono, direccion, activo });
 
         res.status(200).json({
@@ -126,14 +133,17 @@ const clienteDelete = async (req, res) => {
 const completarPerfil = async (req, res) => {
     try {
 
-        const { telefono, direccion } = req.body;
+        const { telefono, direccion, latitud, longitud } = req.body;
 
         if (!telefono || !direccion) return res.status(400).json({ message: 'Falta rellenar campo telefono o dirección' });
 
         const cli_id = await getClienteIdByUserId(req.user.id);
         if (!cli_id) return res.status(404).json({ message: 'Cliente no encontrado' })
 
-        const perfilCompletado = await completarPerfilCliente(cli_id, { telefono, direccion });
+
+        if (!validarTelefonoMX(telefono)) return res.status(400).json({ message: 'El teléfono debe tener 10 dígitos' });
+
+        const perfilCompletado = await completarPerfilCliente(cli_id, { telefono, direccion, latitud, longitud });
 
         return res.status(200).json({
             perfilCompletado

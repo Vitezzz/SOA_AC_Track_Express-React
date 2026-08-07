@@ -5,6 +5,10 @@ import {
 import { selectOrdenesServicioById } from "../models/ordenes_servicio.js";
 import { findUserById } from "../models/usuarios.js";
 import { getClienteIdByUserId } from "../utils/lookupUtils.js";
+import { enviarPush } from '../utils/pushService.js';
+import { getClienteById } from '../models/clientes.js';
+
+
 
 const getBitacoraEstados = async (req, res) => {
     try {
@@ -60,6 +64,22 @@ const postBitacoraEstados = async (req, res) => {
         if (!usuarioExiste) return res.status(400).json({ message: 'Usuario no encontrado' })
 
         const nuevoBitacoraEstado = await insertBitacoraEstados({ ord_id, usu_id, estado_anterior, estado_nuevo })
+
+        // Si es uno de los eventos de seguimiento del técnico, avisamos
+        // al cliente por push -- sin bloquear la respuesta si algo falla.
+        if (estado_nuevo === 'tecnico_en_camino' || estado_nuevo === 'tecnico_llego') {
+            const orden = await selectOrdenesServicioById(ord_id);
+            if (orden) {
+                const cliente = await getClienteById(orden.cli_id);
+                if (cliente && cliente.usu_id) {
+                    const titulo = estado_nuevo === 'tecnico_en_camino'
+                        ? ' Tu técnico va en camino'
+                        : ' Tu técnico ha llegado';
+                    const cuerpo = `Orden ${orden.folio}`;
+                    await enviarPush(cliente.usu_id, titulo, cuerpo);
+                }
+            }
+        }
 
         res.status(201).json({
             id: nuevoBitacoraEstado.id,

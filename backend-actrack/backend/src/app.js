@@ -28,12 +28,16 @@ import notificacionesRouter from './routes/notificaciones.router.js'
 import rutasRouter from './routes/rutas.router.js'
 import rutaParadasRouter from './routes/rutaParadas.router.js'
 import inventarioVehiculoRoutes from './routes/inventarioVehiculoRouter.js';
+import reportesRoutes from './routes/reportesRoutes.js';
 import './config/passport.js'
 import passport from 'passport';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import uploadRoutes from './routes/uploadRoutes.js';
+import pushRoutes from './routes/pushRoutes.js';
+import usuariosRoutes from './routes/usuariosRoutes.js';
+import { origenPermitido } from './utils/corsUtils.js';
  
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,8 +47,12 @@ const app = express(); //create an express app
 
 app.use(express.json());
 app.use(cookieParser())
+
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'capacitor://localhost', 'file://'],
+    origin: (origin, callback) => {
+        if (origenPermitido(origin)) return callback(null, true);
+        return callback(new Error('Origen no permitido por CORS'));
+    },
     credentials: true
 }))
 app.use(passport.initialize())
@@ -79,5 +87,8 @@ app.use('/api/notificaciones', notificacionesRouter);
 app.use('/api/rutas', rutasRouter);
 app.use('/api/ruta_paradas', rutaParadasRouter);
 app.use('/api/inventario_vehiculo', inventarioVehiculoRoutes);
+app.use('/api/reportes', reportesRoutes);
+app.use('/api/push', pushRoutes);
+app.use('/api/usuarios', usuariosRoutes);
 
 export default app;

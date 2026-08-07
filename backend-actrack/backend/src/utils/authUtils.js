@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 
 export const generateAccessToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '15m'});
+    return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '1h'});
 }
 
 export const generateRefreshToken = (id) => {
@@ -20,5 +20,5 @@ export const cookieOptions = {
     httpOnly: true, //No se puede acceder dede JavaScript en el navegador (protege contra XXS).
     secure: process.env.NODE_ENV === 'production', //solo se envia por HTTPS en producción
     sameSite: 'Strict', //solo se envía si vienes del mismo sitio (protege contra CSRF)
-    maxAge: 15 * 60 * 1000 //15 min
+    maxAge: 60 * 60 * 1000 //1 hora
 }

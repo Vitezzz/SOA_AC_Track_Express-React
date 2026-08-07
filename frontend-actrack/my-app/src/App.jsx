@@ -12,13 +12,11 @@ import SolicitudServicio from "./pages/SolicitudServicio/SolicitudServicio.jsx"
 import CompletarPerfil from "./pages/CompletarPerfil/CompletarPerfil.jsx";
 import OrdenDetalle from "./pages/Ordenes/OrdenDetalle.jsx";
 import EquipoDetalle from "./pages/Equipos/EquipoDetalle.jsx";
+import NotificacionesPush from "./components/NotificacionesPush";
 
 //Component
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
-import DashboardLayout from "./pages/Dashboard/DashboardLayout.jsx";
-import DashboardHome from "./pages/Dashboard/DashboardHome.jsx";
-import DashboardDetails from "./pages/Dashboard/DashboardDetails.jsx";
 import DashboardCliente from "./pages/Dashboard/DashboardCliente.jsx"
 import { AuthProvider } from "./context/AuthContext.jsx";
 
@@ -29,6 +27,7 @@ function App() {
         <BrowserRouter>
           <div>
             <Navigation />
+            <NotificacionesPush />
             <main>
               <Routes>
                 <Route path="/" element={<Login />} />
@@ -43,10 +42,6 @@ function App() {
                 <Route path="/SolicitudServicio" element={<ProtectedRoute><SolicitudServicio /></ProtectedRoute>}></Route>
                 <Route path="/mi-dashboard" element={<ProtectedRoute><DashboardCliente /></ProtectedRoute>}></Route>
                 <Route path="/completar-perfil" element={<ProtectedRoute><CompletarPerfil /></ProtectedRoute>}></Route>
-                <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-                  <Route index element={<DashboardHome />} />
-                  <Route path="details" element={<DashboardDetails />} />
-                </Route>
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </main>

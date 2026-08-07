@@ -27,3 +27,23 @@
   color: var(--color-accent-hover);
   background-color: var(--color-accent-soft);
 }
+
+/* Fila de filtros tipo pill (p.ej. Mis Órdenes: Todas/Pendientes/En curso/Completadas) */
+.filter-pill {
+  @apply text-xs font-medium px-3 py-1.5 rounded-full transition-colors;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-text-muted);
+}
+
+.filter-pill:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent-hover);
+}
+
+.filter-pill-active,
+.filter-pill-active:hover {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-accent-contrast);
+}

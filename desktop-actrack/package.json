@@ -20,7 +20,11 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
-    "react-router-dom": "^7.18.1"
+    "leaflet": "^1.9.4",
+    "react-leaflet": "^5.0.0",
+    "react-router-dom": "^7.18.1",
+    "recharts": "^3.10.1",
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config": "^2.1.0",

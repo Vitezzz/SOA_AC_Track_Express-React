@@ -19,7 +19,8 @@ const ListaPagos = () => {
     const [error, setError] = useState("");
     const [confirmandoId, setConfirmandoId] = useState(null);
 
-    const { apiFetch } = useAuth();
+    const { apiFetch, user } = useAuth();
+    const esAdmin = user?.rol_id === 2;
 
     const cargarDatos = async () => {
         try {
@@ -150,12 +151,14 @@ const ListaPagos = () => {
                                                 {confirmandoId === pago.id ? "Confirmando..." : "Confirmar cobro"}
                                             </button>
                                         )}
-                                        <button
-                                            onClick={() => handleEliminar(pago.id)}
-                                            style={{ color: "red", marginLeft: "6px" }}
-                                        >
-                                            Eliminar
-                                        </button>
+                                        {esAdmin && (
+                                            <button
+                                                onClick={() => handleEliminar(pago.id)}
+                                                style={{ color: "red", marginLeft: "6px" }}
+                                            >
+                                                Eliminar
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             );

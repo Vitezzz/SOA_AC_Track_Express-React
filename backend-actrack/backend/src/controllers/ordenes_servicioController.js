@@ -13,7 +13,6 @@ import { selectPrioridadById } from "../models/prioridad.js";
 import { getClienteIdByUserId, getTecnicoIdByUserId } from '../utils/lookupUtils.js'
 
 
-
 const getOrdenesServicio = async (req, res) => {
     try {
 

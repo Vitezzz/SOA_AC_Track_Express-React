@@ -11,14 +11,34 @@ const ESTILOS_ESTADO = {
     cancelada: "badge-danger",
 };
 
+// "Completadas" agrupa completada + pagada (para el admin, ambas ya
+// significan que el trabajo en campo terminó). "Sin asignar" es su propia
+// pestaña porque es justo lo que necesita atención inmediata: no importa
+// el estatus, si no tiene técnico todavía nadie va a ir a atenderla.
+const FILTROS = [
+    { key: "todas", label: "Todas" },
+    { key: "sin_asignar", label: "Sin asignar" },
+    { key: "pendiente", label: "Pendientes" },
+    { key: "en_proceso", label: "En curso" },
+    { key: "completada", label: "Completadas" },
+];
+
+const coincideFiltro = (filtro, orden) => {
+    if (filtro === "todas") return true;
+    if (filtro === "sin_asignar") return !orden.tec_id && orden.estatus !== "cancelada" && orden.estatus !== "completada" && orden.estatus !== "pagada";
+    if (filtro === "completada") return orden.estatus === "completada" || orden.estatus === "pagada";
+    return orden.estatus === filtro;
+};
+
 const GestionOrdenes = () => {
     const [ordenes, setOrdenes] = useState([]);
     const [clientes, setClientes] = useState([]);
+    const [tecnicos, setTecnicos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
     const [busqueda, setBusqueda] = useState("");
-    const [filtroEstatus, setFiltroEstatus] = useState("todos");
+    const [filtro, setFiltro] = useState("todas");
 
     const { apiFetch, user } = useAuth();
 
@@ -27,9 +47,10 @@ const GestionOrdenes = () => {
     useEffect(() => {
         const cargarDatos = async () => {
             try {
-                const [resOrdenes, resClientes] = await Promise.all([
+                const [resOrdenes, resClientes, resTecnicos] = await Promise.all([
                     apiFetch("/api/ordenes_servicio"),
                     apiFetch("/api/clientes/"),
+                    apiFetch("/api/tecnicos/todos"),
                 ]);
 
                 if (!resOrdenes.ok) throw new Error("No se pudieron cargar las órdenes");
@@ -40,6 +61,8 @@ const GestionOrdenes = () => {
                 } else if (resClientes.ok) {
                     setClientes(await resClientes.json());
                 }
+
+                if (resTecnicos.status !== 404 && resTecnicos.ok) setTecnicos(await resTecnicos.json());
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -51,9 +74,17 @@ const GestionOrdenes = () => {
 
     if (loading) return <p className="page">Cargando...</p>;
 
+    const tecnicosPorId = new Map(tecnicos.map((t) => [t.id, t]));
+
     const ordenesConNombre = ordenes.map((orden) => {
         const cliente = clientes.find((c) => c.id === orden.cli_id);
-        return { ...orden, nombreCliente: cliente?.nombre || `Cliente #${orden.cli_id}` };
+        return {
+            ...orden,
+            nombreCliente: cliente?.nombre || `Cliente #${orden.cli_id}`,
+            nombreTecnico: orden.tec_id
+                ? tecnicosPorId.get(orden.tec_id)?.nombre || `Técnico #${orden.tec_id}`
+                : null,
+        };
     });
 
     const ordenesFiltradas = ordenesConNombre.filter((orden) => {
@@ -61,9 +92,7 @@ const GestionOrdenes = () => {
             orden.folio?.toLowerCase().includes(busqueda.toLowerCase()) ||
             orden.nombreCliente.toLowerCase().includes(busqueda.toLowerCase());
 
-        const coincideEstatus = filtroEstatus === "todos" || orden.estatus === filtroEstatus;
-
-        return coincideTexto && coincideEstatus;
+        return coincideTexto && coincideFiltro(filtro, orden);
     });
 
     const ordenesOrdenadas = [...ordenesFiltradas].sort((a, b) => {
@@ -95,16 +124,18 @@ const GestionOrdenes = () => {
                         onChange={(e) => setBusqueda(e.target.value)}
                     />
                 </div>
-                <select
-                    value={filtroEstatus}
-                    onChange={(e) => setFiltroEstatus(e.target.value)}
-                >
-                    <option value="todos">Todos los estatus</option>
-                    <option value="pendiente">Pendiente</option>
-                    <option value="en_proceso">En proceso</option>
-                    <option value="completada">Completada</option>
-                    <option value="cancelada">Cancelada</option>
-                </select>
+            </div>
+
+            <div className="tabs">
+                {FILTROS.map((f) => (
+                    <button
+                        key={f.key}
+                        onClick={() => setFiltro(f.key)}
+                        className={filtro === f.key ? "tab active" : "tab"}
+                    >
+                        {f.label}
+                    </button>
+                ))}
             </div>
 
             {ordenesOrdenadas.length === 0 ? (
@@ -132,7 +163,11 @@ const GestionOrdenes = () => {
                                 <tr key={orden.id}>
                                     <td>{orden.folio || "—"}</td>
                                     <td>{orden.nombreCliente}</td>
-                                    <td>{orden.tec_id || "Sin asignar"}</td>
+                                    <td>
+                                        {orden.nombreTecnico || (
+                                            <span className="badge badge-warning">Sin asignar</span>
+                                        )}
+                                    </td>
                                     <td>
                                         <span className={`badge ${clase}`}>{orden.estatus}</span>
                                     </td>

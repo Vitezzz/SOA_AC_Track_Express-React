@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { pedirPermisoYObtenerToken, escucharMensajesEnPrimerPlano } from "../config/firebase";
+
 
 //Crea el contenedor global 
 const AuthContext = createContext();
@@ -15,33 +17,35 @@ export function AuthProvider({ children }) {
             .then((res) => (res.ok ? res.json() : null))
             .then((data) => {
                 //Si el backend responde ok, guarda usuario en setUser(data)
-                if (data) setUser(data)
+                if (data) {
+                    setUser(data)
+                }
                 setLoading(false)
             })
             .catch(() => setLoading(false)) //atrapa cualquier error de red (no de respuesta HTTP),eso ya lo maneja el res.ok
 
-            //el vacio final [], hace que solo se ejecute una vez al montar la app
+        //el vacio final [], hace que solo se ejecute una vez al montar la app
     }, [])
 
-    const login = async (email ,password ) => {
+    const login = async (email, password) => {
         const res = await fetch('/api/auth/login', {
             method: 'POST',
-            headers : {"Content-Type": "application/json"},
-            body: JSON.stringify({ email, password}),
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
             credentials: "include", //le dice al servidor "incluye las cookies en esta petición aunque sea otro dominio"
-                                    //Sin esto el backend nunca recibe la cookie de sesión y responde como si estuvieras autenticado
+            //Sin esto el backend nunca recibe la cookie de sesión y responde como si estuvieras autenticado
         })
 
         //Espera a que el servidor responda y convierte la respuesta a JSON
         const data = await res.json();
 
-        if(!res.ok) throw new Error(data.message || "Credenciales incorrectas")
+        if (!res.ok) throw new Error(data.message || "Credenciales incorrectas")
 
         //Obtener perfil completo
-        const profileRes = await fetch("/api/auth/profile", { credentials: "include"})
-        const profile= await profileRes.json()
+        const profileRes = await fetch("/api/auth/profile", { credentials: "include" })
+        const profile = await profileRes.json()
         //Guardamos el refresh token que devuelve el backend
-        if(data.refreshToken) localStorage.setItem("refreshToken", data.refreshToken)
+        if (data.refreshToken) localStorage.setItem("refreshToken", data.refreshToken)
         //SI todo salio bien , data es el objeto del usuario
         //lo guardo en el estado global
         setUser(profile)
@@ -50,46 +54,71 @@ export function AuthProvider({ children }) {
 
     /* Lee lacookie de sesión (JWT) , la invalida
     o la borra y responde con un JSON*/
-    const logout = async() => {
+    const logout = async () => {
         const res = await fetch('/api/auth/logout', {
             method: 'POST',
             credentials: "include"
         })
 
-         const data = await res.json();
+        const data = await res.json();
 
-         if(!res.ok) throw new Error(data.message || 'Error de logout');
+        if (!res.ok) throw new Error(data.message || 'Error de logout');
 
-         setUser(null)
-         return data
+        setUser(null)
+        return data
     }
 
+    // Esta función SOLO debe llamarse como reacción directa a un clic real
+    // del usuario (un botón) -- los navegadores bloquean silenciosamente
+    // Notification.requestPermission() si se llama de forma automática,
+    // sin un evento de usuario justo antes.
+    const registrarNotificaciones = async () => {
+        try {
+            const token = await pedirPermisoYObtenerToken();
+            if (token) {
+                await apiFetch("/api/push/registrar-token", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ token }),
+                });
+            }
+            return token;
+        } catch (err) {
+            console.error("No se pudo registrar el token de notificaciones:", err.message);
+            return null;
+        }
+    };
+
     //formData no es palabra reservada, es nombre del parametro
-    const register = async(formData) => {
-        const res =await fetch("/api/auth/register", {
+    const register = async (formData) => {
+        const res = await fetch("/api/auth/register", {
             method: "POST",
-            headers: { "Content-Type": "application/json"},
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(formData),
             credentials: "include",
         })
 
         const data = await res.json()
 
-        if(!res.ok) throw new Error(data.message || "Error al registrarse")
+        if (!res.ok) throw new Error(data.message || "Error al registrarse")
+
+        //Igual que en login: sin esto, la sesión recién creada no se puede
+        //renovar sola y el usuario se queda fuera al ratito.
+        if (data.refreshToken) localStorage.setItem("refreshToken", data.refreshToken)
 
         return data
     }
 
     const apiFetch = async (url, options = {}) => {
 
-        const res = await fetch(url, {...options, credentials: "include"} )
+        const res = await fetch(url, { ...options, credentials: "include" })
 
-        if(res.status !== 401) return res;
+        if (res.status !== 401) return res;
 
         //Sacar el refresh token guardado
-        const refreshToken = localStorage.getItem("refreshToken") 
+        const refreshToken = localStorage.getItem("refreshToken")
 
-        if(!refreshToken){
+        if (!refreshToken) {
             setUser(null);
             return res;
         }
@@ -97,24 +126,24 @@ export function AuthProvider({ children }) {
         //Pedir access token nuevo
         const refreshRes = await fetch('/api/auth/refresh', {
             method: 'POST',
-            headers: {"Content-Type":'application/json'},
-            body: JSON.stringify({refreshToken}),
+            headers: { "Content-Type": 'application/json' },
+            body: JSON.stringify({ refreshToken }),
             credentials: "include"
         })
 
-        if(!refreshRes.ok){
+        if (!refreshRes.ok) {
             setUser(null);
             localStorage.removeItem("refreshToken")
             return res;
         }
 
-        return fetch(url, { ...options, credentials: "include"});
+        return fetch(url, { ...options, credentials: "include" });
 
     }
 
-    return(
+    return (
         //Todo lo que este dentro de <AuthContext.Provider> en App.jsx le provee user y loading
-        <AuthContext.Provider value={{ user, loading, login, logout, register, apiFetch, setUser }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, register, apiFetch, setUser, registrarNotificaciones }}>
             {children}
         </AuthContext.Provider>
     )

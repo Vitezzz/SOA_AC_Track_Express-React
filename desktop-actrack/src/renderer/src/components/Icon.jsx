@@ -65,6 +65,34 @@ const PATHS = {
       <circle cx="12" cy="16.3" r="0.9" fill="currentColor" stroke="none" />
     </>
   ),
+  map: (
+    <>
+      <path d="M9 4 4 6.2v13.3l5-2.2 6 2.2 5-2.2V4.2l-5 2.2-6-2.2Z" />
+      <path d="M9 4v13.3M15 6.4v13.3" />
+    </>
+  ),
+  route: (
+    <>
+      <circle cx="5.5" cy="6" r="2.1" />
+      <circle cx="18.5" cy="18" r="2.1" />
+      <path d="M5.5 8.1C5.5 12 13 10.5 13 14s5.5 2 5.5 3.9" />
+    </>
+  ),
+  chart: (
+    <>
+      <path d="M4 4v16h16" />
+      <rect x="7" y="13" width="2.8" height="6.2" rx="0.6" />
+      <rect x="12.4" y="9" width="2.8" height="10.2" rx="0.6" />
+      <rect x="17.8" y="5.5" width="2.8" height="13.7" rx="0.6" />
+    </>
+  ),
+  file: (
+    <>
+      <path d="M6.5 3.5h7.5l4 4V20a1 1 0 0 1-1 1h-10.5a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1Z" />
+      <path d="M14 3.5V8h4" />
+      <path d="M8.5 12.5h7M8.5 15.8h7M8.5 19h4.5" />
+    </>
+  ),
 };
 
 const Icon = ({ name, className = "", style }) => (

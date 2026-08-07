@@ -11,6 +11,10 @@ const enlaces = [
     { to: "/tecnicos", label: "Técnicos", icono: "wrench" },
     { to: "/mantenimiento", label: "Mantenimiento", icono: "calendar" },
     { to: "/inventario", label: "Inventario", icono: "box" },
+    { to: "/rutas/mapa", label: "Mapa en Vivo", icono: "map" },
+    { to: "/rutas/planificar", label: "Planificar Rutas", icono: "route" },
+    { to: "/reportes/dashboard", label: "Dashboard KPIs", icono: "chart" },
+    { to: "/reportes", label: "Reportes", icono: "file" },
     { to: "/configuracion", label: "Configuración", icono: "settings" },
 ];
 

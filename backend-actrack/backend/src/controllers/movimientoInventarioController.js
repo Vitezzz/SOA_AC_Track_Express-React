@@ -1,11 +1,16 @@
+import pool from '../config/database.js';
 import {
     selectAllMovimientosInventario, selectMovimientosInventarioId,
-    insertMovimientosInventario, updateMovimientosInventario, deleteMovimientosInventario
+    updateMovimientosInventario, deleteMovimientosInventario
 } from "../models/movimientos_inventario.js";
-import { selectInventarioId, updateInventarioStock } from '../models/inventario.js';
+import { selectInventarioId } from '../models/inventario.js';
 import { selectTipoMovimientoInventarioById } from "../models/tipos_movimiento_inventario.js";
 import { selectOrdenesServicioById } from "../models/ordenes_servicio.js";
 import { findUserById } from "../models/usuarios.js";
+import { getTecnicoIdByUserId } from '../utils/lookupUtils.js';
+import {
+    selectInventarioVehiculoPorTecnicoYArticulo, upsertInventarioVehiculo, descontarInventarioVehiculo
+} from '../models/inventario_vehiculo.js';
 
 const getMovimientosInventario = async (req, res) => {
     try {
@@ -65,20 +70,61 @@ const postMovimientosInventario = async (req, res) => {
         const item = await selectInventarioId(inv_id);
         if (!item) return res.status(404).json({ message: 'Item no encontrado' });
 
+        // Si quien registra el movimiento es un técnico, el material sale
+        // de SU vehículo, no del almacén general -- el almacén ya se
+        // descontó cuando se le transfirió (ver
+        // inventarioVehiculoController.transferirAVehiculo). Sin esto,
+        // una "salida" de campo descontaba el almacén otra vez y nunca
+        // bajaba lo que el técnico trae en la camioneta.
+        const tecId = usuarioExiste.rol_id === 4 ? await getTecnicoIdByUserId(usu_id) : null;
+
         // Ya no comparamos el nombre del tipo -- cada tipo declara su
         // propia dirección con "es_entrada", así funciona sin importar
         // cuántos tipos nuevos agregues después (Ajustes, Devoluciones, etc.)
-        if (!tipoMov.es_entrada && Number(item.stock_actual) < Number(cantidad)) {
-            return res.status(400).json({ message: "Stock insuficiente" })
+        if (!tipoMov.es_entrada) {
+            if (tecId) {
+                const stockVehiculo = await selectInventarioVehiculoPorTecnicoYArticulo(tecId, inv_id);
+                if (!stockVehiculo || Number(stockVehiculo.cantidad) < Number(cantidad)) {
+                    return res.status(400).json({
+                        message: `No tienes esa cantidad disponible en tu vehículo (disponible: ${stockVehiculo?.cantidad || 0})`
+                    });
+                }
+            } else if (Number(item.stock_actual) < Number(cantidad)) {
+                return res.status(400).json({ message: "Stock insuficiente" })
+            }
         }
 
-        const nuevoMovimientoInventario = await insertMovimientosInventario({ inv_id, ord_id: ord_id || null, usu_id, tip_id, cantidad });
+        const client = await pool.connect();
+        let nuevoMovimientoInventario;
+        try {
+            await client.query('BEGIN');
 
-        const nuevoStock = tipoMov.es_entrada
-            ? Number(item.stock_actual) + Number(cantidad)
-            : Number(item.stock_actual) - Number(cantidad)
+            const resultadoInsert = await client.query(
+                `INSERT INTO movimientos_inventario (inv_id, ord_id, usu_id, tip_id, cantidad) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+                [inv_id, ord_id || null, usu_id, tip_id, cantidad]
+            );
+            nuevoMovimientoInventario = resultadoInsert.rows[0];
 
-        await updateInventarioStock(inv_id, nuevoStock);
+            if (tecId) {
+                if (tipoMov.es_entrada) {
+                    await upsertInventarioVehiculo(client, inv_id, tecId, cantidad);
+                } else {
+                    await descontarInventarioVehiculo(client, tecId, inv_id, cantidad);
+                }
+            } else {
+                const nuevoStock = tipoMov.es_entrada
+                    ? Number(item.stock_actual) + Number(cantidad)
+                    : Number(item.stock_actual) - Number(cantidad)
+                await client.query(`UPDATE inventario SET stock_actual = $1 WHERE id = $2`, [nuevoStock, inv_id]);
+            }
+
+            await client.query('COMMIT');
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
 
         res.status(201).json({
             id: nuevoMovimientoInventario.id,

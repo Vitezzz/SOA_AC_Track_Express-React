@@ -5,13 +5,18 @@ import { useAuth } from "../../context/AuthContext";
 const EditarTecnico = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { apiFetch } = useAuth();
+    const { apiFetch, user } = useAuth();
+    const esAdmin = user?.rol_id === 2;
 
     const [tecnico, setTecnico] = useState(null);
     const [especialidades, setEspecialidades] = useState([]);
 
     const [espId, setEspId] = useState("");
     const [disponible, setDisponible] = useState(true);
+    const [nombre, setNombre] = useState("");
+    const [paterno, setPaterno] = useState("");
+    const [materno, setMaterno] = useState("");
+    const [email, setEmail] = useState("");
 
     const [loading, setLoading] = useState(true);
     const [guardando, setGuardando] = useState(false);
@@ -31,6 +36,10 @@ const EditarTecnico = () => {
                 setTecnico(dataTecnico);
                 setEspId(dataTecnico.esp_id);
                 setDisponible(dataTecnico.disponible);
+                setNombre(dataTecnico.usuario_nombre || "");
+                setPaterno(dataTecnico.usuario_paterno || "");
+                setMaterno(dataTecnico.usuario_materno || "");
+                setEmail(dataTecnico.usuario_email || "");
 
                 if (resEspecialidades.ok) setEspecialidades(await resEspecialidades.json());
             } catch (err) {
@@ -49,18 +58,39 @@ const EditarTecnico = () => {
         setGuardando(true);
 
         try {
-            const res = await apiFetch(`/api/tecnicos/${id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    usu_id: tecnico.usu_id,
-                    esp_id: Number(espId),
-                    disponible,
+            // Editar nombre/email es cosa de admin (PUT /api/usuarios/:id
+            // así lo exige en el backend) -- un supervisor solo manda el PUT
+            // de especialidad/disponibilidad, para no disparar un 403 al pedo.
+            const peticiones = [
+                apiFetch(`/api/tecnicos/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        usu_id: tecnico.usu_id,
+                        esp_id: Number(espId),
+                        disponible,
+                    }),
                 }),
-            });
+            ];
+            if (esAdmin) {
+                peticiones.push(
+                    apiFetch(`/api/usuarios/${tecnico.usu_id}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ nombre, paterno, materno, email }),
+                    })
+                );
+            }
 
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || "No se pudo actualizar el técnico");
+            const [resTecnico, resUsuario] = await Promise.all(peticiones);
+
+            const dataTecnico = await resTecnico.json();
+            if (!resTecnico.ok) throw new Error(dataTecnico.message || "No se pudo actualizar el técnico");
+
+            if (resUsuario) {
+                const dataUsuario = await resUsuario.json();
+                if (!resUsuario.ok) throw new Error(dataUsuario.message || "No se pudieron actualizar los datos del técnico");
+            }
 
             setGuardado(true);
         } catch (err) {
@@ -74,12 +104,37 @@ const EditarTecnico = () => {
 
     return (
         <div className="page page-narrow">
-            <h2>Editar Técnico #{tecnico?.usu_id}</h2>
+            <h2>Editar Técnico — {tecnico?.nombre || `#${tecnico?.usu_id}`}</h2>
 
             {error && <p className="error-text">{error}</p>}
             {guardado && <p className="success-text">¡Técnico actualizado correctamente!</p>}
 
             <form onSubmit={handleSubmit} className="form">
+                <label>
+                    <span>Nombre(s)</span>
+                    <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} disabled={!esAdmin} required />
+                </label>
+
+                <label>
+                    <span>Apellido paterno</span>
+                    <input type="text" value={paterno} onChange={(e) => setPaterno(e.target.value)} disabled={!esAdmin} />
+                </label>
+
+                <label>
+                    <span>Apellido materno</span>
+                    <input type="text" value={materno} onChange={(e) => setMaterno(e.target.value)} disabled={!esAdmin} />
+                </label>
+
+                <label>
+                    <span>Email</span>
+                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={!esAdmin} required />
+                </label>
+                {!esAdmin && (
+                    <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "-8px" }}>
+                        Solo un administrador puede editar el nombre y el email.
+                    </p>
+                )}
+
                 <label>
                     <span>Especialidad</span>
                     <select value={espId} onChange={(e) => setEspId(e.target.value)}>

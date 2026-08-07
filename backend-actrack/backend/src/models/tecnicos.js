@@ -1,12 +1,28 @@
 import pool from '../config/database.js'
 
+// tecnicos no tiene columna de nombre propia (vive en usuarios.nombre) --
+// sin este JOIN, cualquier pantalla que liste técnicos solo puede mostrar
+// "Técnico #<usu_id>", nunca el nombre real.
 export const selectTecnicos = async () => {
-    const result = await pool.query(`SELECT * FROM tecnicos WHERE disponible = true`);
+    const result = await pool.query(
+        `SELECT t.*, TRIM(CONCAT_WS(' ', u.nombre, u.paterno, u.materno)) AS nombre
+         FROM tecnicos t
+         JOIN usuarios u ON u.id = t.usu_id
+         WHERE t.disponible = true`
+    );
     return result.rows;
 }
 
 export const selectTecnicoById = async (id) => {
-    const result = await pool.query(`SELECT * FROM tecnicos WHERE id = $1`, [id]);
+    const result = await pool.query(
+        `SELECT t.*, TRIM(CONCAT_WS(' ', u.nombre, u.paterno, u.materno)) AS nombre,
+            u.nombre AS usuario_nombre, u.paterno AS usuario_paterno,
+            u.materno AS usuario_materno, u.email AS usuario_email
+         FROM tecnicos t
+         JOIN usuarios u ON u.id = t.usu_id
+         WHERE t.id = $1`,
+        [id]
+    );
     return result.rows[0];
 }
 
@@ -28,7 +44,11 @@ export const deleteTecnicos = async (id) => {
 }
 
 export const selectTecnicosTodos = async () => {
-    const result = await pool.query(`SELECT * FROM tecnicos`);
+    const result = await pool.query(
+        `SELECT t.*, TRIM(CONCAT_WS(' ', u.nombre, u.paterno, u.materno)) AS nombre
+         FROM tecnicos t
+         JOIN usuarios u ON u.id = t.usu_id`
+    );
     return result.rows;
 }
 

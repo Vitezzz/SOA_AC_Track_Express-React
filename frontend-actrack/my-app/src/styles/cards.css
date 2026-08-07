@@ -14,6 +14,12 @@ a.panel:hover,
   transform: translateY(-2px);
 }
 
+/* Variante destacada: la orden activa más avanzada, en "Mis Órdenes" */
+.panel-featured {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-accent);
+}
+
 /* Variante grande y centrada, para pantallas tipo "hero" (Home, 404) */
 .panel-hero {
   @apply p-12 text-center relative overflow-hidden;
