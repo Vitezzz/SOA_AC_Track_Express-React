@@ -1,5 +1,5 @@
 import {
-    selectCotizaciones, selectCotizacionesById, selectCotizacionesByCliente, insertCotizaciones,
+    selectCotizaciones, selectCotizacionesById, selectCotizacionesByCliente, selectCotizacionesByTecnico, insertCotizaciones,
     updateCotizaciones, deleteCotizaciones,
     generarSiguienteFolioCotizacion
 } from "../models/cotizaciones.js";
@@ -7,7 +7,7 @@ import { puedeVerTodo } from "../utils/roleUtils.js";
 import { getClienteById } from "../models/clientes.js";
 import { selectOrdenesServicioById } from "../models/ordenes_servicio.js";
 import { selectTecnicoById } from "../models/tecnicos.js";
-import { getClienteIdByUserId } from '../utils/lookupUtils.js'
+import { getClienteIdByUserId, getTecnicoIdByUserId } from '../utils/lookupUtils.js'
 import { enviarSMS, formatearTelefonoE164 } from "../utils/smsService.js";
 import { insertNotificaciones } from "../models/notificaciones.js";
 import pool from '../config/database.js'
@@ -23,6 +23,10 @@ const getCotizaciones = async (req, res) => {
             const cli_id = await getClienteIdByUserId(req.user.id);
             if (!cli_id) return res.status(404).json({ message: 'Cliente no encontrado' });
             listaCotizaciones = await selectCotizacionesByCliente(cli_id);
+        } else if (req.user.rol_id === 4) {
+            const tec_id = await getTecnicoIdByUserId(req.user.id);
+            if (!tec_id) return res.status(404).json({ message: 'Tecnico no encontrado' });
+            listaCotizaciones = await selectCotizacionesByTecnico(tec_id);
         } else {
             return res.status(403).json({ message: "No tienes acceso" })
         }

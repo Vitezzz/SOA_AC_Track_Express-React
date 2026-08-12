@@ -5,6 +5,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useAuth } from "../../context/AuthContext";
 import { calcularRutaOptima } from "../../utils/osrm";
+import Icon from "../../components/Icon";
 
 import iconUrl from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
@@ -27,9 +28,16 @@ const horaActual = () => {
     return `${String(ahora.getHours()).padStart(2, "0")}:${String(ahora.getMinutes()).padStart(2, "0")}`;
 };
 
-// "YYYY-MM-DD" de hoy, para que el selector de fecha de la ruta ya
-// empiece en el día correcto.
-const fechaHoy = () => new Date().toISOString().slice(0, 10);
+// "YYYY-MM-DD" en hora LOCAL (no UTC) -- toISOString().slice(0,10) se
+// mueve al día siguiente en cuanto la hora local pasa de las 6pm (somos
+// UTC-6), y ahí una orden agendada "hoy" a las 11pm deja de verse como
+// de hoy. Se usa tanto para la fecha por defecto del selector como para
+// convertir fecha_programada antes de comparar.
+const aFechaLocal = (fecha) => {
+    const d = new Date(fecha);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const fechaHoy = () => aFechaLocal(new Date());
 
 // Le suma "segundos" a una hora "HH:MM" y regresa "HH:MM:SS", para calcular
 // la hora estimada de llegada a cada parada acumulando las duraciones de
@@ -48,6 +56,7 @@ const PlanificarRuta = () => {
     const [tecnicos, setTecnicos] = useState([]);
     const [ordenes, setOrdenes] = useState([]);
     const [clientes, setClientes] = useState([]);
+    const [rutasExistentes, setRutasExistentes] = useState([]);
 
     const [tecId, setTecId] = useState("");
     const [fechaRuta, setFechaRuta] = useState(fechaHoy());
@@ -64,15 +73,17 @@ const PlanificarRuta = () => {
     useEffect(() => {
         const cargarDatos = async () => {
             try {
-                const [resTecnicos, resOrdenes, resClientes] = await Promise.all([
+                const [resTecnicos, resOrdenes, resClientes, resRutas] = await Promise.all([
                     apiFetch("/api/tecnicos/todos"),
                     apiFetch("/api/ordenes_servicio"),
                     apiFetch("/api/clientes/"),
+                    apiFetch("/api/rutas"),
                 ]);
 
                 if (resTecnicos.status !== 404 && resTecnicos.ok) setTecnicos(await resTecnicos.json());
                 if (resOrdenes.ok) setOrdenes(await resOrdenes.json());
                 if (resClientes.ok) setClientes(await resClientes.json());
+                if (resRutas.status !== 400 && resRutas.status !== 404 && resRutas.ok) setRutasExistentes(await resRutas.json());
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -93,7 +104,7 @@ const PlanificarRuta = () => {
             o.estatus !== "completada" &&
             o.estatus !== "pagada" &&
             o.fecha_programada &&
-            o.fecha_programada.slice(0, 10) === fechaRuta
+            aFechaLocal(o.fecha_programada) === fechaRuta
     );
 
     const toggleOrden = (ordenId) => {
@@ -158,17 +169,41 @@ const PlanificarRuta = () => {
         setError("");
         setGuardando(true);
         try {
-            const resRuta = await apiFetch("/api/rutas", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    fecha_ruta: fechaRuta,
-                    tecnico_id: Number(tecId),
-                    estado: "pendiente",
-                }),
-            });
-            if (!resRuta.ok) throw new Error((await resRuta.json()).message || "No se pudo crear la ruta");
-            const nuevaRuta = await resRuta.json();
+            // Antes esto creaba una ruta NUEVA cada vez que se le daba a
+            // "Guardar ruta", aunque ya hubiera una para este técnico/día --
+            // terminaban paradas repartidas entre varias rutas duplicadas
+            // para el mismo día. Si ya existe, se reusa (y se limpian sus
+            // paradas viejas antes de guardar las nuevas, por si el orden o
+            // las paradas elegidas cambiaron).
+            const rutaExistente = rutasExistentes.find(
+                (r) => r.tecnico_id === Number(tecId) && aFechaLocal(r.fecha_ruta) === fechaRuta
+            );
+
+            let nuevaRuta;
+            if (rutaExistente) {
+                nuevaRuta = rutaExistente;
+                const resParadasViejas = await apiFetch(`/api/ruta_paradas/ruta/${rutaExistente.id}`);
+                if (resParadasViejas.ok) {
+                    const paradasViejas = await resParadasViejas.json();
+                    for (const vieja of paradasViejas) {
+                        const resDelete = await apiFetch(`/api/ruta_paradas/${vieja.id}`, { method: "DELETE" });
+                        if (!resDelete.ok) throw new Error((await resDelete.json()).message || "No se pudo limpiar una parada anterior");
+                    }
+                }
+            } else {
+                const resRuta = await apiFetch("/api/rutas", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        fecha_ruta: fechaRuta,
+                        tecnico_id: Number(tecId),
+                        estado: "pendiente",
+                    }),
+                });
+                if (!resRuta.ok) throw new Error((await resRuta.json()).message || "No se pudo crear la ruta");
+                nuevaRuta = await resRuta.json();
+                setRutasExistentes((prev) => [...prev, nuevaRuta]);
+            }
 
             // ordenParadas[0] es siempre la base (source=first); a partir de
             // ahí cada entrada es una parada real, en el orden en que OSRM
@@ -180,7 +215,7 @@ const PlanificarRuta = () => {
                     .slice(0, i + 1)
                     .reduce((suma, s) => suma + s, 0);
                 return {
-                    ord_id: parada.orden.id,
+                    orden: parada.orden,
                     posicion: i + 1,
                     hora_estimada: sumarSegundos(horaSalida, segundosAcumulados),
                 };
@@ -192,13 +227,32 @@ const PlanificarRuta = () => {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         rut_id: nuevaRuta.id,
-                        ord_id: parada.ord_id,
+                        ord_id: parada.orden.id,
                         posicion: parada.posicion,
                         hora_estimada: parada.hora_estimada,
                         estado: "pendiente",
                     }),
                 });
                 if (!resParada.ok) throw new Error((await resParada.json()).message || "No se pudo guardar una parada");
+
+                // Sin esto, la orden se queda con la hora con la que se
+                // creó aunque OSRM haya decidido otra al optimizar -- la
+                // ruta y "Gestión de Órdenes" terminaban mostrando horas
+                // distintas para lo mismo. Se resendea la orden completa
+                // (full-replace) cambiando solo fecha_programada.
+                const o = parada.orden;
+                const resOrden = await apiFetch(`/api/ordenes_servicio/${o.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        cli_id: o.cli_id, equ_id: o.equ_id, cat_id: o.cat_id, pri_id: o.pri_id,
+                        folio: o.folio, prioridad: o.prioridad, estatus: o.estatus,
+                        descripcion: o.descripcion, fecha_cierre: o.fecha_cierre,
+                        tec_id: o.tec_id, duracion_estimada_horas: o.duracion_estimada_horas,
+                        fecha_programada: `${fechaRuta}T${parada.hora_estimada}`,
+                    }),
+                });
+                if (!resOrden.ok) throw new Error((await resOrden.json()).message || "No se pudo actualizar la hora de la orden");
             }
 
             setRutaGuardada(true);
@@ -290,7 +344,11 @@ const PlanificarRuta = () => {
                         <button onClick={handleGuardarRuta} disabled={guardando}>
                             {guardando ? "Guardando..." : "Guardar ruta"}
                         </button>
-                        {rutaGuardada && <span style={{ color: "#15803d" }}>Ruta guardada ✓</span>}
+                        {rutaGuardada && (
+                            <span style={{ color: "#15803d", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                                <Icon name="check" className="icon-sm" /> Ruta guardada
+                            </span>
+                        )}
                     </div>
 
                     <div style={{ height: "500px", borderRadius: "8px", overflow: "hidden" }}>

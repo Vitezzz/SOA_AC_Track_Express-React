@@ -1,7 +1,12 @@
 import pool from "../config/database.js";
 
 export const selectNotificaciones = async () => {
-    const result = await pool.query(`SELECT * FROM notificaciones`)
+    const result = await pool.query(`SELECT * FROM notificaciones ORDER BY id DESC`)
+    return result.rows;
+}
+
+export const selectNotificacionesByUsuario = async (usu_id) => {
+    const result = await pool.query(`SELECT * FROM notificaciones WHERE usu_id = $1 ORDER BY id DESC`, [usu_id]);
     return result.rows;
 }
 

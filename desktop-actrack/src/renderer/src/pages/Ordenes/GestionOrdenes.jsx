@@ -1,7 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import Icon from "../../components/Icon";
+
+// No hay socket para "nueva orden" (solo existe para ubicación en vivo del
+// técnico) -- se refresca solo cada 20s para que no haya que cambiar de
+// pantalla y volver para verla, más el botón manual para no esperar.
+const INTERVALO_REFRESCO_MS = 20000;
 
 const ESTILOS_ESTADO = {
     pendiente: "badge-warning",
@@ -17,6 +22,7 @@ const ESTILOS_ESTADO = {
 // el estatus, si no tiene técnico todavía nadie va a ir a atenderla.
 const FILTROS = [
     { key: "todas", label: "Todas" },
+    { key: "solicitudes", label: "Solicitudes de cliente" },
     { key: "sin_asignar", label: "Sin asignar" },
     { key: "pendiente", label: "Pendientes" },
     { key: "en_proceso", label: "En curso" },
@@ -25,6 +31,7 @@ const FILTROS = [
 
 const coincideFiltro = (filtro, orden) => {
     if (filtro === "todas") return true;
+    if (filtro === "solicitudes") return orden.solicitud_estado === "pendiente";
     if (filtro === "sin_asignar") return !orden.tec_id && orden.estatus !== "cancelada" && orden.estatus !== "completada" && orden.estatus !== "pagada";
     if (filtro === "completada") return orden.estatus === "completada" || orden.estatus === "pagada";
     return orden.estatus === filtro;
@@ -35,6 +42,7 @@ const GestionOrdenes = () => {
     const [clientes, setClientes] = useState([]);
     const [tecnicos, setTecnicos] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [refrescando, setRefrescando] = useState(false);
     const [error, setError] = useState("");
 
     const [busqueda, setBusqueda] = useState("");
@@ -44,33 +52,47 @@ const GestionOrdenes = () => {
 
     const puedeCrear = user?.rol_id === 2 || user?.rol_id === 5;
 
-    useEffect(() => {
-        const cargarDatos = async () => {
-            try {
-                const [resOrdenes, resClientes, resTecnicos] = await Promise.all([
-                    apiFetch("/api/ordenes_servicio"),
-                    apiFetch("/api/clientes/"),
-                    apiFetch("/api/tecnicos/todos"),
-                ]);
+    const cargarDatos = useCallback(async () => {
+        try {
+            const [resOrdenes, resClientes, resTecnicos] = await Promise.all([
+                apiFetch("/api/ordenes_servicio"),
+                apiFetch("/api/clientes/"),
+                apiFetch("/api/tecnicos/todos"),
+            ]);
 
-                if (!resOrdenes.ok) throw new Error("No se pudieron cargar las órdenes");
-                setOrdenes(await resOrdenes.json());
+            if (!resOrdenes.ok) throw new Error("No se pudieron cargar las órdenes");
+            setOrdenes(await resOrdenes.json());
 
-                if (resClientes.status === 404) {
-                    setClientes([]);
-                } else if (resClientes.ok) {
-                    setClientes(await resClientes.json());
-                }
-
-                if (resTecnicos.status !== 404 && resTecnicos.ok) setTecnicos(await resTecnicos.json());
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
+            if (resClientes.status === 404) {
+                setClientes([]);
+            } else if (resClientes.ok) {
+                setClientes(await resClientes.json());
             }
+
+            if (resTecnicos.status !== 404 && resTecnicos.ok) setTecnicos(await resTecnicos.json());
+        } catch (err) {
+            setError(err.message);
+        }
+    }, [apiFetch]);
+
+    useEffect(() => {
+        let cancelado = false;
+        (async () => {
+            await cargarDatos();
+            if (!cancelado) setLoading(false);
+        })();
+        const intervalo = setInterval(cargarDatos, INTERVALO_REFRESCO_MS);
+        return () => {
+            cancelado = true;
+            clearInterval(intervalo);
         };
-        cargarDatos();
-    }, []);
+    }, [cargarDatos]);
+
+    const handleRefrescar = async () => {
+        setRefrescando(true);
+        await cargarDatos();
+        setRefrescando(false);
+    };
 
     if (loading) return <p className="page">Cargando...</p>;
 
@@ -101,6 +123,8 @@ const GestionOrdenes = () => {
         return new Date(b.fecha_programada) - new Date(a.fecha_programada);
     });
 
+    const totalSolicitudes = ordenesConNombre.filter((o) => o.solicitud_estado === "pendiente").length;
+
     return (
         <div className="page">
             <div className="page-header">
@@ -124,6 +148,9 @@ const GestionOrdenes = () => {
                         onChange={(e) => setBusqueda(e.target.value)}
                     />
                 </div>
+                <button type="button" className="btn-sm" onClick={handleRefrescar} disabled={refrescando}>
+                    {refrescando ? "Actualizando..." : "↻ Actualizar"}
+                </button>
             </div>
 
             <div className="tabs">
@@ -134,6 +161,7 @@ const GestionOrdenes = () => {
                         className={filtro === f.key ? "tab active" : "tab"}
                     >
                         {f.label}
+                        {f.key === "solicitudes" && totalSolicitudes > 0 && ` (${totalSolicitudes})`}
                     </button>
                 ))}
             </div>
@@ -170,6 +198,11 @@ const GestionOrdenes = () => {
                                     </td>
                                     <td>
                                         <span className={`badge ${clase}`}>{orden.estatus}</span>
+                                        {orden.solicitud_estado === "pendiente" && (
+                                            <span className="badge badge-warning" style={{ marginLeft: "6px" }}>
+                                                Pidió {orden.solicitud_tipo === "cancelar" ? "cancelar" : "reagendar"}
+                                            </span>
+                                        )}
                                     </td>
                                     <td>
                                         {orden.fecha_programada

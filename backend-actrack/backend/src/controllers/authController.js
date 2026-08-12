@@ -123,13 +123,21 @@ const login = async (req, res) => {
             return res.status(401).json({ message: 'Credenciales inválidas' });
         }
 
+        if (user.activo === false) {
+            return res.status(403).json({ message: 'Esta cuenta está desactivada' });
+        }
+
         const accessToken = generateAccessToken(user.id);
         const refreshToken = generateRefreshToken(user.id);
 
         //Calcular fecha de expiracion del refresh (7 días desde ahora)
         const expira = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-        //Guardar refresh token en BD 
+        // Solo una sesión activa por cuenta -- al iniciar sesión de nuevo
+        // (desde otro dispositivo o navegador) se invalida cualquier
+        // refresh token anterior, así ese otro dispositivo no puede
+        // seguir renovando su sesión en silencio.
+        await deleteSesiones(user.id);
         await insertSesiones(user.id, refreshToken, expira);
 
         res.cookie('token', accessToken, cookieOptions);

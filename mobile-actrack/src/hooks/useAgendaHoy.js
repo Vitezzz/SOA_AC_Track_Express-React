@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getRutaDeHoy, getParadasDeRuta } from '../api/rutas';
+import { getRutaPorFecha, getParadasDeRuta, aFechaLocal } from '../api/rutas';
 import { getOrdenById } from '../api/ordenesServicio';
 import { getClienteById } from '../api/clientes';
 
-// Paradas de la ruta de HOY, ya hidratadas con orden + cliente -- lo usan
-// tanto la Agenda (lista) como la Ruta Optimizada (mapa).
-export const useAgendaHoy = () => {
+// Paradas de la ruta del día pedido ("YYYY-MM-DD"; sin fecha = hoy), ya
+// hidratadas con orden + cliente -- lo usan tanto la Agenda (lista, con
+// navegación de día) como la Ruta Optimizada (mapa, siempre hoy).
+export const useAgendaHoy = (fecha) => {
   const { apiFetch, user, loading: cargandoSesion } = useAuth();
   const [paradas, setParadas] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -15,7 +16,7 @@ export const useAgendaHoy = () => {
   const cargar = useCallback(async () => {
     setError('');
     try {
-      const ruta = await getRutaDeHoy(apiFetch);
+      const ruta = await getRutaPorFecha(apiFetch, fecha);
       if (!ruta) {
         setParadas([]);
         return;
@@ -29,11 +30,15 @@ export const useAgendaHoy = () => {
           return { ...parada, orden, cliente };
         })
       );
+      // El backend no las regresa ordenadas -- Agenda (candado de "la
+      // siguiente se habilita hasta cerrar esta") y Ruta (línea de la
+      // ruta, siguiente parada) asumen que vienen en orden de visita.
+      paradasHidratadas.sort((a, b) => a.posicion - b.posicion);
       setParadas(paradasHidratadas);
     } catch (err) {
       setError(err.message);
     }
-  }, [apiFetch]);
+  }, [apiFetch, fecha]);
 
   useEffect(() => {
     if (cargandoSesion || !user) return;
@@ -43,3 +48,5 @@ export const useAgendaHoy = () => {
 
   return { paradas, cargando, error, recargar: cargar };
 };
+
+export const esHoy = (fecha) => !fecha || fecha === aFechaLocal(new Date());

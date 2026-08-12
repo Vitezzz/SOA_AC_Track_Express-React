@@ -2,11 +2,12 @@ import {
     selectBitacoraEstados, selectBitacoraEstadosById,
     insertBitacoraEstados, selectBitacoraPorOrden
 } from "../models/bitacora_estados.js";
-import { selectOrdenesServicioById } from "../models/ordenes_servicio.js";
+import { selectOrdenesServicioById, updateOrdenesServicio } from "../models/ordenes_servicio.js";
 import { findUserById } from "../models/usuarios.js";
 import { getClienteIdByUserId } from "../utils/lookupUtils.js";
 import { enviarPush } from '../utils/pushService.js';
 import { getClienteById } from '../models/clientes.js';
+import { recalcularRetrasoRuta } from '../services/retrasoService.js';
 
 
 
@@ -77,6 +78,31 @@ const postBitacoraEstados = async (req, res) => {
                         : ' Tu técnico ha llegado';
                     const cuerpo = `Orden ${orden.folio}`;
                     await enviarPush(cliente.usu_id, titulo, cuerpo);
+                }
+
+                // El momento real en que arranca el trabajo es cuando el
+                // técnico llega, no cuando alguien se acuerde de tocar un
+                // select -- así el estatus de la orden avanza solo, sin que
+                // el admin tenga que "inventarlo" a mano. Solo aplica si
+                // seguía en pendiente (si ya se movió por otro lado, no la
+                // pisamos).
+                if (estado_nuevo === 'tecnico_llego' && orden.estatus === 'pendiente') {
+                    await updateOrdenesServicio(ord_id, {
+                        cli_id: orden.cli_id, equ_id: orden.equ_id, cat_id: orden.cat_id,
+                        pri_id: orden.pri_id, folio: orden.folio, prioridad: orden.prioridad,
+                        estatus: 'en_proceso', descripcion: orden.descripcion,
+                        fecha_programada: orden.fecha_programada, fecha_cierre: orden.fecha_cierre,
+                        tec_id: orden.tec_id, duracion_estimada_horas: orden.duracion_estimada_horas
+                    });
+                    await insertBitacoraEstados({
+                        ord_id, usu_id, estado_anterior: 'pendiente', estado_nuevo: 'en_proceso'
+                    });
+                }
+
+                // Si llegó tarde, recorre las paradas que siguen ese día y
+                // avisa a esos clientes -- ver retrasoService.js.
+                if (estado_nuevo === 'tecnico_llego') {
+                    await recalcularRetrasoRuta(ord_id);
                 }
             }
         }

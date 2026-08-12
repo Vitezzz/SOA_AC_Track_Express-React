@@ -4,6 +4,7 @@ import { View, Text, TextInput, Pressable, Switch, StyleSheet, ActivityIndicator
 import { useAuth } from '../src/context/AuthContext';
 import { getMiPerfil, actualizarMiPerfil } from '../src/api/usuarios';
 import { getMiTecnico, actualizarDisponibilidad } from '../src/api/tecnicos';
+import Icon from '../src/components/Icon';
 
 export default function Perfil() {
   const { user, loading: cargandoSesion, apiFetch } = useAuth();
@@ -52,7 +53,7 @@ export default function Perfil() {
     setGuardandoPerfil(true);
     try {
       await actualizarMiPerfil(apiFetch, form);
-      setMensaje('Perfil actualizado ✓');
+      setMensaje('Perfil actualizado');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -98,7 +99,12 @@ export default function Perfil() {
       </View>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      {mensaje ? <Text style={styles.mensaje}>{mensaje}</Text> : null}
+      {mensaje ? (
+        <View style={styles.mensajeRow}>
+          <Icon name="check" size={14} color="#15803d" />
+          <Text style={styles.mensaje}>{mensaje}</Text>
+        </View>
+      ) : null}
 
       {tecnico && (
         <View style={styles.disponibleRow}>
@@ -154,7 +160,8 @@ const styles = StyleSheet.create({
   volver: { color: '#2563eb' },
   titulo: { fontWeight: '700', fontSize: 16 },
   error: { color: '#dc2626', marginBottom: 12 },
-  mensaje: { color: '#15803d', marginBottom: 12 },
+  mensajeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 },
+  mensaje: { color: '#15803d' },
   disponibleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

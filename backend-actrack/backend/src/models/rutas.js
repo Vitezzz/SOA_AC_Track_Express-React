@@ -15,6 +15,16 @@ export const selectRutasByTecnico = async(tec_id) => {
     return result.rows;
 }
 
+// "fechaStr" en formato YYYY-MM-DD -- para encontrar (o no) la ruta del
+// día que ya existe para ese técnico, antes de crear una nueva de más.
+export const selectRutaByTecnicoYFecha = async (tec_id, fechaStr) => {
+    const result = await pool.query(
+        `SELECT * FROM rutas WHERE tecnico_id = $1 AND fecha_ruta = $2::date ORDER BY id ASC LIMIT 1`,
+        [tec_id, fechaStr]
+    );
+    return result.rows[0];
+}
+
 export const insertRutas = async ({ fecha_ruta, estado, tecnico_id }) => {
     const result = await pool.query(`INSERT INTO rutas (fecha_ruta, estado, tecnico_id) VALUES 
         ($1, $2, $3) RETURNING *`, [fecha_ruta, estado, tecnico_id]);

@@ -284,6 +284,12 @@ create table ORDENES_SERVICIO (
    FECHA_PROGRAMADA     TIMESTAMP            null,
    FECHA_CIERRE         TIMESTAMP            null,
    TEC_ID               INT2                 null,
+   DURACION_ESTIMADA_HORAS NUMERIC           null,
+   SOLICITUD_TIPO       VARCHAR(20)          null,
+   SOLICITUD_FECHA_NUEVA TIMESTAMP           null,
+   SOLICITUD_MOTIVO     TEXT                 null,
+   SOLICITUD_ESTADO     VARCHAR(20)          null,
+   SOLICITUD_RESPUESTA  TEXT                 null,
     constraint PK_ORDENES_SERVICIO primary key (ID)
 );
 

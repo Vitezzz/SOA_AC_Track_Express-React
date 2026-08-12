@@ -6,6 +6,8 @@ import { puedeVerTodo } from "../utils/roleUtils.js";
 import { selectTecnicoById } from "../models/tecnicos.js";
 import { getTecnicoIdByUserId } from '../utils/lookupUtils.js'
 import { listaEquipos } from "./equiposController.js";
+import { insertNotificaciones } from "../models/notificaciones.js";
+import { enviarPush } from "../utils/pushService.js";
 
 const getRutas = async (req, res) => {
     try {
@@ -69,6 +71,19 @@ const postRutas = async (req, res) => {
 
 
         const nuevaRuta = await insertRutas({ fecha_ruta, estado, tecnico_id });
+
+        // Sin esto el técnico no se enteraba de que ya le armaron la ruta
+        // del día hasta que se le ocurriera abrir la app. nuevaRuta.fecha_ruta
+        // ya es un Date en memoria (no pasó por JSON todavía) -- toLocaleDateString
+        // usa sus getters locales directo, sin riesgo del bug UTC de siempre.
+        const fechaLegible = nuevaRuta.fecha_ruta.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
+        await insertNotificaciones({
+            usu_id: tecnicoExiste.usu_id,
+            tipo: 'ruta_asignada',
+            titulo: `Ya tienes una ruta planeada para el ${fechaLegible}`,
+            leido: false
+        });
+        await enviarPush(tecnicoExiste.usu_id, 'Nueva ruta asignada', `Ruta planeada para el ${fechaLegible}`);
 
         res.status(201).json({
             id: nuevaRuta.id,

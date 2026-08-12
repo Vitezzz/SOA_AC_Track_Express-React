@@ -1,14 +1,25 @@
 import { useState } from 'react';
-import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { actualizarOrden } from '../../api/ordenesServicio';
 import PingsBotones from './PingsBotones';
 import { ordenEstaCerrada } from '../../utils/estadosOrden';
 
-export default function CierreTab({ orden, setOrden }) {
+export default function CierreTab({ orden, setOrden, cliente }) {
   const { apiFetch } = useAuth();
   const [cerrando, setCerrando] = useState(false);
   const [error, setError] = useState('');
+
+  const confirmarCierre = () => {
+    Alert.alert(
+      'Cerrar servicio',
+      'Se marcará la orden como completada y se le avisará al cliente. ¿Confirmas?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Cerrar servicio', style: 'destructive', onPress: cerrarServicio },
+      ]
+    );
+  };
 
   const cerrarServicio = async () => {
     setError('');
@@ -53,10 +64,10 @@ export default function CierreTab({ orden, setOrden }) {
         <>
           <Text style={styles.subtitulo}>Avisar al cliente</Text>
           <View style={{ marginBottom: 24 }}>
-            <PingsBotones ordenId={orden.id} estatusOrden={orden.estatus} />
+            <PingsBotones ordenId={orden.id} estatusOrden={orden.estatus} cliente={cliente} />
           </View>
 
-          <Pressable style={styles.cerrarBoton} onPress={cerrarServicio} disabled={cerrando}>
+          <Pressable style={styles.cerrarBoton} onPress={confirmarCierre} disabled={cerrando}>
             {cerrando ? <ActivityIndicator color="#fff" /> : <Text style={styles.cerrarTexto}>Cerrar servicio</Text>}
           </Pressable>
         </>

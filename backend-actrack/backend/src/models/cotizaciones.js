@@ -17,6 +17,20 @@ export const selectCotizacionesByCliente = async (cli_id) => {
     );
     return result.rows;
 }
+
+// Igual que selectPagosByTecnico (models/pagos.js): se filtra por el
+// técnico ASIGNADO A LA ORDEN (ordenes_servicio.tec_id), no por
+// cotizaciones.tec_id -- ese es "quién la redactó", que puede quedar
+// desactualizado si la orden se reasigna a otro técnico después.
+export const selectCotizacionesByTecnico = async (tec_id) => {
+    const result = await pool.query(
+        `SELECT c.* FROM cotizaciones c
+         JOIN ordenes_servicio o ON c.ord_id = o.id
+         WHERE o.tec_id = $1 AND c.estado != 'borrador'`,
+        [tec_id]
+    );
+    return result.rows;
+}
 export const insertCotizaciones = async ({ ord_id, tec_id, cli_id, folio, estado, total,
     notas
 }) => {

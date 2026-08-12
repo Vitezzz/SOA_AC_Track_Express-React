@@ -1,3 +1,5 @@
+import Icon from "../../components/Icon";
+
 // Modal genérico para los reportes exportables a PDF. No usamos ninguna
 // librería de PDF: el botón "Guardar PDF" dispara el diálogo de impresión
 // del propio Chromium (Electron), que en Linux/Windows/Mac trae la opción
@@ -48,7 +50,9 @@ const ReporteImprimible = ({ titulo, subtitulo, onCerrar, children }) => {
                 }}
             >
                 <div className="no-print" style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginBottom: "20px" }}>
-                    <button onClick={() => window.print()}>🖨️ Imprimir / Guardar PDF</button>
+                    <button onClick={() => window.print()} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <Icon name="printer" className="icon-sm" /> Imprimir / Guardar PDF
+                    </button>
                     <button onClick={onCerrar}>Cerrar</button>
                 </div>
 

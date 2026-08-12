@@ -9,6 +9,8 @@ const CrearCotizacion = () => {
     const [ordenes, setOrdenes] = useState([]);
     const [clientes, setClientes] = useState([]);
     const [tecnicos, setTecnicos] = useState([]);
+    const [equipos, setEquipos] = useState([]);
+    const [categorias, setCategorias] = useState([]);
     const [cotizacionesExistentes, setCotizacionesExistentes] = useState([]);
 
     const [ordId, setOrdId] = useState("");
@@ -22,15 +24,19 @@ const CrearCotizacion = () => {
     useEffect(() => {
         const cargarCatalogos = async () => {
             try {
-                const [resOrdenes, resClientes, resTecnicos, resCotizaciones] = await Promise.all([
+                const [resOrdenes, resClientes, resTecnicos, resCotizaciones, resEquipos, resCategorias] = await Promise.all([
                     apiFetch("/api/ordenes_servicio"),
                     apiFetch("/api/clientes/"),
                     apiFetch("/api/tecnicos/"),
                     apiFetch("/api/cotizaciones"),
+                    apiFetch("/api/equipos/"),
+                    apiFetch("/api/categoriaServicio"),
                 ]);
 
                 if (resOrdenes.ok) setOrdenes(await resOrdenes.json());
                 if (resClientes.ok) setClientes(await resClientes.json());
+                if (resEquipos.ok) setEquipos(await resEquipos.json());
+                if (resCategorias.ok) setCategorias(await resCategorias.json());
 
                 if (resTecnicos.status !== 404 && resTecnicos.ok) {
                     const listaTecnicos = await resTecnicos.json();
@@ -131,6 +137,22 @@ const CrearCotizacion = () => {
                         </p>
                     )}
                 </label>
+
+                {ordenSeleccionada && (() => {
+                    const cliente = clientes.find((c) => c.id === ordenSeleccionada.cli_id);
+                    const equipo = equipos.find((e) => e.id === ordenSeleccionada.equ_id);
+                    const categoria = categorias.find((c) => c.id === ordenSeleccionada.cat_id);
+                    return (
+                        <div className="panel" style={{ marginBottom: "16px", fontSize: "14px", lineHeight: "1.6" }}>
+                            <p><strong>Cliente:</strong> {cliente?.nombre || `#${ordenSeleccionada.cli_id}`}
+                                {cliente?.telefono && ` · ${cliente.telefono}`}
+                            </p>
+                            <p><strong>Equipo:</strong> {equipo ? `${equipo.tipo || "—"}${equipo.modelo ? ` ${equipo.modelo}` : ""}` : "Sin equipo asociado"}</p>
+                            <p><strong>Servicio solicitado:</strong> {categoria?.nombre || `#${ordenSeleccionada.cat_id}`}</p>
+                            {ordenSeleccionada.descripcion && <p><strong>Descripción:</strong> {ordenSeleccionada.descripcion}</p>}
+                        </div>
+                    );
+                })()}
 
                 <label>
                     <span>Técnico responsable *</span>

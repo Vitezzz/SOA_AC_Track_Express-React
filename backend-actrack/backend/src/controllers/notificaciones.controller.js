@@ -1,17 +1,18 @@
 import {
-    selectNotificaciones, selectNotificacionesById,
+    selectNotificaciones, selectNotificacionesById, selectNotificacionesByUsuario,
     insertNotificaciones, updateNotificaciones, deleteNotificaciones
 } from "../models/notificaciones.js";
 import { findUserById } from "../models/usuarios.js";
+import { puedeVerTodo } from "../utils/roleUtils.js";
 
+// Admin/supervisor ven todas (para soporte); cualquier otro usuario solo
+// las suyas -- antes esto regresaba TODA la tabla a cualquiera con sesión.
 const getNotificaciones = async (req, res) => {
     try {
 
-        const listaNotificaciones = await selectNotificaciones();
-
-        if (listaNotificaciones.length === 0) {
-            return res.status(404).json({ message: "Lista de notificaciones no encontrada" });
-        }
+        const listaNotificaciones = puedeVerTodo(req.user.rol_id)
+            ? await selectNotificaciones()
+            : await selectNotificacionesByUsuario(req.user.id);
 
         res.status(200).json(listaNotificaciones);
 
@@ -34,6 +35,12 @@ const getNotificacionesById = async (req, res) => {
 
         if (!notificacionId) {
             return res.status(404).json({ message: "Notificacion no encontrada" })
+        }
+
+        // Mismo criterio que la lista: no dejar leer la notificación de
+        // otra persona solo por adivinar el id.
+        if (!puedeVerTodo(req.user.rol_id) && notificacionId.usu_id !== req.user.id) {
+            return res.status(403).json({ message: "No tienes acceso a esta notificación" });
         }
 
         res.status(200).json(notificacionId)
@@ -82,14 +89,21 @@ const putNotificaciones = async (req, res) => {
             return res.status(400).json({ message: "Id no encontrado" })
         }
 
+        const notificacionExistente = await selectNotificacionesById(id);
+        if (!notificacionExistente) {
+            return res.status(404).json({ message: "Notificacion no encontrada" });
+        }
+
+        // Igual que en el GET: sin esto, cualquiera con sesión podía marcar
+        // como leída (o reasignar de usu_id) la notificación de otra persona.
+        if (!puedeVerTodo(req.user.rol_id) && notificacionExistente.usu_id !== req.user.id) {
+            return res.status(403).json({ message: "No tienes acceso a esta notificación" });
+        }
+
         const usuarioExiste = await findUserById(usu_id)
         if (!usuarioExiste) return res.status(404).json({ message: 'Usuario no encontrado' });
 
         const notificacionUpdt = await updateNotificaciones(id, { usu_id, tipo, titulo, leido });
-
-        if (!notificacionUpdt) {
-            return res.status(404).json({ message: "Notificacion no encontrada" });
-        }
 
         res.status(200).json({
             id: notificacionUpdt.id,

@@ -88,7 +88,7 @@ const InventarioVehiculo = () => {
         return {
             ...s,
             nombreArticulo: articulo?.nombre || `Artículo #${s.inv_id}`,
-            nombreTecnico: tecnico ? `Técnico #${tecnico.usu_id}` : `Técnico #${s.tec_id}`,
+            nombreTecnico: tecnico?.nombre || `Técnico #${s.tec_id}`,
         };
     });
 
@@ -120,7 +120,7 @@ const InventarioVehiculo = () => {
                     <select value={tecId} onChange={(e) => setTecId(e.target.value)} style={{ width: "100%", padding: "8px" }}>
                         <option value="">Selecciona un técnico</option>
                         {tecnicos.map((tec) => (
-                            <option key={tec.id} value={tec.id}>Técnico #{tec.usu_id}</option>
+                            <option key={tec.id} value={tec.id}>{tec.nombre || `Técnico #${tec.usu_id}`}</option>
                         ))}
                     </select>
                 </label>

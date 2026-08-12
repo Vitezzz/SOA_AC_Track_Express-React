@@ -2,16 +2,33 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
-const ESTADOS_POSIBLES = ["pendiente", "en_proceso", "pagada", "completada", "cancelada"];
+// El admin ya NO puede saltar el estatus a mano a cualquier valor -- eso
+// era justo lo que hacía que el flujo se sintiera "inventado". El resto del
+// flujo avanza solo por eventos reales: pendiente -> en_proceso cuando el
+// técnico marca que llegó (mobile), -> completada cuando cierra el
+// servicio (mobile), -> pagada cuando se cubre el saldo (pagosService).
+// Lo único que sigue siendo decisión humana es cancelar/reactivar.
+const opcionesEstatus = (estatusActual) => {
+    if (estatusActual === "cancelada") return [{ valor: "cancelada", label: "Cancelada" }, { valor: "pendiente", label: "Reactivar orden" }];
+    if (estatusActual === "completada" || estatusActual === "pagada") return null;
+    return [{ valor: estatusActual, label: estatusActual }, { valor: "cancelada", label: "Cancelar orden" }];
+};
 
 const EditarOrden = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { apiFetch,user  } = useAuth();
+    const { apiFetch } = useAuth();
 
     const [orden, setOrden] = useState(null);
     const [tecnicos, setTecnicos] = useState([]);
     const [disponibilidad, setDisponibilidad] = useState({});
+
+    // Solo para mostrar el contexto de la orden (qué pidió el cliente, en
+    // qué equipo) -- así se puede elegir técnico con criterio, no a ciegas.
+    const [cliente, setCliente] = useState(null);
+    const [equipo, setEquipo] = useState(null);
+    const [marca, setMarca] = useState(null);
+    const [categoria, setCategoria] = useState(null);
 
     const [estatus, setEstatus] = useState("");
     const [tecId, setTecId] = useState("");
@@ -21,62 +38,84 @@ const EditarOrden = () => {
     const [guardando, setGuardando] = useState(false);
     const [error, setError] = useState("");
     const [guardado, setGuardado] = useState(false);
+    const [resolviendo, setResolviendo] = useState(false);
 
-    const [marcandoEvento, setMarcandoEvento] = useState(false);
-    const [mensajeEvento, setMensajeEvento] = useState("");
-
-    const marcarEvento = async (tipoEvento) => {
-        setMarcandoEvento(true);
-        setMensajeEvento("");
+    const cargarDatos = async () => {
         try {
-            const res = await apiFetch("/api/bitacora_estados", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    ord_id: Number(id),
-                    usu_id: user.id,
-                    estado_anterior: null,
-                    estado_nuevo: tipoEvento,
-                }),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || "No se pudo registrar el evento");
-            setMensajeEvento(tipoEvento === "tecnico_en_camino" ? "Marcado: técnico en camino" : "Marcado: técnico llegó");
+            const [resOrden, resTecnicos] = await Promise.all([
+                apiFetch(`/api/ordenes_servicio/${id}`),
+                apiFetch("/api/tecnicos/todos"),
+            ]);
+
+            if (!resOrden.ok) throw new Error("No se pudo cargar la orden");
+            const dataOrden = await resOrden.json();
+            setOrden(dataOrden);
+            setEstatus(dataOrden.estatus);
+            setTecId(dataOrden.tec_id || "");
+            setDuracionEstimada(String(dataOrden.duracion_estimada_horas ?? 2));
+
+            if (resTecnicos.status === 404) {
+                setTecnicos([]);
+            } else if (resTecnicos.ok) {
+                setTecnicos(await resTecnicos.json());
+            }
+
+            const [resCliente, resEquipo, resCategoria] = await Promise.all([
+                dataOrden.cli_id ? apiFetch(`/api/clientes/${dataOrden.cli_id}`) : null,
+                dataOrden.equ_id ? apiFetch(`/api/equipos/${dataOrden.equ_id}`) : null,
+                dataOrden.cat_id ? apiFetch(`/api/categoriaServicio/${dataOrden.cat_id}`) : null,
+            ]);
+
+            if (resCliente?.ok) setCliente(await resCliente.json());
+            if (resCategoria?.ok) setCategoria(await resCategoria.json());
+
+            if (resEquipo?.ok) {
+                const dataEquipo = await resEquipo.json();
+                setEquipo(dataEquipo);
+                if (dataEquipo.mar_id) {
+                    const resMarca = await apiFetch(`/api/marcas/${dataEquipo.mar_id}`);
+                    if (resMarca.ok) setMarca(await resMarca.json());
+                }
+            }
         } catch (err) {
             setError(err.message);
         } finally {
-            setMarcandoEvento(false);
+            setLoading(false);
         }
     };
 
     useEffect(() => {
-        const cargarDatos = async () => {
-            try {
-                const [resOrden, resTecnicos] = await Promise.all([
-                    apiFetch(`/api/ordenes_servicio/${id}`),
-                    apiFetch("/api/tecnicos/todos"),
-                ]);
-
-                if (!resOrden.ok) throw new Error("No se pudo cargar la orden");
-                const dataOrden = await resOrden.json();
-                setOrden(dataOrden);
-                setEstatus(dataOrden.estatus);
-                setTecId(dataOrden.tec_id || "");
-                setDuracionEstimada(String(dataOrden.duracion_estimada_horas ?? 2));
-
-                if (resTecnicos.status === 404) {
-                    setTecnicos([]);
-                } else if (resTecnicos.ok) {
-                    setTecnicos(await resTecnicos.json());
-                }
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-        cargarDatos();
+        (async () => {
+            await cargarDatos();
+        })();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
+
+    const resolverSolicitud = async (aprobar) => {
+        setError("");
+
+        let motivoRespuesta = "";
+        if (!aprobar) {
+            motivoRespuesta = window.prompt("Motivo del rechazo (el cliente lo va a ver):", "") || "";
+            if (motivoRespuesta === "" && !window.confirm("¿Rechazar sin dar motivo?")) return;
+        }
+
+        setResolviendo(true);
+        try {
+            const res = await apiFetch(`/api/ordenes_servicio/${id}/resolver-solicitud`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ aprobar, motivo_respuesta: motivoRespuesta || null }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "No se pudo resolver la solicitud");
+            await cargarDatos();
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setResolviendo(false);
+        }
+    };
 
     useEffect(() => {
         if (!orden?.fecha_programada) return;
@@ -141,17 +180,52 @@ const EditarOrden = () => {
             {error && <p className="error-text">{error}</p>}
             {guardado && <p className="success-text">¡Orden actualizada correctamente!</p>}
 
+            <div className="panel" style={{ marginBottom: "16px", fontSize: "14px", lineHeight: "1.6" }}>
+                <p><strong>Cliente:</strong> {cliente?.nombre || `#${orden.cli_id}`}
+                    {cliente?.telefono && ` · ${cliente.telefono}`}
+                    {cliente?.direccion && ` · ${cliente.direccion}`}
+                </p>
+                <p><strong>Equipo:</strong> {equipo ? `${equipo.tipo || "—"}${marca?.nombre ? ` ${marca.nombre}` : ""}${equipo.modelo ? ` ${equipo.modelo}` : ""}` : "Sin equipo asociado"}</p>
+                <p><strong>Servicio solicitado:</strong> {categoria?.nombre || `#${orden.cat_id}`}</p>
+                <p><strong>Prioridad:</strong> {orden.prioridad || "—"}</p>
+                <p><strong>Fecha programada:</strong> {orden.fecha_programada ? new Date(orden.fecha_programada).toLocaleString("es-MX") : "Sin fecha"}</p>
+                {orden.descripcion && <p><strong>Descripción:</strong> {orden.descripcion}</p>}
+            </div>
+
+            {orden.solicitud_estado === "pendiente" && (
+                <div className="panel" style={{ marginBottom: "16px", background: "#fffbeb", fontSize: "14px" }}>
+                    <p style={{ fontWeight: "600", marginBottom: "8px" }}>
+                        El cliente pidió {orden.solicitud_tipo === "cancelar" ? "cancelar" : "reagendar"} esta orden
+                        {orden.solicitud_tipo === "reagendar" && orden.solicitud_fecha_nueva &&
+                            ` para el ${new Date(orden.solicitud_fecha_nueva).toLocaleString("es-MX")}`}.
+                    </p>
+                    {orden.solicitud_motivo && <p style={{ marginBottom: "8px" }}>Motivo: {orden.solicitud_motivo}</p>}
+                    <div style={{ display: "flex", gap: "8px" }}>
+                        <button type="button" className="btn-primary" onClick={() => resolverSolicitud(true)} disabled={resolviendo}>
+                            Aprobar
+                        </button>
+                        <button type="button" onClick={() => resolverSolicitud(false)} disabled={resolviendo}>
+                            Rechazar
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <form onSubmit={handleSubmit} className="form">
                 <label>
                     <span>Estatus</span>
-                    <select
-                        value={estatus}
-                        onChange={(e) => setEstatus(e.target.value)}
-                    >
-                        {ESTADOS_POSIBLES.map((valor) => (
-                            <option key={valor} value={valor}>{valor}</option>
-                        ))}
-                    </select>
+                    {opcionesEstatus(orden.estatus) ? (
+                        <select
+                            value={estatus}
+                            onChange={(e) => setEstatus(e.target.value)}
+                        >
+                            {opcionesEstatus(orden.estatus).map((op) => (
+                                <option key={op.valor} value={op.valor}>{op.label}</option>
+                            ))}
+                        </select>
+                    ) : (
+                        <p style={{ margin: 0, fontWeight: "600" }}>{orden.estatus} — ya no se puede modificar desde aquí</p>
+                    )}
                 </label>
 
                 <label>
@@ -179,16 +253,6 @@ const EditarOrden = () => {
                         ))}
                     </select>
                 </label>
-
-                <div style={{ marginTop: "12px", display: "flex", gap: "8px" }}>
-                    <button type="button" onClick={() => marcarEvento("tecnico_en_camino")} disabled={marcandoEvento}>
-                        🚗 Marcar en camino
-                    </button>
-                    <button type="button" onClick={() => marcarEvento("tecnico_llego")} disabled={marcandoEvento}>
-                        📍 Marcar llegada
-                    </button>
-                </div>
-                {mensajeEvento && <p style={{ color: "green", fontSize: "13px" }}>{mensajeEvento}</p>}
 
                 <div className="form-actions">
                     <button type="submit" disabled={guardando} className="btn-primary">

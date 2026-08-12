@@ -1,7 +1,7 @@
 import express from 'express';
 import {
     getOrdenesServicio, getOrdenesServicioById, postOrdenesServicio,
-    putOrdenesServicio, dltOrdenesServicio
+    putOrdenesServicio, dltOrdenesServicio, postSolicitudCliente, putResolverSolicitud
 } from '../controllers/ordenes_servicioController.js';
 
 import { protect } from "../middlewares/authMiddleware.js";
@@ -14,6 +14,8 @@ router.get('/:id', protect, getOrdenesServicioById);
 router.post('/', protect, authorize(2, 3, 5), postOrdenesServicio);
 router.put('/:id', protect, authorize(2, 4, 5), putOrdenesServicio);
 router.delete('/:id', protect, authorize(2, 5), dltOrdenesServicio);
+router.post('/:id/solicitud', protect, authorize(3), postSolicitudCliente);
+router.put('/:id/resolver-solicitud', protect, authorize(2, 5), putResolverSolicitud);
 
 
 export default router;

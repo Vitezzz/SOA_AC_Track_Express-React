@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import Icon from "../../components/Icon";
 
 const formatoMoneda = (valor) =>
     new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(valor);
@@ -139,8 +140,9 @@ const CrearPago = () => {
                 {ordId && (
                     <div style={{ background: "#f9fafb", borderRadius: "8px", padding: "12px", fontSize: "14px" }}>
                         {!cotizacionAprobada ? (
-                            <p style={{ color: "#b45309" }}>
-                                ⚠️ Esta orden no tiene una cotización aprobada — no se puede registrar un pago todavía.
+                            <p style={{ color: "#b45309", display: "flex", alignItems: "flex-start", gap: "6px" }}>
+                                <Icon name="warning" className="icon-sm" style={{ marginTop: "2px", flexShrink: 0 }} />
+                                <span>Esta orden no tiene una cotización aprobada — no se puede registrar un pago todavía.</span>
                             </p>
                         ) : (
                             <>

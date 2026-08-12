@@ -1,0 +1,125 @@
+.notif-bell-wrap {
+  position: relative;
+  margin-left: auto;
+}
+
+.notif-bell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.notif-bell:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.notif-badge {
+  position: absolute;
+  top: -0.2rem;
+  right: -0.2rem;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  background: var(--color-danger-text);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.notif-dropdown {
+  position: absolute;
+  top: 2.4rem;
+  right: -0.5rem;
+  width: 20rem;
+  max-height: 22rem;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  z-index: 50;
+  padding: 0.5rem 0;
+}
+
+.notif-dropdown-title {
+  padding: 0.4rem 0.9rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
+}
+
+.notif-dropdown-empty {
+  padding: 0.5rem 0.9rem 0.9rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.notif-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  border-top: 1px solid var(--color-border);
+}
+
+.notif-item:hover {
+  background: var(--color-bg);
+}
+
+.notif-item-nueva {
+  background: var(--color-accent-soft);
+  font-weight: 600;
+}
+
+.notif-toast {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  max-width: 20rem;
+  padding: 0.85rem 1rem;
+  background: var(--color-text);
+  color: #fff;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  text-align: left;
+  animation: notif-toast-in 180ms ease;
+}
+
+.notif-toast strong {
+  font-size: 0.8rem;
+  color: var(--color-accent-soft-strong);
+}
+
+.notif-toast span {
+  font-size: 0.85rem;
+}
+
+@keyframes notif-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

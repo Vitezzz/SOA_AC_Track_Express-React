@@ -20,8 +20,8 @@
     "hash": "fc02d69b202334f4c962c4eddbe20820"
   },
   "backend-actrack/backend/src/controllers/authController.js": {
-    "mtime": 1785816093878.4219,
-    "hash": "5483069fa129a5c5e5e3b04196a6181c"
+    "mtime": 1786136059220.4883,
+    "hash": "85b1926329f1f1840d75823234e9b408"
   },
   "backend-actrack/backend/src/controllers/bitacoraEstadosController.js": {
     "mtime": 1785960024259.0613,
@@ -76,8 +76,8 @@
     "hash": "57f8f121d3632d4925bda326ade4e4a7"
   },
   "backend-actrack/backend/src/controllers/mantenimientoPreventivoController.js": {
-    "mtime": 1783068629946.5679,
-    "hash": "a067a319901bebde7f47cb753fc6a434"
+    "mtime": 1786135958409.7185,
+    "hash": "bde4ec782e8510a00d5eec1eccf7b018"
   },
   "backend-actrack/backend/src/controllers/marcasController.js": {
     "mtime": 1784978329743.9321,
@@ -128,12 +128,12 @@
     "hash": "3d2cdaf0a5998a17709ea897e8e31c4e"
   },
   "backend-actrack/backend/src/index.js": {
-    "mtime": 1785726297977.0488,
-    "hash": "30be7c66649c61c2e382242e4028a8d3"
+    "mtime": 1786135989047.3384,
+    "hash": "2e844b1d220199a9346b9307663be376"
   },
   "backend-actrack/backend/src/middlewares/authMiddleware.js": {
-    "mtime": 1784777241570.393,
-    "hash": "6535f1c00a45902e81a5f26b0f0e9840"
+    "mtime": 1786136045314.6545,
+    "hash": "a0ca4c02c4b5a528f9069a6824463618"
   },
   "backend-actrack/backend/src/middlewares/roleMiddleware.js": {
     "mtime": 1783891787381.878,
@@ -240,16 +240,16 @@
     "hash": "f4198cd2785d1f7472bdde53cc3aa576"
   },
   "backend-actrack/backend/src/models/tecnicos.js": {
-    "mtime": 1785974746261.571,
-    "hash": "2fb1c13085376a9e0e9c7ebad01d10e6"
+    "mtime": 1786129795938.0054,
+    "hash": "f6e4d5b5346cc6bb6b8d456e33df1e55"
   },
   "backend-actrack/backend/src/models/tipos_movimiento_inventario.js": {
     "mtime": 1782691519512.2039,
     "hash": "44b949b80b9e559b7c0c7450f2ec9be6"
   },
   "backend-actrack/backend/src/models/usuarios.js": {
-    "mtime": 1785970231573.9827,
-    "hash": "24e75132110767461b09f32aee953034"
+    "mtime": 1786136073911.3137,
+    "hash": "b6dc920b5552cf8a2d4e1f1635a1e5ad"
   },
   "backend-actrack/backend/src/routes/auth.js": {
     "mtime": 1784607284753.7556,
@@ -308,8 +308,8 @@
     "hash": "13b9f9ad8cd39a84c0bdf340e42465ae"
   },
   "backend-actrack/backend/src/routes/mantenimientoPreventivoRouter.js": {
-    "mtime": 1783891363854.9136,
-    "hash": "f61d81598475ce82e0314a65e9be32cb"
+    "mtime": 1786135969536.5798,
+    "hash": "1050a7a04b9ccf79e3e9a935baaf9fcc"
   },
   "backend-actrack/backend/src/routes/marcaRoute.js": {
     "mtime": 1783891299304.5947,
@@ -372,8 +372,8 @@
     "hash": "e3e68fb32798e2388f4d725f56c7b299"
   },
   "backend-actrack/backend/src/utils/authUtils.js": {
-    "mtime": 1782193149772.9153,
-    "hash": "ada166d914fc560b35223214ade39e0f"
+    "mtime": 1786132699543.6462,
+    "hash": "e909aefba67dbd4eae738323821abe31"
   },
   "backend-actrack/backend/src/utils/lookupUtils.js": {
     "mtime": 1783068759210.292,
@@ -404,16 +404,16 @@
     "hash": "216e47e4a283b7ffad5c5204766fbfc2"
   },
   "desktop-actrack/src/renderer/src/App.jsx": {
-    "mtime": 1785818838901.6697,
-    "hash": "e43754e194ef7b1b0ef96268b7c0a94d"
+    "mtime": 1786130200917.3635,
+    "hash": "3f043ce51e00eac347afaa39a778885d"
   },
   "desktop-actrack/src/renderer/src/components/Icon.jsx": {
-    "mtime": 1785437277278.629,
-    "hash": "ac3b1a24923d5d6b6b4116f58a1f9258"
+    "mtime": 1786133595676.269,
+    "hash": "7e971a20f5e65a4df7fe21afb1bcb848"
   },
   "desktop-actrack/src/renderer/src/components/ProtectedRoute.jsx": {
-    "mtime": 1784779906454.6292,
-    "hash": "09b0dd8b016f48b9c42537824d7fd795"
+    "mtime": 1786130192371.291,
+    "hash": "4f8560d2431b4da033b7e9c0dff27817"
   },
   "desktop-actrack/src/renderer/src/components/Sidebar.jsx": {
     "mtime": 1785818874899.8125,
@@ -448,16 +448,16 @@
     "hash": "8fe118c5ca2477a9411c40d98a835549"
   },
   "desktop-actrack/src/renderer/src/pages/Configuracion/Configuracion.jsx": {
-    "mtime": 1785436855996.5645,
-    "hash": "c421a2af15fe51b5e6af3cba28f4b892"
+    "mtime": 1786136178104.105,
+    "hash": "1e2b7bb72aa0729e39816dde3b449fa9"
   },
   "desktop-actrack/src/renderer/src/pages/Cotizaciones/CrearCotizacion.jsx": {
     "mtime": 1785578601528.7146,
     "hash": "dacb886cb2424e941c9c45de7e244695"
   },
   "desktop-actrack/src/renderer/src/pages/Cotizaciones/EditarCotizacion.jsx": {
-    "mtime": 1785697007085.3137,
-    "hash": "3016dbe8a0313c95277361f1bc0689f0"
+    "mtime": 1786130215062.4878,
+    "hash": "440786a2a4dcd6b739cf370ef1eba4df"
   },
   "desktop-actrack/src/renderer/src/pages/Cotizaciones/ListaCotizaciones.jsx": {
     "mtime": 1785436592512.1501,
@@ -504,8 +504,8 @@
     "hash": "7cd47aa606ff0dc10f625a73bf9a75b9"
   },
   "desktop-actrack/src/renderer/src/pages/Ordenes/GestionOrdenes.jsx": {
-    "mtime": 1785437297846.4453,
-    "hash": "d9081c6bf27c568633a37981bf594bbe"
+    "mtime": 1786133237710.8994,
+    "hash": "52e358a3c5e3bce4e548d6e30fec717b"
   },
   "desktop-actrack/src/renderer/src/pages/Pagos/CrearPago.jsx": {
     "mtime": 1785710151695.8877,
@@ -516,32 +516,28 @@
     "hash": "749e0657e24aca204c26a44e932e714e"
   },
   "desktop-actrack/src/renderer/src/pages/Pagos/ListaPagos.jsx": {
-    "mtime": 1785710687461.2979,
-    "hash": "0d298d84ec60c1b311b4a5c9779f8366"
+    "mtime": 1786130358990.0872,
+    "hash": "18e0dacc56ba2d9e1559cbd181e99a70"
   },
   "desktop-actrack/src/renderer/src/pages/Tecnicos/CrearTecnico.jsx": {
     "mtime": 1785436698257.7144,
     "hash": "d00d02fd7d950843e0db846e7b9d590b"
   },
   "desktop-actrack/src/renderer/src/pages/Tecnicos/EditarTecnico.jsx": {
-    "mtime": 1785436708144.3076,
-    "hash": "03aea309f0a797c909b257904cae5413"
+    "mtime": 1786130164765.9082,
+    "hash": "aa4064f5057ef7f4dc3d00c13486ce1b"
   },
   "desktop-actrack/src/renderer/src/pages/Tecnicos/ListaTecnicos.jsx": {
-    "mtime": 1785437321444.3723,
-    "hash": "1248fcb79bcaff2af99c4ab7c94d43be"
+    "mtime": 1786130178327.1763,
+    "hash": "9a93a2c159f553c68951b1af00df5536"
   },
   "frontend-actrack/my-app/eslint.config.js": {
     "mtime": 1781816309754.253,
     "hash": "3aa4b57d7f08181d86bde52a4dcb7f22"
   },
   "frontend-actrack/my-app/src/App.jsx": {
-    "mtime": 1785960996857.4873,
-    "hash": "4822392f39c588fb61adfb5994da5643"
-  },
-  "frontend-actrack/my-app/src/components/AddressAutocompleteInput.jsx": {
-    "mtime": 1784756455521.7585,
-    "hash": "16137477403dbcca0b37675a8293a358"
+    "mtime": 1786131191189.5925,
+    "hash": "c2c84d5945e3d026c526e0ec18a826a4"
   },
   "frontend-actrack/my-app/src/components/Card.jsx": {
     "mtime": 1785434657059.5806,
@@ -568,8 +564,8 @@
     "hash": "f64b37f0ad405f22e83998d28c5edd02"
   },
   "frontend-actrack/my-app/src/components/Navigation.jsx": {
-    "mtime": 1785434161934.434,
-    "hash": "3f4e6e8404dcf133999b3c90ba23d4d9"
+    "mtime": 1786131924101.34,
+    "hash": "072c5a3bc5853bc2e560cc07f5042432"
   },
   "frontend-actrack/my-app/src/components/ProtectedRoute.jsx": {
     "mtime": 1783794599996.269,
@@ -580,8 +576,8 @@
     "hash": "092f8f394b2f13b790e8d616ca3f7adf"
   },
   "frontend-actrack/my-app/src/context/AuthContext.jsx": {
-    "mtime": 1785962819226.3486,
-    "hash": "88b7831543ce077ccc4ce26ffafb7f99"
+    "mtime": 1786132722990.165,
+    "hash": "a609d4ae4304efcad6d3d7d12155fa5a"
   },
   "frontend-actrack/my-app/src/main.jsx": {
     "mtime": 1784181056476.7903,
@@ -595,18 +591,6 @@
     "mtime": 1785435681625.297,
     "hash": "6a639c0ecbfb292acef502331328bf06"
   },
-  "frontend-actrack/my-app/src/pages/Dashboard/DashboardDetails.jsx": {
-    "mtime": 1785435738096.1768,
-    "hash": "42b1a4b0ebf7707aaa26dbca38819f67"
-  },
-  "frontend-actrack/my-app/src/pages/Dashboard/DashboardHome.jsx": {
-    "mtime": 1785435770051.2253,
-    "hash": "d26e6f0ba3a41299df2ea7f25ab25fbd"
-  },
-  "frontend-actrack/my-app/src/pages/Dashboard/DashboardLayout.jsx": {
-    "mtime": 1785434245597.3655,
-    "hash": "13dd755c438890c5a6cc2e6956725a48"
-  },
   "frontend-actrack/my-app/src/pages/Equipos/EquipoDetalle.jsx": {
     "mtime": 1785435663610.0244,
     "hash": "f24c1452bd133c5fb7b94cb344a9e156"
@@ -616,8 +600,8 @@
     "hash": "be45ed3371acf273c5c4e06b7fa9a781"
   },
   "frontend-actrack/my-app/src/pages/HomePage/HomePage.jsx": {
-    "mtime": 1785962738589.327,
-    "hash": "a481f19c74acc4cabed0bd5abe34c98c"
+    "mtime": 1786132505007.1326,
+    "hash": "772a42fac5adacff180112f4f5d741ca"
   },
   "frontend-actrack/my-app/src/pages/NotFoundPage/NotFoundPage.jsx": {
     "mtime": 1785434305306.4485,
@@ -632,16 +616,16 @@
     "hash": "e49318c38d8caa2c54ff7943ba0be9a1"
   },
   "frontend-actrack/my-app/src/pages/Pagos/Pagos.jsx": {
-    "mtime": 1785435615370.317,
-    "hash": "fbe3570dba579e485c02350d9531652b"
+    "mtime": 1786132348445.8113,
+    "hash": "d0556416fcc86dae2b3758f0b24c134a"
   },
   "frontend-actrack/my-app/src/pages/SolicitudServicio/SolicitudServicio.jsx": {
     "mtime": 1785974715019.8594,
     "hash": "25b75dfbb25a6f8c1ccc74eb366dd5ea"
   },
   "frontend-actrack/my-app/src/pages/cotizaciones/Cotizaciones.jsx": {
-    "mtime": 1785697003042.5005,
-    "hash": "d77fb429d454817f554a5c81f4e53fd3"
+    "mtime": 1786132208324.0356,
+    "hash": "d5e92122049907322fcd65e25e859cde"
   },
   "frontend-actrack/my-app/src/pages/login/Login.jsx": {
     "mtime": 1785434689154.5789,
@@ -680,8 +664,8 @@
     "hash": "a28dc4cb878325f3e9e5649f3e1469ac"
   },
   "frontend-actrack/my-app/index.html": {
-    "mtime": 1785434001247.3342,
-    "hash": "5a920bd192f82499a6c72023494b3517"
+    "mtime": 1786135854887.0493,
+    "hash": "260df581fe9e208ed92a870a177adac1"
   },
   "frontend.md": {
     "mtime": 1783753996772.7136,
@@ -730,5 +714,289 @@
   "supabase-schema-qrenmwqejkgvedqtbeny.png": {
     "mtime": 1781816309756.9822,
     "hash": "29e21de58c3bf0828a3e2aa2d7afa0f2"
+  },
+  "backend-actrack/backend/simulador-tecnico.js": {
+    "mtime": 1785726459292.161,
+    "hash": "4d02761e82e9bb67839bf4efe4a0401f"
+  },
+  "backend-actrack/backend/src/config/firebase.js": {
+    "mtime": 1785960077712.604,
+    "hash": "706683c693058bc39bab545a12ff8e7b"
+  },
+  "backend-actrack/backend/src/controllers/pushController.js": {
+    "mtime": 1785959491762.8577,
+    "hash": "1e750a5a41063896bea229107271e7f5"
+  },
+  "backend-actrack/backend/src/controllers/reportesController.js": {
+    "mtime": 1785817154044.873,
+    "hash": "45eaf23fa4f9597f1db7170e0b5280c7"
+  },
+  "backend-actrack/backend/src/controllers/usuariosController.js": {
+    "mtime": 1786136108648.905,
+    "hash": "627fff1f4379f45bb9672f2973ac7806"
+  },
+  "backend-actrack/backend/src/models/reportes_cache.js": {
+    "mtime": 1785817059699.9082,
+    "hash": "556679eefa897387c7c67a24aaf9f85c"
+  },
+  "backend-actrack/backend/src/routes/pushRoutes.js": {
+    "mtime": 1785959491762.0347,
+    "hash": "a0cb164ea94344baaa1e1668ab6cc9c9"
+  },
+  "backend-actrack/backend/src/routes/reportesRoutes.js": {
+    "mtime": 1785817386461.3733,
+    "hash": "939f86c8469dfd3ed527e9dae5999636"
+  },
+  "backend-actrack/backend/src/routes/usuariosRoutes.js": {
+    "mtime": 1786136126297.6997,
+    "hash": "ae899928ac736bb14c783c8c9a26d9d3"
+  },
+  "backend-actrack/backend/src/services/reportesService.js": {
+    "mtime": 1785818725982.6238,
+    "hash": "3fc977bded2b262caff2c21d31eff703"
+  },
+  "backend-actrack/backend/src/socket.js": {
+    "mtime": 1785966310404.3362,
+    "hash": "9374ae72beed2f8e5f433ad5dbbe4204"
+  },
+  "backend-actrack/backend/src/utils/corsUtils.js": {
+    "mtime": 1785966295485.9075,
+    "hash": "c7db94920a62ccae5fef1252b48c81ac"
+  },
+  "backend-actrack/backend/src/utils/pushService.js": {
+    "mtime": 1785960089900.4414,
+    "hash": "d0e8554498da02574b9ba7d3b782950f"
+  },
+  "backend-actrack/backend/src/utils/validaciones.js": {
+    "mtime": 1785816093878.4219,
+    "hash": "68bb027bd22fc0f58f038db8521484f2"
+  },
+  "desktop-actrack/src/renderer/src/components/SelectorDireccion.jsx": {
+    "mtime": 1786131118211.1042,
+    "hash": "538e0d9988fb57c6ee67c81f1f14baae"
+  },
+  "desktop-actrack/src/renderer/src/pages/Reportes/DashboardKPIs.jsx": {
+    "mtime": 1785817562984.316,
+    "hash": "99611fc50b084f9abb4cfcb143d8d980"
+  },
+  "desktop-actrack/src/renderer/src/pages/Reportes/ReporteImprimible.jsx": {
+    "mtime": 1786127692887.2136,
+    "hash": "75b0ef5743e7867b3736fefdfa04b8c1"
+  },
+  "desktop-actrack/src/renderer/src/pages/Reportes/Reportes.jsx": {
+    "mtime": 1786128131537.986,
+    "hash": "2b549809877b479cb72cab17189c6d40"
+  },
+  "desktop-actrack/src/renderer/src/pages/Rutas/MapaEnVivo.jsx": {
+    "mtime": 1785727003040.9492,
+    "hash": "8a09ff644698b2b2c665b90807da0da0"
+  },
+  "desktop-actrack/src/renderer/src/pages/Rutas/PlanificarRuta.jsx": {
+    "mtime": 1786128499860.3037,
+    "hash": "bf98afb0aaf6060a5a7eb5ab8eaba7aa"
+  },
+  "desktop-actrack/src/renderer/src/utils/osrm.js": {
+    "mtime": 1785966330074.3572,
+    "hash": "700cb14c24c69a840a231baf40097cdd"
+  },
+  "frontend-actrack/my-app/public/firebase-messaging-sw.js": {
+    "mtime": 1785960421932.728,
+    "hash": "fd3fa719c3226ca1021ba377650825e3"
+  },
+  "frontend-actrack/my-app/src/components/NotificacionesPush.jsx": {
+    "mtime": 1785960762532.4456,
+    "hash": "34e798eca3cb7ba39d8d38745c49c162"
+  },
+  "frontend-actrack/my-app/src/components/SelectorDireccion.jsx": {
+    "mtime": 1786131111121.961,
+    "hash": "62ec27c048d2ebd55a90bad572a547f2"
+  },
+  "frontend-actrack/my-app/src/config/firebase.js": {
+    "mtime": 1785962113941.0383,
+    "hash": "1eee98f13bdeed1d7b2da4db8c099210"
+  },
+  "frontend-actrack/my-app/src/utils/ordenesProgreso.js": {
+    "mtime": 1785972204003.0874,
+    "hash": "148be30e4b9d93b776cc9a5505e9fd0c"
+  },
+  "migrations/001_checklist_ejecucion_item_id.sql": {
+    "mtime": 1785966074167.0762,
+    "hash": "699eb81bef6cef93671144bd5294978b"
+  },
+  "mobile-actrack/app/_layout.js": {
+    "mtime": 1785970074558.5986,
+    "hash": "f03e198ed0787804fe1d00d4532f6dc1"
+  },
+  "mobile-actrack/app/agenda.js": {
+    "mtime": 1785970162889.347,
+    "hash": "80edf886a96cb0d359853dc25ce00ce9"
+  },
+  "mobile-actrack/app/estadisticas.js": {
+    "mtime": 1785970151631.1016,
+    "hash": "96675932dae5ebe97c45cecfbbc7e8ed"
+  },
+  "mobile-actrack/app/index.js": {
+    "mtime": 1785966698110.573,
+    "hash": "d7bd1ea06c3ebb2481481607648d8661"
+  },
+  "mobile-actrack/app/login.js": {
+    "mtime": 1785966706911.1294,
+    "hash": "6c187bb90907c9b080e41f2ed486c84b"
+  },
+  "mobile-actrack/app/orden/[id].jsx": {
+    "mtime": 1785968002301.5173,
+    "hash": "65a9cb9664afcb63058a6e04998ba0a0"
+  },
+  "mobile-actrack/app/perfil.js": {
+    "mtime": 1785970282966.9656,
+    "hash": "88e4fc1df6155a912c2dca17efeeefe2"
+  },
+  "mobile-actrack/app/ruta.js": {
+    "mtime": 1785971496108.597,
+    "hash": "1cc4563db20d2969e577c3e531f806f9"
+  },
+  "mobile-actrack/src/api/bitacora.js": {
+    "mtime": 1785969638451.6821,
+    "hash": "999bab491c9ac7f324a0ddda6cf29c2c"
+  },
+  "mobile-actrack/src/api/checklist.js": {
+    "mtime": 1785968138604.1638,
+    "hash": "13fd5609984895c0c6831209d5df1f05"
+  },
+  "mobile-actrack/src/api/clientes.js": {
+    "mtime": 1785966778591.9966,
+    "hash": "f1f55bbd3750276eeeb6534c387eaad2"
+  },
+  "mobile-actrack/src/api/equipos.js": {
+    "mtime": 1785966817994.1777,
+    "hash": "41c1ea6ef6dac6706a4abdd82eaac97c"
+  },
+  "mobile-actrack/src/api/inventario.js": {
+    "mtime": 1785968234019.4119,
+    "hash": "1d7acae8e1b3cfc3f7ff4a814392aa2c"
+  },
+  "mobile-actrack/src/api/ordenesServicio.js": {
+    "mtime": 1785970129620.8625,
+    "hash": "b001d3a22af2079875b5d138adae4dcd"
+  },
+  "mobile-actrack/src/api/rutas.js": {
+    "mtime": 1785966767337.481,
+    "hash": "ace9973564bb82e8f13d906e5190121d"
+  },
+  "mobile-actrack/src/api/tecnicos.js": {
+    "mtime": 1785970047265.6943,
+    "hash": "6d67c8a4eb7aa50bb02783b63d0ea073"
+  },
+  "mobile-actrack/src/api/usuarios.js": {
+    "mtime": 1785970260042.2869,
+    "hash": "0531429fcaee78e4c2980ddb61858cc5"
+  },
+  "mobile-actrack/src/components/SesionEfectos.jsx": {
+    "mtime": 1785970068376.0662,
+    "hash": "f086dc137d1fb9165ffe10e6817ebd92"
+  },
+  "mobile-actrack/src/components/orden/ChecklistTab.jsx": {
+    "mtime": 1785968164033.851,
+    "hash": "bb8802e4fa2ad950b63177b4490e4b5f"
+  },
+  "mobile-actrack/src/components/orden/CierreTab.jsx": {
+    "mtime": 1785971467396.2742,
+    "hash": "f97fbcc0ac916e9f2f69c424d5d459d0"
+  },
+  "mobile-actrack/src/components/orden/InfoTab.jsx": {
+    "mtime": 1785968010602.976,
+    "hash": "45fd446d78aad106a6a1065ea2128f35"
+  },
+  "mobile-actrack/src/components/orden/InventarioTab.jsx": {
+    "mtime": 1785968250828.3123,
+    "hash": "b7f7266ffabcd47c5b3031d5dbda714e"
+  },
+  "mobile-actrack/src/components/orden/PingsBotones.jsx": {
+    "mtime": 1785971437399.9875,
+    "hash": "0848c9688a7db56a0413e813f68bb5c1"
+  },
+  "mobile-actrack/src/config/env.js": {
+    "mtime": 1785966641827.229,
+    "hash": "a30c948f5a605bf45743a8eecae6480c"
+  },
+  "mobile-actrack/src/context/AuthContext.jsx": {
+    "mtime": 1785966691496.5347,
+    "hash": "27fa3ee997b99a1d14f3e85de33f38e6"
+  },
+  "mobile-actrack/src/hooks/useAgendaHoy.js": {
+    "mtime": 1785969821472.759,
+    "hash": "64a98103d828af432a6fe9940512e044"
+  },
+  "mobile-actrack/src/hooks/useOrdenDetalle.js": {
+    "mtime": 1785967997597.4954,
+    "hash": "eba0247b1f7df5fa4c32394c4081af56"
+  },
+  "mobile-actrack/src/hooks/usePingsOrden.js": {
+    "mtime": 1785971428705.1958,
+    "hash": "c500f2037e4d4b8d2607ac7fa537034a"
+  },
+  "mobile-actrack/src/hooks/usePushRegistration.js": {
+    "mtime": 1785970056024.013,
+    "hash": "8625028a244e5ecbec84bd87fdf544dd"
+  },
+  "mobile-actrack/src/hooks/useUbicacionEnVivo.js": {
+    "mtime": 1785970063633.3132,
+    "hash": "5a9b466ce5db5a6724f4da1080ad885b"
+  },
+  "mobile-actrack/src/utils/estadosOrden.js": {
+    "mtime": 1785971460158.4456,
+    "hash": "9d7e3f09b7ce4f7a4707bc4b0173292a"
+  },
+  "mobile-actrack/src/utils/semanas.js": {
+    "mtime": 1785970137095.0935,
+    "hash": "be0b5081dbfdb07007f0ef740c26eafa"
+  },
+  ".graphify/GRAPH_REPORT.md": {
+    "mtime": 1786105383223.0881,
+    "hash": "e817b7015d959204eb92075fa2fc82ae"
+  },
+  ".graphify/graph.html": {
+    "mtime": 1786105388649.1023,
+    "hash": "3d6c13743fbdc14ecf100ded4d20effe"
+  },
+  ".graphify/scratch/assistant-extract-instructions.md": {
+    "mtime": 1786105048302.8123,
+    "hash": "ed6d92f3404f05b745d74a86087abbcf"
+  },
+  "mobile-actrack/AGENTS.md": {
+    "mtime": 1785967660480.6885,
+    "hash": "fa597bde49bd54c3eca61137e60aa28a"
+  },
+  "mobile-actrack/CLAUDE.md": {
+    "mtime": 1785966432414.6326,
+    "hash": "5c27369b226fcf2be8a6cfe52224e767"
+  },
+  "mobile-actrack/README.md": {
+    "mtime": 1785966648731.2734,
+    "hash": "bd860e005d880e16dc01c208eee0d4ed"
+  },
+  "mobile-actrack/assets/android-icon-background.png": {
+    "mtime": 1785966414890.579,
+    "hash": "2d65569cc0e2afdcea0af9f9902d4173"
+  },
+  "mobile-actrack/assets/android-icon-foreground.png": {
+    "mtime": 1785966414891.7366,
+    "hash": "72e71a9c846c6aa4ae32476641a00e18"
+  },
+  "mobile-actrack/assets/android-icon-monochrome.png": {
+    "mtime": 1785966414892.8225,
+    "hash": "1e097dab989759fc0b69440092ca22cd"
+  },
+  "mobile-actrack/assets/favicon.png": {
+    "mtime": 1785966414893.166,
+    "hash": "d9f444efbdfbe7931aa93beada07318a"
+  },
+  "mobile-actrack/assets/icon.png": {
+    "mtime": 1785966414895.1523,
+    "hash": "cb975bba2216ce10a60e6c0ffe9941a2"
+  },
+  "mobile-actrack/assets/splash-icon.png": {
+    "mtime": 1785966414895.4294,
+    "hash": "97dae5a0e62ad8551d8a31897b425e63"
   }
 }

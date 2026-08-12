@@ -35,3 +35,23 @@ export const updateUsuario = async (id, { nombre, paterno, materno, email }) => 
     return result.rows[0];
 }
 
+// Pantalla "Configuración > Usuarios" -- necesita el nombre del rol, no
+// solo el id, para mostrarlo legible en la tabla.
+export const selectTodosUsuarios = async () => {
+    const result = await pool.query(
+        `SELECT u.id, u.nombre, u.paterno, u.materno, u.email, u.rol_id, u.activo, r.nombre AS rol_nombre
+         FROM usuarios u
+         JOIN roles r ON r.id = u.rol_id
+         ORDER BY u.id`
+    );
+    return result.rows;
+}
+
+export const updateActivoUsuario = async (id, activo) => {
+    const result = await pool.query(
+        `UPDATE usuarios SET activo = $1 WHERE id = $2 RETURNING id, nombre, email, rol_id, activo`,
+        [activo, id]
+    );
+    return result.rows[0];
+}
+

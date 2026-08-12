@@ -8,6 +8,7 @@ import {
   crearEjecucion,
   actualizarEjecucion,
 } from '../../api/checklist';
+import Icon from '../Icon';
 
 export default function ChecklistTab({ orden }) {
   const { apiFetch } = useAuth();
@@ -136,7 +137,7 @@ export default function ChecklistTab({ orden }) {
               {guardandoId === item.id ? (
                 <ActivityIndicator size="small" color={completado ? '#fff' : '#111827'} />
               ) : (
-                completado && <Text style={styles.check}>✓</Text>
+                completado && <Icon name="check" size={13} color="#fff" />
               )}
             </View>
             <Text style={[styles.itemTexto, completado && styles.itemTextoCompletado]}>{item.descripcion}</Text>
@@ -150,7 +151,7 @@ export default function ChecklistTab({ orden }) {
           {ejecucionesAdhoc.map((e) => (
             <View key={e.id} style={styles.item}>
               <View style={[styles.checkbox, styles.checkboxMarcado]}>
-                <Text style={styles.check}>✓</Text>
+                <Icon name="check" size={13} color="#fff" />
               </View>
               <Text style={styles.itemTexto}>{e.item_desc}</Text>
             </View>
@@ -192,7 +193,6 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   checkboxMarcado: { backgroundColor: '#111827', borderColor: '#111827' },
-  check: { color: '#fff', fontSize: 14, fontWeight: '700' },
   itemTexto: { flex: 1, fontSize: 15, color: '#111827' },
   itemTextoCompletado: { color: '#6b7280', textDecorationLine: 'line-through' },
   adhocRow: { flexDirection: 'row', gap: 8 },

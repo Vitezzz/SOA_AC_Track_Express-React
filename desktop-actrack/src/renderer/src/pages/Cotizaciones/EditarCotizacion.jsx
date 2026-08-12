@@ -17,6 +17,14 @@ const EditarCotizacion = () => {
     const [stockVehiculo, setStockVehiculo] = useState([]);
     const [renglones, setRenglones] = useState([]);
 
+    // Contexto de la orden que se está cotizando -- sin esto no se ve qué
+    // pidió el cliente ni en qué equipo, y cotizar se siente a ciegas.
+    const [orden, setOrden] = useState(null);
+    const [cliente, setCliente] = useState(null);
+    const [equipo, setEquipo] = useState(null);
+    const [marca, setMarca] = useState(null);
+    const [categoria, setCategoria] = useState(null);
+
     const [tecId, setTecId] = useState("");
     const [estado, setEstado] = useState("");
     const [notas, setNotas] = useState("");
@@ -65,6 +73,32 @@ const EditarCotizacion = () => {
             } else if (resDetalle.ok) {
                 const todos = await resDetalle.json();
                 setRenglones(todos.filter((r) => r.cot_id === Number(id)));
+            }
+
+            if (data.ord_id) {
+                const resOrden = await apiFetch(`/api/ordenes_servicio/${data.ord_id}`);
+                if (resOrden.ok) {
+                    const dataOrden = await resOrden.json();
+                    setOrden(dataOrden);
+
+                    const [resCliente, resEquipo, resCategoria] = await Promise.all([
+                        dataOrden.cli_id ? apiFetch(`/api/clientes/${dataOrden.cli_id}`) : null,
+                        dataOrden.equ_id ? apiFetch(`/api/equipos/${dataOrden.equ_id}`) : null,
+                        dataOrden.cat_id ? apiFetch(`/api/categoriaServicio/${dataOrden.cat_id}`) : null,
+                    ]);
+
+                    if (resCliente?.ok) setCliente(await resCliente.json());
+                    if (resCategoria?.ok) setCategoria(await resCategoria.json());
+
+                    if (resEquipo?.ok) {
+                        const dataEquipo = await resEquipo.json();
+                        setEquipo(dataEquipo);
+                        if (dataEquipo.mar_id) {
+                            const resMarca = await apiFetch(`/api/marcas/${dataEquipo.mar_id}`);
+                            if (resMarca.ok) setMarca(await resMarca.json());
+                        }
+                    }
+                }
             }
         } catch (err) {
             setError(err.message);
@@ -173,6 +207,18 @@ const EditarCotizacion = () => {
 
             {error && <p className="error-text">{error}</p>}
             {guardado && <p className="success-text">¡Cotización actualizada correctamente!</p>}
+
+            {orden && (
+                <div className="panel" style={{ marginBottom: "16px", fontSize: "14px", lineHeight: "1.6" }}>
+                    <p><strong>Orden:</strong> {orden.folio}
+                        {cliente && ` · ${cliente.nombre}`}
+                        {cliente?.telefono && ` · ${cliente.telefono}`}
+                    </p>
+                    <p><strong>Equipo:</strong> {equipo ? `${equipo.tipo || "—"}${marca?.nombre ? ` ${marca.nombre}` : ""}${equipo.modelo ? ` ${equipo.modelo}` : ""}` : "Sin equipo asociado"}</p>
+                    <p><strong>Servicio solicitado:</strong> {categoria?.nombre || `#${orden.cat_id}`}</p>
+                    {orden.descripcion && <p><strong>Descripción:</strong> {orden.descripcion}</p>}
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="form">
                 <label>

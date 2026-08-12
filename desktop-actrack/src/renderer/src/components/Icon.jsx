@@ -93,6 +93,33 @@ const PATHS = {
       <path d="M8.5 12.5h7M8.5 15.8h7M8.5 19h4.5" />
     </>
   ),
+  bell: (
+    <>
+      <path d="M6 10.5a6 6 0 0 1 12 0c0 4 1.5 5.5 2 6.5H4c.5-1 2-2.5 2-6.5Z" />
+      <path d="M10 20a2 2 0 0 0 4 0" />
+    </>
+  ),
+  check: <path d="M5 12.5 9.5 17 19 7" />,
+  refresh: (
+    <>
+      <path d="M20 11A8 8 0 1 0 19 15" />
+      <path d="M20 5v6h-6" />
+    </>
+  ),
+  printer: (
+    <>
+      <path d="M7 8V3.5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1V8" />
+      <rect x="3.5" y="8" width="17" height="8" rx="1.5" />
+      <rect x="7" y="13.5" width="10" height="7" rx="1" />
+    </>
+  ),
+  "check-square": (
+    <>
+      <rect x="3.5" y="3.5" width="17" height="17" rx="2.5" />
+      <path d="M7.5 12.5 10.5 15.5 16.5 8.5" />
+    </>
+  ),
+  square: <rect x="3.5" y="3.5" width="17" height="17" rx="2.5" />,
 };
 
 const Icon = ({ name, className = "", style }) => (

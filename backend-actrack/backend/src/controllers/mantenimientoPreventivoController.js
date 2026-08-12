@@ -8,6 +8,7 @@ import { puedeVerTodo } from "../utils/roleUtils.js";
 import { getClienteById } from "../models/clientes.js";
 import { getEquipoById } from "../models/equipos.js";
 import { getClienteIdByUserId } from '../utils/lookupUtils.js'
+import { generarOrdenesVencidas } from "../services/mantenimientoPreventivoService.js";
 
 const getMantenimientoPreventivo = async (req, res) => {
     try {
@@ -152,9 +153,25 @@ const dltMantenimientoPreventivo = async (req, res) => {
     }
 }
 
+// Disparo manual del mismo job que corre solo todos los días -- sirve para
+// probarlo sin esperar al cron, o para forzar la revisión si el backend
+// estuvo apagado y se acumularon mantenimientos vencidos.
+const postGenerarVencidos = async (req, res) => {
+    try {
+        const generadas = await generarOrdenesVencidas();
+        res.status(200).json({
+            message: `${generadas.length} orden(es) generada(s) por mantenimiento preventivo vencido.`,
+            generadas,
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        return res.status(500).json({ message: "Error del servidor" })
+    }
+}
+
 export {
     getMantenimientoPreventivo, getMantenimientoPreventivoById, postMantenimientoPreventivo,
-    putMantenimientoPreventivo, dltMantenimientoPreventivo
+    putMantenimientoPreventivo, dltMantenimientoPreventivo, postGenerarVencidos
 }
 
 

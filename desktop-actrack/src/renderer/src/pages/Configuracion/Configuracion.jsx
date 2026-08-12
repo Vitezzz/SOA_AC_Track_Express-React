@@ -2,14 +2,19 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
-const PESTAÑAS = ["Categorías de Servicio", "Categorías de Inventario", "Checklists", "Roles"];
+const PESTAÑAS_BASE = ["Categorías de Servicio", "Categorías de Inventario", "Checklists", "Roles"];
 
 const Configuracion = () => {
     const { apiFetch, user } = useAuth();
-    const [pestañaActiva, setPestañaActiva] = useState(PESTAÑAS[0]);
 
     const esAdmin = user?.rol_id === 2;
     const puedeEditarChecklist = user?.rol_id === 2 || user?.rol_id === 5;
+
+    // "Usuarios" (crear/activar cuentas de admin y supervisor) es exclusivo
+    // de admin -- ni siquiera se muestra la pestaña para nadie más, el
+    // backend de todos modos la rechazaría.
+    const PESTAÑAS = esAdmin ? [...PESTAÑAS_BASE, "Usuarios"] : PESTAÑAS_BASE;
+    const [pestañaActiva, setPestañaActiva] = useState(PESTAÑAS_BASE[0]);
 
     return (
         <div className="page">
@@ -38,6 +43,9 @@ const Configuracion = () => {
                 <ChecklistPlantillas apiFetch={apiFetch} puedeEditar={puedeEditarChecklist} />
             )}
             {pestañaActiva === "Roles" && <ListaRoles apiFetch={apiFetch} />}
+            {pestañaActiva === "Usuarios" && esAdmin && (
+                <UsuariosTab apiFetch={apiFetch} miPropioId={user.id} />
+            )}
         </div>
     );
 };
@@ -265,6 +273,150 @@ const ListaRoles = ({ apiFetch }) => {
                 </li>
             ))}
         </ul>
+    );
+};
+
+// ---------- Usuarios: crear cuentas de admin/supervisor y activar o
+// desactivar cualquier cuenta -- técnico y cliente tienen su propio flujo
+// de alta en otro lado, aquí solo viven los dos roles que no tienen dónde
+// más nacer. ----------
+const ROLES_CREABLES = [
+    { id: 2, nombre: "Admin" },
+    { id: 5, nombre: "Supervisor" },
+];
+
+const UsuariosTab = ({ apiFetch, miPropioId }) => {
+    const [usuarios, setUsuarios] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [guardando, setGuardando] = useState(false);
+
+    const [nombre, setNombre] = useState("");
+    const [paterno, setPaterno] = useState("");
+    const [materno, setMaterno] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [rolId, setRolId] = useState("2");
+
+    const cargar = async () => {
+        try {
+            const res = await apiFetch("/api/usuarios");
+            if (!res.ok) throw new Error("No se pudieron cargar los usuarios");
+            setUsuarios(await res.json());
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        cargar();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const handleCrear = async (e) => {
+        e.preventDefault();
+        if (!nombre.trim() || !email.trim() || !password) return;
+
+        setGuardando(true);
+        setError("");
+        try {
+            const res = await apiFetch("/api/usuarios", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nombre, paterno, materno, email, password, rol_id: Number(rolId) }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "No se pudo crear el usuario");
+
+            setNombre(""); setPaterno(""); setMaterno(""); setEmail(""); setPassword("");
+            cargar();
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setGuardando(false);
+        }
+    };
+
+    const handleToggleActivo = async (usuario) => {
+        const nuevoActivo = !(usuario.activo !== false);
+        try {
+            const res = await apiFetch(`/api/usuarios/${usuario.id}/activo`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ activo: nuevoActivo }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "No se pudo actualizar el usuario");
+            setUsuarios((prev) => prev.map((u) => (u.id === usuario.id ? { ...u, activo: nuevoActivo } : u)));
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
+    if (loading) return <p className="muted-text">Cargando...</p>;
+
+    return (
+        <div>
+            {error && <p className="error-text">{error}</p>}
+
+            <form onSubmit={handleCrear} className="form form-inline" style={{ flexWrap: "wrap", marginBottom: "16px" }}>
+                <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre(s)" required />
+                <input value={paterno} onChange={(e) => setPaterno(e.target.value)} placeholder="Apellido paterno" />
+                <input value={materno} onChange={(e) => setMaterno(e.target.value)} placeholder="Apellido materno" />
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required />
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Contraseña" required />
+                <select value={rolId} onChange={(e) => setRolId(e.target.value)} style={{ flex: "0 0 auto", width: "auto" }}>
+                    {ROLES_CREABLES.map((r) => (
+                        <option key={r.id} value={r.id}>{r.nombre}</option>
+                    ))}
+                </select>
+                <button type="submit" className="btn-primary" disabled={guardando}>
+                    {guardando ? "Creando..." : "Crear cuenta"}
+                </button>
+            </form>
+
+            <div className="table-wrap">
+                <table className="table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {usuarios.map((u) => {
+                            const activo = u.activo !== false;
+                            return (
+                                <tr key={u.id}>
+                                    <td>{[u.nombre, u.paterno, u.materno].filter(Boolean).join(" ")}</td>
+                                    <td>{u.email}</td>
+                                    <td>{u.rol_nombre}</td>
+                                    <td>
+                                        <span className={`badge ${activo ? "badge-success" : "badge-neutral"}`}>
+                                            {activo ? "Activo" : "Desactivado"}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {u.id === miPropioId ? (
+                                            <span className="muted-text" style={{ fontSize: "12px" }}>Esta es tu cuenta</span>
+                                        ) : (
+                                            <button className="btn-sm" onClick={() => handleToggleActivo(u)}>
+                                                {activo ? "Desactivar" : "Activar"}
+                                            </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     );
 };
 

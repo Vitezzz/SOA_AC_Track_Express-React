@@ -5,6 +5,7 @@ import {
     LineChart, Line, PieChart, Pie, Cell, Legend,
 } from "recharts";
 import { useAuth } from "../../context/AuthContext";
+import Icon from "../../components/Icon";
 
 const formatoMoneda = (valor) =>
     new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(valor);
@@ -83,8 +84,9 @@ const DashboardKPIs = () => {
                         </p>
                     )}
                 </div>
-                <button onClick={handleRecalcular} disabled={recalculando}>
-                    {recalculando ? "Actualizando..." : "🔄 Actualizar datos"}
+                <button onClick={handleRecalcular} disabled={recalculando} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    {!recalculando && <Icon name="refresh" className="icon-sm" />}
+                    {recalculando ? "Actualizando..." : "Actualizar datos"}
                 </button>
             </div>
 
@@ -158,7 +160,9 @@ const DashboardKPIs = () => {
 
                 {/* Stock crítico */}
                 <div style={{ border: "1px solid #e5e7eb", borderRadius: "12px", padding: "16px" }}>
-                    <p style={{ fontWeight: "600", marginBottom: "12px" }}>⚠️ Stock crítico</p>
+                    <p style={{ fontWeight: "600", marginBottom: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
+                        <Icon name="warning" className="icon-sm" /> Stock crítico
+                    </p>
                     {stockCritico.length === 0 ? (
                         <p style={{ color: "#15803d" }}>Ningún artículo está en nivel crítico ahorita.</p>
                     ) : (

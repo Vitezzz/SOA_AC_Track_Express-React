@@ -10,6 +10,6 @@ import { getRutaParadasByRutaId, postRutaParadas,
  router.get('/ruta/:rut_id',protect, getRutaParadasByRutaId);
  router.post('/',protect, authorize(2,5),postRutaParadas);
  router.put('/:id', protect,authorize(2,4,5),putRutaParadas);
- router.delete('/:id', protect,authorize(2),dltRutaParadas);
+ router.delete('/:id', protect,authorize(2,5),dltRutaParadas);
 
  export default router;

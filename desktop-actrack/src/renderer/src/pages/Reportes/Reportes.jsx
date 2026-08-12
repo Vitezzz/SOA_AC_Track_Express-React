@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import ReporteImprimible from "./ReporteImprimible";
+import Icon from "../../components/Icon";
 
 const PESTAÑAS = ["Productividad", "Cobros", "Inventario", "Órdenes finalizadas"];
 
@@ -245,8 +246,9 @@ const Reportes = () => {
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "8px" }}>
                 <h2>Reportes</h2>
-                <button onClick={handleRecalcular} disabled={recalculando}>
-                    {recalculando ? "Actualizando..." : "🔄 Actualizar datos"}
+                <button onClick={handleRecalcular} disabled={recalculando} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    {!recalculando && <Icon name="refresh" className="icon-sm" />}
+                    {recalculando ? "Actualizando..." : "Actualizar datos"}
                 </button>
             </div>
 
@@ -302,7 +304,9 @@ const Reportes = () => {
                                         <td style={{ padding: "8px" }}>{p.canceladas}</td>
                                         <td style={{ padding: "8px" }}>{p.total_asignadas}</td>
                                         <td style={{ padding: "8px" }}>
-                                            <button onClick={() => setReporteTecnico(p)}>📄 Reporte</button>
+                                            <button onClick={() => setReporteTecnico(p)} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                                                <Icon name="file" className="icon-sm" /> Reporte
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
@@ -457,9 +461,10 @@ const Reportes = () => {
                                             <button
                                                 onClick={() => abrirReporteOrden(orden)}
                                                 disabled={cargandoReporteOrdenId === orden.id}
-                                                style={{ margin: "0 16px" }}
+                                                style={{ margin: "0 16px", display: "flex", alignItems: "center", gap: "5px" }}
                                             >
-                                                {cargandoReporteOrdenId === orden.id ? "Cargando..." : "📄 Reporte"}
+                                                {cargandoReporteOrdenId !== orden.id && <Icon name="file" className="icon-sm" />}
+                                                {cargandoReporteOrdenId === orden.id ? "Cargando..." : "Reporte"}
                                             </button>
                                         </div>
 
@@ -498,7 +503,7 @@ const Reportes = () => {
                                                                 key={item.id}
                                                                 style={{ display: "flex", gap: "8px", fontSize: "13px", padding: "4px 0" }}
                                                             >
-                                                                <span>{item.completado ? "✅" : "⬜"}</span>
+                                                                <Icon name={item.completado ? "check-square" : "square"} className="icon-sm" style={{ color: item.completado ? "#15803d" : "#9ca3af" }} />
                                                                 <span>{item.descripcion || "(sin descripción)"}</span>
                                                             </div>
                                                         ))}
@@ -586,7 +591,7 @@ const Reportes = () => {
                         <div style={{ marginBottom: "20px" }}>
                             {checklistPorOrden[reporteOrden.id].map((item) => (
                                 <div key={item.id} style={{ display: "flex", gap: "8px", fontSize: "14px", padding: "3px 0" }}>
-                                    <span>{item.completado ? "✅" : "⬜"}</span>
+                                    <Icon name={item.completado ? "check-square" : "square"} className="icon-sm" style={{ color: item.completado ? "#15803d" : "#9ca3af" }} />
                                     <span>{item.descripcion || "(sin descripción)"}</span>
                                 </div>
                             ))}
