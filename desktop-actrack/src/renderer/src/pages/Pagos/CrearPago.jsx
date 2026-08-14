@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import Icon from "../../components/Icon";
 
@@ -113,11 +113,16 @@ const CrearPago = () => {
     if (loading) return <p className="page">Cargando...</p>;
 
     return (
-        <div className="page page-narrow">
-            <h2>{esTecnico ? "Confirmar Pago Recibido" : "Registrar Pago"}</h2>
+        <div className="page">
+            <Link to="/pagos" className="page-back">← Volver a Pagos</Link>
+            <div className="page-header">
+                <h2>{esTecnico ? "Confirmar Pago Recibido" : "Registrar Pago"}</h2>
+            </div>
 
             {error && <p className="error-text">{error}</p>}
 
+            <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: "1.5rem", alignItems: "start", width: "100%" }}>
+            <div className="panel">
             <form onSubmit={handleSubmit} className="form">
                 <label>
                     <span>Orden de servicio *</span>
@@ -136,25 +141,6 @@ const CrearPago = () => {
                         <p className="hint-text">No hay órdenes con saldo pendiente de cobro.</p>
                     )}
                 </label>
-
-                {ordId && (
-                    <div style={{ background: "#f9fafb", borderRadius: "8px", padding: "12px", fontSize: "14px" }}>
-                        {!cotizacionAprobada ? (
-                            <p style={{ color: "#b45309", display: "flex", alignItems: "flex-start", gap: "6px" }}>
-                                <Icon name="warning" className="icon-sm" style={{ marginTop: "2px", flexShrink: 0 }} />
-                                <span>Esta orden no tiene una cotización aprobada — no se puede registrar un pago todavía.</span>
-                            </p>
-                        ) : (
-                            <>
-                                <p>Total cotizado: <strong>{formatoMoneda(cotizacionAprobada.total)}</strong></p>
-                                <p>Ya cobrado: <strong>{formatoMoneda(sumaYaPagada)}</strong></p>
-                                <p>Saldo pendiente: <strong style={{ color: saldoPendiente > 0 ? "#b91c1c" : "#15803d" }}>
-                                    {formatoMoneda(saldoPendiente)}
-                                </strong></p>
-                            </>
-                        )}
-                    </div>
-                )}
 
                 <label>
                     <span>Método de pago *</span>
@@ -201,6 +187,28 @@ const CrearPago = () => {
                     <button type="button" onClick={() => navigate("/pagos")}>Cancelar</button>
                 </div>
             </form>
+            </div>
+
+            <div className="panel">
+                <p style={{ fontWeight: 600, marginBottom: "0.9rem" }}>Saldo de la orden</p>
+                {!ordId ? (
+                    <p className="muted-text">Elige una orden para ver su saldo aquí.</p>
+                ) : !cotizacionAprobada ? (
+                    <p style={{ color: "#b45309", display: "flex", alignItems: "flex-start", gap: "6px", margin: 0 }}>
+                        <Icon name="warning" className="icon-sm" style={{ marginTop: "2px", flexShrink: 0 }} />
+                        <span>Esta orden no tiene una cotización aprobada — no se puede registrar un pago todavía.</span>
+                    </p>
+                ) : (
+                    <div style={{ fontSize: "14px", display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                        <p style={{ margin: 0 }}>Total cotizado: <strong>{formatoMoneda(cotizacionAprobada.total)}</strong></p>
+                        <p style={{ margin: 0 }}>Ya cobrado: <strong>{formatoMoneda(sumaYaPagada)}</strong></p>
+                        <p style={{ margin: 0 }}>Saldo pendiente: <strong style={{ color: saldoPendiente > 0 ? "#b91c1c" : "#15803d" }}>
+                            {formatoMoneda(saldoPendiente)}
+                        </strong></p>
+                    </div>
+                )}
+            </div>
+            </div>
         </div>
     );
 };

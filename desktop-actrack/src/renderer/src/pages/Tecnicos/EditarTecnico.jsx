@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const EditarTecnico = () => {
@@ -10,6 +10,7 @@ const EditarTecnico = () => {
 
     const [tecnico, setTecnico] = useState(null);
     const [especialidades, setEspecialidades] = useState([]);
+    const [ordenes, setOrdenes] = useState([]);
 
     const [espId, setEspId] = useState("");
     const [disponible, setDisponible] = useState(true);
@@ -26,9 +27,10 @@ const EditarTecnico = () => {
     useEffect(() => {
         const cargarDatos = async () => {
             try {
-                const [resTecnico, resEspecialidades] = await Promise.all([
+                const [resTecnico, resEspecialidades, resOrdenes] = await Promise.all([
                     apiFetch(`/api/tecnicos/${id}`),
                     apiFetch("/api/especialidad/"),
+                    apiFetch("/api/ordenes_servicio"),
                 ]);
 
                 if (!resTecnico.ok) throw new Error("No se pudo cargar el técnico");
@@ -42,6 +44,10 @@ const EditarTecnico = () => {
                 setEmail(dataTecnico.usuario_email || "");
 
                 if (resEspecialidades.ok) setEspecialidades(await resEspecialidades.json());
+                if (resOrdenes.ok) {
+                    const todas = await resOrdenes.json();
+                    setOrdenes(todas.filter((o) => o.tec_id === Number(id)));
+                }
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -102,13 +108,23 @@ const EditarTecnico = () => {
 
     if (loading) return <p className="page">Cargando...</p>;
 
+    const completadas = ordenes.filter((o) => o.estatus === "completada" || o.estatus === "pagada").length;
+    const canceladas = ordenes.filter((o) => o.estatus === "cancelada").length;
+    const activas = ordenes.filter((o) => o.estatus === "pendiente" || o.estatus === "en_proceso");
+    const proximas = [...activas].sort((a, b) => new Date(a.fecha_programada) - new Date(b.fecha_programada)).slice(0, 5);
+
     return (
-        <div className="page page-narrow">
-            <h2>Editar Técnico — {tecnico?.nombre || `#${tecnico?.usu_id}`}</h2>
+        <div className="page">
+            <Link to="/tecnicos" className="page-back">← Volver a Técnicos</Link>
+            <div className="page-header">
+                <h2>Editar Técnico — {tecnico?.nombre || `#${tecnico?.usu_id}`}</h2>
+            </div>
 
             {error && <p className="error-text">{error}</p>}
             {guardado && <p className="success-text">¡Técnico actualizado correctamente!</p>}
 
+            <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: "1.5rem", alignItems: "start", width: "100%" }}>
+            <div className="panel">
             <form onSubmit={handleSubmit} className="form">
                 <label>
                     <span>Nombre(s)</span>
@@ -160,6 +176,46 @@ const EditarTecnico = () => {
                     <button type="button" onClick={() => navigate("/tecnicos")}>Volver</button>
                 </div>
             </form>
+            </div>
+
+            <div>
+                <div className="panel" style={{ marginBottom: "1rem" }}>
+                    <p style={{ fontWeight: 600, marginBottom: "0.9rem" }}>Su historial</p>
+                    <div style={{ display: "flex", gap: "1.5rem" }}>
+                        <div>
+                            <p className="muted-text" style={{ fontSize: "0.8rem", margin: 0 }}>Completadas</p>
+                            <p style={{ fontSize: "1.4rem", fontWeight: 700, margin: 0 }}>{completadas}</p>
+                        </div>
+                        <div>
+                            <p className="muted-text" style={{ fontSize: "0.8rem", margin: 0 }}>Activas</p>
+                            <p style={{ fontSize: "1.4rem", fontWeight: 700, margin: 0 }}>{activas.length}</p>
+                        </div>
+                        <div>
+                            <p className="muted-text" style={{ fontSize: "0.8rem", margin: 0 }}>Canceladas</p>
+                            <p style={{ fontSize: "1.4rem", fontWeight: 700, margin: 0 }}>{canceladas}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="panel">
+                    <p style={{ fontWeight: 600, marginBottom: "0.9rem" }}>Próximas paradas</p>
+                    {proximas.length === 0 ? (
+                        <p className="muted-text">No tiene órdenes pendientes.</p>
+                    ) : (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                            {proximas.map((o) => (
+                                <div key={o.id} style={{ fontSize: "0.875rem", display: "flex", justifyContent: "space-between" }}>
+                                    <span>{o.folio}</span>
+                                    <span className="muted-text">
+                                        {o.fecha_programada ? new Date(o.fecha_programada).toLocaleDateString("es-MX") : "Sin fecha"}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+            </div>
         </div>
     );
 };

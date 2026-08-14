@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import Logo from "./Logo";
 
 const Navigation = () => {
 
@@ -21,7 +22,9 @@ const Navigation = () => {
     <nav className="site-nav mb-6">
       <div className="flex items-center max-w-7xl mx-auto">
         <NavLink to="/home" className="brand">
-          <span className="brand-mark">AC</span>
+          <span className="brand-mark">
+            <Logo className="w-4 h-4" />
+          </span>
           AC Track
         </NavLink>
         <div className="flex items-center gap-1 flex-1">

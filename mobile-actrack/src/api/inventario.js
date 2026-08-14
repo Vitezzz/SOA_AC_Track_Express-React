@@ -30,3 +30,13 @@ export const registrarMovimiento = async (apiFetch, { inv_id, ord_id, usu_id, ti
   if (!res.ok) throw new Error((await res.json()).message || 'No se pudo registrar el movimiento');
   return res.json();
 };
+
+// El backend regresa TODOS los movimientos (de cualquier técnico, no solo
+// el propio) -- se filtra por ord_id del lado del cliente para mostrar
+// solo lo de esta orden.
+export const getMovimientosInventario = async (apiFetch) => {
+  const res = await apiFetch('/api/movimientos_inventario');
+  if (res.status === 404) return [];
+  if (!res.ok) throw new Error('No se pudieron cargar los movimientos');
+  return res.json();
+};

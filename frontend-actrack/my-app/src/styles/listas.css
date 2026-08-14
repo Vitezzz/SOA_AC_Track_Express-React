@@ -1,0 +1,274 @@
+/* Encabezado tipo "hero" compacto para pantallas de listado (Mis Órdenes,
+   Mis Cotizaciones) -- reemplaza el <h2> plano por algo con presencia real,
+   con el conteo de lo que hay dentro para que no haya que leer toda la
+   lista para saber qué está pasando. */
+.list-header {
+  @apply flex items-center gap-4 mb-6 p-5 relative overflow-hidden;
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-hover) 75%);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-accent);
+  color: #fff;
+}
+
+.list-header::before {
+  content: "";
+  position: absolute;
+  width: 11rem;
+  height: 11rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  top: -6rem;
+  right: -3rem;
+}
+
+.list-header-icon {
+  @apply flex items-center justify-center shrink-0 relative;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.list-header-icon svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.list-header-title {
+  @apply text-xl font-semibold relative;
+  letter-spacing: -0.01em;
+}
+
+.list-header-subtitle {
+  @apply text-sm relative;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Contador dentro de un filter-pill (p.ej. "Pendientes 3") */
+.filter-pill-count {
+  @apply ml-1 text-[10px] font-semibold px-1.5 rounded-full;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.filter-pill-active .filter-pill-count {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Encabezado de subgrupo dentro de una lista (p.ej. "Otras órdenes en
+   curso", "Necesitan tu respuesta", "Historial") */
+.list-section-title {
+  @apply flex items-center gap-2 text-xs font-semibold uppercase tracking-wide mb-3;
+  color: var(--color-text-subtle);
+}
+
+.list-section-title .badge-status {
+  @apply normal-case tracking-normal;
+}
+
+/* Insignia circular de ícono dentro de una tarjeta (categoría/servicio) */
+.card-icon-badge {
+  @apply flex items-center justify-center shrink-0;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-md);
+  background: var(--color-accent-soft);
+  color: var(--color-accent-hover);
+}
+
+.card-icon-badge svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+/* Precio destacado, para el total de una cotización */
+.price-tag {
+  @apply text-lg font-bold px-3 py-1 rounded-lg inline-block;
+  background: var(--color-accent-soft);
+  color: var(--color-accent-hover);
+}
+
+/* Desglose colapsable (<details>/<summary> nativo -- sin JS extra) */
+.detalle-toggle {
+  @apply border-t pt-3 mb-1;
+  border-color: var(--color-border);
+}
+
+.detalle-toggle summary {
+  @apply text-sm font-medium cursor-pointer select-none flex items-center gap-1.5;
+  color: var(--color-text-muted);
+  list-style: none;
+}
+
+.detalle-toggle summary::-webkit-details-marker {
+  display: none;
+}
+
+.detalle-toggle summary svg {
+  width: 0.85rem;
+  height: 0.85rem;
+  transition: transform var(--transition-fast);
+}
+
+.detalle-toggle[open] summary svg {
+  transform: rotate(90deg);
+}
+
+.detalle-toggle summary:hover {
+  color: var(--color-accent-hover);
+}
+
+.detalle-list {
+  @apply space-y-1 mt-3;
+}
+
+/* ---- Historial de pagos: vista tipo "estado de cuenta" ---- */
+
+/* Tarjetas de resumen (total pagado / pendiente) debajo del hero */
+.stat-grid {
+  @apply grid grid-cols-2 gap-3 mb-6;
+}
+
+.stat-card {
+  @apply p-4;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-card-label {
+  @apply text-xs mb-1;
+  color: var(--color-text-muted);
+}
+
+.stat-card-value {
+  @apply text-xl font-bold;
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+}
+
+.stat-card-value-accent {
+  color: var(--color-accent-hover);
+}
+
+/* Un mes del historial: encabezado (nombre del mes + subtotal) y una sola
+   tarjeta contenedora con los pagos de ese mes como renglones divididos --
+   se lee como estado de cuenta bancario, no como tarjetas sueltas. */
+.ledger-month + .ledger-month {
+  @apply mt-8;
+}
+
+.ledger-month-header {
+  @apply flex items-center justify-between mb-3 px-1;
+}
+
+.ledger-month-title {
+  @apply text-xs font-semibold uppercase tracking-wide;
+  color: var(--color-text-subtle);
+}
+
+.ledger-month-total {
+  @apply text-xs font-semibold;
+  color: var(--color-text-muted);
+}
+
+.ledger-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.ledger-row {
+  @apply flex items-center gap-3 px-4 py-3;
+}
+
+.ledger-row + .ledger-row {
+  border-top: 1px solid var(--color-border);
+}
+
+.ledger-row-icon {
+  @apply flex items-center justify-center shrink-0;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  background: var(--color-accent-soft);
+  color: var(--color-accent-hover);
+}
+
+.ledger-row-icon svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.ledger-row-icon-pendiente {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.ledger-row-icon-cancelado {
+  background: #f1f2f4;
+  color: #6b7280;
+}
+
+.ledger-row-main {
+  @apply flex-1 min-w-0;
+}
+
+.ledger-row-title {
+  @apply text-sm font-medium truncate;
+  color: var(--color-text);
+}
+
+.ledger-row-subtitle {
+  @apply text-xs truncate;
+  color: var(--color-text-subtle);
+}
+
+.ledger-row-amount {
+  @apply text-sm font-bold shrink-0;
+  color: var(--color-text);
+}
+
+.ledger-row-amount-pendiente {
+  color: #b45309;
+}
+
+.ledger-row-amount-cancelado {
+  color: var(--color-text-subtle);
+  text-decoration: line-through;
+}
+
+/* ---- Cotizaciones: grid de 2 columnas con acento de color por estado ---- */
+.quote-grid {
+  @apply grid gap-4;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .quote-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.quote-card {
+  border-left-width: 4px;
+  border-left-style: solid;
+}
+
+.quote-card-enviada {
+  border-left-color: #1d4ed8;
+}
+
+.quote-card-aprobada {
+  border-left-color: var(--color-accent);
+}
+
+.quote-card-rechazada {
+  border-left-color: #b3261e;
+}
+
+.quote-card-borrador {
+  border-left-color: #9aa3b2;
+}

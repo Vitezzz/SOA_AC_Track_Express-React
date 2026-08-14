@@ -72,6 +72,25 @@ const PATHS = {
     </>
   ),
   "chevron-left": <path d="m14.5 5-7 7 7 7" />,
+  "chevron-right": <path d="m9.5 5 7 7-7 7" />,
+  close: <path d="M6 6l12 12M18 6 6 18" />,
+  cash: (
+    <>
+      <rect x="3" y="6.5" width="18" height="11" rx="2" />
+      <circle cx="12" cy="12" r="2.3" />
+      <path d="M6.5 6.5v0M17.5 17.5v0" />
+    </>
+  ),
+  transfer: (
+    <>
+      <path d="M4 8h13" />
+      <path d="M17 8 13.5 4.5" />
+      <path d="M17 8 13.5 11.5" />
+      <path d="M20 16H7" />
+      <path d="M7 16l3.5 3.5" />
+      <path d="M7 16l3.5-3.5" />
+    </>
+  ),
 };
 
 const Icon = ({ name, className = "" }) => (

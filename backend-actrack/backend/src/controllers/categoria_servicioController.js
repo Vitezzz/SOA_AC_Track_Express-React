@@ -43,7 +43,7 @@ const categoriaServicioById = async (req, res) => {
 
 const crearCategoriaServicio = async (req, res) => {
     try {
-        const { nombre } = req.body;
+        const { nombre, precio_sugerido } = req.body;
 
         if (!nombre) {
             return res.status(400).json({ message: "Dato faltante" })
@@ -52,11 +52,12 @@ const crearCategoriaServicio = async (req, res) => {
         const categoriaExiste = await getCategoriaServicioByNombre(nombre);
         if (categoriaExiste) return res.status(400).json({ message: 'Ya existe una categoría con ese nombre' });
 
-        const nuevaCategoriaServicio = await createCategoriaServicio({ nombre });
+        const nuevaCategoriaServicio = await createCategoriaServicio({ nombre, precio_sugerido });
 
         res.status(201).json({
             id: nuevaCategoriaServicio.id,
-            nombre: nuevaCategoriaServicio.nombre
+            nombre: nuevaCategoriaServicio.nombre,
+            precio_sugerido: nuevaCategoriaServicio.precio_sugerido
         })
     } catch (error) {
         console.error("Error: ", error)
@@ -71,9 +72,9 @@ const putCategoriaServicio = async (req, res) => {
             return res.status(400).json({ message: 'Id no encontrado' })
         }
 
-        const { nombre } = req.body;
+        const { nombre, precio_sugerido } = req.body;
 
-        const categoriaServicioActualizada = await updateCategoriaServicio(id, { nombre });
+        const categoriaServicioActualizada = await updateCategoriaServicio(id, { nombre, precio_sugerido });
 
         if (!categoriaServicioActualizada) {
             return res.status(400).json({ message: "Id de categoria servicio no encontrada" })
@@ -81,7 +82,8 @@ const putCategoriaServicio = async (req, res) => {
 
         res.status(200).json({
             id: categoriaServicioActualizada.id,
-            nombre: categoriaServicioActualizada.nombre
+            nombre: categoriaServicioActualizada.nombre,
+            precio_sugerido: categoriaServicioActualizada.precio_sugerido
         });
     } catch (error) {
         console.error('Error: ', error);

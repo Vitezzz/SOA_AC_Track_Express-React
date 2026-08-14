@@ -16,6 +16,7 @@ const DashboardKPIs = () => {
     const { apiFetch } = useAuth();
 
     const [reportes, setReportes] = useState({});
+    const [tecnicos, setTecnicos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [recalculando, setRecalculando] = useState(false);
     const [error, setError] = useState("");
@@ -46,8 +47,16 @@ const DashboardKPIs = () => {
 
     useEffect(() => {
         cargarReportes();
+        (async () => {
+            const res = await apiFetch("/api/tecnicos/todos");
+            if (res.status !== 404 && res.ok) setTecnicos(await res.json());
+        })();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // El reporte de "técnico más productivo" viene con usu_id (id de
+    // usuario, no de técnico) -- así se cruza con /api/tecnicos/todos.
+    const nombreDeUsuId = (usu_id) => tecnicos.find((t) => t.usu_id === usu_id)?.nombre || `Técnico #${usu_id}`;
 
     const handleRecalcular = async () => {
         setRecalculando(true);
@@ -63,7 +72,7 @@ const DashboardKPIs = () => {
         }
     };
 
-    if (loading) return <p style={{ padding: "24px" }}>Cargando...</p>;
+    if (loading) return <p className="page">Cargando...</p>;
 
     const ordenesPorEstado = reportes.ordenes_por_estado || [];
     const tecnicoMasProductivo = [...(reportes.tecnico_mas_productivo || [])]
@@ -71,15 +80,21 @@ const DashboardKPIs = () => {
     const ingresosMes = (reportes.ingresos_mes || []).map((r) => ({ ...r, total: Number(r.total) }));
     const stockCritico = reportes.stock_critico || [];
 
-    return (
-        <div style={{ padding: "24px" }}>
-            <Link to="/home">← Inicio</Link>
+    // Resumen rápido arriba de las gráficas -- números sueltos que ya
+    // veníamos calculando, nomás que no se mostraban en ningún lado.
+    const totalOrdenesActivas = ordenesPorEstado.reduce((s, o) => s + Number(o.cantidad), 0);
+    const ingresoMesActual = ingresosMes.length ? ingresosMes[ingresosMes.length - 1].total : 0;
+    const lider = tecnicoMasProductivo[0];
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "8px" }}>
+    return (
+        <div className="page">
+            <Link to="/home" className="page-back">← Inicio</Link>
+
+            <div className="page-header">
                 <div>
                     <h2>Dashboard / KPIs</h2>
                     {ultimaActualizacion && (
-                        <p style={{ color: "#6b7280", fontSize: "13px" }}>
+                        <p className="muted-text" style={{ marginTop: "0.25rem" }}>
                             Última actualización: {new Date(ultimaActualizacion).toLocaleString("es-MX")}
                         </p>
                     )}
@@ -90,15 +105,38 @@ const DashboardKPIs = () => {
                 </button>
             </div>
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && <p className="error-text">{error}</p>}
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginTop: "24px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem", marginBottom: "1.25rem" }}>
+                <div className="panel">
+                    <p className="muted-text" style={{ fontSize: "0.8rem", marginBottom: "0.4rem" }}>Órdenes activas</p>
+                    <p style={{ fontSize: "1.6rem", fontWeight: 700, margin: 0 }}>{totalOrdenesActivas}</p>
+                </div>
+                <div className="panel">
+                    <p className="muted-text" style={{ fontSize: "0.8rem", marginBottom: "0.4rem" }}>Ingresos del último mes</p>
+                    <p style={{ fontSize: "1.6rem", fontWeight: 700, margin: 0 }}>{formatoMoneda(ingresoMesActual)}</p>
+                </div>
+                <div className="panel">
+                    <p className="muted-text" style={{ fontSize: "0.8rem", marginBottom: "0.4rem" }}>Técnico más productivo</p>
+                    <p style={{ fontSize: "1.15rem", fontWeight: 700, margin: 0 }}>
+                        {lider ? nombreDeUsuId(lider.usu_id) : "—"}
+                    </p>
+                </div>
+                <div className="panel">
+                    <p className="muted-text" style={{ fontSize: "0.8rem", marginBottom: "0.4rem" }}>Artículos en stock crítico</p>
+                    <p style={{ fontSize: "1.6rem", fontWeight: 700, margin: 0, color: stockCritico.length > 0 ? "var(--color-danger-text)" : "inherit" }}>
+                        {stockCritico.length}
+                    </p>
+                </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
 
                 {/* Órdenes por estado */}
-                <div style={{ border: "1px solid #e5e7eb", borderRadius: "12px", padding: "16px" }}>
+                <div className="panel">
                     <p style={{ fontWeight: "600", marginBottom: "12px" }}>Órdenes por estado</p>
                     {ordenesPorEstado.length === 0 ? (
-                        <p style={{ color: "#9ca3af" }}>Sin datos todavía.</p>
+                        <p className="muted-text">Sin datos todavía.</p>
                     ) : (
                         <ResponsiveContainer width="100%" height={250}>
                             <PieChart>
@@ -123,7 +161,7 @@ const DashboardKPIs = () => {
                 </div>
 
                 {/* Técnico más productivo */}
-                <div style={{ border: "1px solid #e5e7eb", borderRadius: "12px", padding: "16px" }}>
+                <div className="panel">
                     <p style={{ fontWeight: "600", marginBottom: "12px" }}>Técnico más productivo</p>
                     {tecnicoMasProductivo.length === 0 ? (
                         <p style={{ color: "#9ca3af" }}>Sin datos todavía.</p>
@@ -131,9 +169,9 @@ const DashboardKPIs = () => {
                         <ResponsiveContainer width="100%" height={250}>
                             <BarChart data={tecnicoMasProductivo}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                                <XAxis dataKey="usu_id" tickFormatter={(v) => `Técnico #${v}`} tick={{ fontSize: 12 }} />
+                                <XAxis dataKey="usu_id" tickFormatter={nombreDeUsuId} tick={{ fontSize: 12 }} />
                                 <YAxis allowDecimals={false} />
-                                <Tooltip labelFormatter={(v) => `Técnico #${v}`} />
+                                <Tooltip labelFormatter={nombreDeUsuId} />
                                 <Bar dataKey="ordenes_completadas" fill="#111827" radius={[6, 6, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
@@ -141,7 +179,7 @@ const DashboardKPIs = () => {
                 </div>
 
                 {/* Ingresos del mes */}
-                <div style={{ border: "1px solid #e5e7eb", borderRadius: "12px", padding: "16px" }}>
+                <div className="panel">
                     <p style={{ fontWeight: "600", marginBottom: "12px" }}>Ingresos por mes</p>
                     {ingresosMes.length === 0 ? (
                         <p style={{ color: "#9ca3af" }}>Sin datos todavía.</p>
@@ -159,7 +197,7 @@ const DashboardKPIs = () => {
                 </div>
 
                 {/* Stock crítico */}
-                <div style={{ border: "1px solid #e5e7eb", borderRadius: "12px", padding: "16px" }}>
+                <div className="panel">
                     <p style={{ fontWeight: "600", marginBottom: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
                         <Icon name="warning" className="icon-sm" /> Stock crítico
                     </p>

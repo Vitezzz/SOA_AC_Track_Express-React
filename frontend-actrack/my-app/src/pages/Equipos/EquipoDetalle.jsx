@@ -64,55 +64,63 @@ const EquipoDetalle = () => {
     const historial = ordenes.filter((o) => o.equ_id === equipo.id);
 
     return (
-        <div className="page-container" style={{ maxWidth: "600px" }}>
+        <div className="page-container-wide">
             <Link to="/misequipos">← Volver a mis equipos</Link>
 
-            <div className="panel" style={{ marginTop: "16px" }}>
-                {equipo.imagen_url && (
-                    <img src={equipo.imagen_url} alt={equipo.modelo} className="w-full h-48 object-cover rounded-xl mb-4" />
-                )}
-
-                <div className="flex justify-between items-start mb-1">
-                    <h2 className="page-title" style={{ margin: 0 }}>{equipo.tipo} — {equipo.modelo}</h2>
-                    <span className={`badge-status ${equipo.activo ? "badge-status-success" : "badge-status-neutral"}`}>
-                        {equipo.activo ? "Activo" : "Inactivo"}
-                    </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 mt-4 text-sm">
-                    <p><span className="text-gray-400">Marca:</span> <span className="text-gray-700">{marca?.nombre || "—"}</span></p>
-                    <p><span className="text-gray-400">N.º de serie:</span> <span className="text-gray-700">{equipo.numero_serie}</span></p>
-                </div>
-
-                <div className="form-section">
-                    <p className="form-section-title"><Icon name="calendar" /> Mantenimiento preventivo</p>
-                    {mantenimiento ? (
-                        <p className="text-sm text-gray-600">
-                            Cada {mantenimiento.frecuencia_dias} días — próxima visita: {formatearFecha(mantenimiento.proxima_fecha)}
-                        </p>
-                    ) : (
-                        <p className="text-sm text-gray-400">No hay mantenimiento programado.</p>
+            <div className="grid gap-6 mt-4" style={{ gridTemplateColumns: "minmax(0, 320px) minmax(0, 1fr)" }}>
+                {/* Columna izquierda: foto + datos básicos del equipo */}
+                <div className="panel">
+                    {equipo.imagen_url && (
+                        <img src={equipo.imagen_url} alt={equipo.modelo} className="w-full h-48 object-cover rounded-xl mb-4" />
                     )}
+
+                    <div className="flex justify-between items-start mb-1">
+                        <h2 className="page-title" style={{ margin: 0, fontSize: "1.25rem" }}>{equipo.tipo} — {equipo.modelo}</h2>
+                        <span className={`badge-status ${equipo.activo ? "badge-status-success" : "badge-status-neutral"}`}>
+                            {equipo.activo ? "Activo" : "Inactivo"}
+                        </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2 mt-4 text-sm">
+                        <p><span className="text-gray-400">Marca:</span> <span className="text-gray-700">{marca?.nombre || "—"}</span></p>
+                        <p><span className="text-gray-400">N.º de serie:</span> <span className="text-gray-700">{equipo.numero_serie}</span></p>
+                    </div>
                 </div>
 
-                <div className="form-section">
-                    <p className="form-section-title"><Icon name="wrench" /> Historial de órdenes ({historial.length})</p>
-                    {historial.length === 0 ? (
-                        <p className="text-sm text-gray-400">Sin órdenes registradas.</p>
-                    ) : (
-                        <ul className="space-y-2">
-                            {historial.map((orden) => (
-                                <li key={orden.id}>
-                                    <Link to={`/ordenes/${orden.id}`} className="flex justify-between items-center text-sm hover:underline">
-                                        <span className="text-gray-600">{orden.folio} — {formatearFecha(orden.fecha_programada)}</span>
-                                        <span className={`badge-status ${ESTILOS_ESTADO[orden.estatus] || "badge-status-neutral"}`}>
-                                            {orden.estatus}
-                                        </span>
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
+                {/* Columna derecha: mantenimiento + historial -- antes iban
+                    apretados debajo de la foto en una sola columna angosta de
+                    600px, dejando vacío el resto de la pantalla. */}
+                <div className="panel">
+                    <div className="form-section" style={{ borderTop: "none", paddingTop: 0, marginTop: 0 }}>
+                        <p className="form-section-title"><Icon name="calendar" /> Mantenimiento preventivo</p>
+                        {mantenimiento ? (
+                            <p className="text-sm text-gray-600">
+                                Cada {mantenimiento.frecuencia_dias} días — próxima visita: {formatearFecha(mantenimiento.proxima_fecha)}
+                            </p>
+                        ) : (
+                            <p className="text-sm text-gray-400">No hay mantenimiento programado.</p>
+                        )}
+                    </div>
+
+                    <div className="form-section">
+                        <p className="form-section-title"><Icon name="wrench" /> Historial de órdenes ({historial.length})</p>
+                        {historial.length === 0 ? (
+                            <p className="text-sm text-gray-400">Sin órdenes registradas.</p>
+                        ) : (
+                            <ul className="space-y-2">
+                                {historial.map((orden) => (
+                                    <li key={orden.id}>
+                                        <Link to={`/ordenes/${orden.id}`} className="flex justify-between items-center text-sm hover:underline">
+                                            <span className="text-gray-600">{orden.folio} — {formatearFecha(orden.fecha_programada)}</span>
+                                            <span className={`badge-status ${ESTILOS_ESTADO[orden.estatus] || "badge-status-neutral"}`}>
+                                                {orden.estatus}
+                                            </span>
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

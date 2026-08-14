@@ -9,6 +9,7 @@ import { selectOrdenesServicioById } from "../models/ordenes_servicio.js";
 import { selectTecnicoById } from "../models/tecnicos.js";
 import { getClienteIdByUserId, getTecnicoIdByUserId } from '../utils/lookupUtils.js'
 import { enviarSMS, formatearTelefonoE164 } from "../utils/smsService.js";
+import { enviarPush } from "../utils/pushService.js";
 import { insertNotificaciones } from "../models/notificaciones.js";
 import pool from '../config/database.js'
 
@@ -130,12 +131,38 @@ const putCotizaciones = async (req, res) => {
         const tecnicoExiste = await selectTecnicoById(tec_id);
         if (!tecnicoExiste) return res.status(404).json({ message: 'Tecnico no encontrado' })
 
+        // Se necesita el estado ANTES del update para no re-notificar cada
+        // vez que se re-guarda una cotización que ya estaba "enviada" (p.ej.
+        // al agregar otro renglón, que resendea la cotización sin cambiar
+        // su estado) -- solo se avisa al cliente la primera vez que entra
+        // a "enviada".
+        const cotizacionAntes = await selectCotizacionesById(id);
+
         const cotizacionUpdt = await updateCotizaciones(id, {
             ord_id, tec_id, cli_id, folio, estado, total, notas
         });
 
         if (!cotizacionUpdt || !cotizacionUpdt.id) {
             return res.status(404).json({ message: "Id de cotizacion no encontrado" })
+        }
+
+        // Antes esto solo avisaba al cliente cuando SU cotización quedaba
+        // aprobada -- pero nadie le avisaba que había una cotización nueva
+        // ESPERANDO su respuesta, así que solo se enteraba si abría la app
+        // por su cuenta. Se manda push + notificación in-app también al
+        // entrar a "enviada" (típicamente el técnico, cotizando en campo).
+        if (estado === 'enviada' && cotizacionAntes?.estado !== 'enviada') {
+            await enviarPush(
+                clienteExiste.usu_id,
+                'Nueva cotización para tu servicio',
+                `Cotización ${cotizacionUpdt.folio} por $${Number(total).toFixed(2)} -- revísala y responde en la app.`
+            );
+            await insertNotificaciones({
+                usu_id: clienteExiste.usu_id,
+                tipo: 'cotizacion_enviada',
+                titulo: `Cotización ${cotizacionUpdt.folio} lista para tu revisión`,
+                leido: false,
+            });
         }
 
         // Si la cotización se está aprobando, notificamos al cliente por SMS.
@@ -149,6 +176,23 @@ const putCotizaciones = async (req, res) => {
                 usu_id: clienteExiste.usu_id,
                 tipo: 'sms_cotizacion_aprobada',
                 titulo: `Cotización ${cotizacionUpdt.folio} aprobada`,
+                leido: false,
+            });
+        }
+
+        // Al rechazar tampoco se avisaba a nadie -- el técnico se quedaba
+        // esperando una respuesta que ya había llegado, sin enterarse salvo
+        // que entrara a checar manualmente.
+        if (estado === 'rechazada' && cotizacionAntes?.estado !== 'rechazada') {
+            await enviarPush(
+                tecnicoExiste.usu_id,
+                'Cotización rechazada',
+                `El cliente rechazó la cotización ${cotizacionUpdt.folio}. Revisa la orden para ver los siguientes pasos.`
+            );
+            await insertNotificaciones({
+                usu_id: tecnicoExiste.usu_id,
+                tipo: 'cotizacion_rechazada',
+                titulo: `Cotización ${cotizacionUpdt.folio} fue rechazada por el cliente`,
                 leido: false,
             });
         }

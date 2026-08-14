@@ -1,9 +1,16 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const formatoMoneda = (valor) =>
     new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(valor);
+
+const BADGE_ESTADO = {
+    borrador: "badge-neutral",
+    enviada: "badge-info",
+    aprobada: "badge-success",
+    rechazada: "badge-danger",
+};
 
 const EditarCotizacion = () => {
     const { id } = useParams();
@@ -202,161 +209,178 @@ const EditarCotizacion = () => {
     if (loading) return <p className="page">Cargando...</p>;
 
     return (
-        <div className="page page-narrow">
-            <h2>Editar Cotización: {cotizacion?.folio}</h2>
+        <div className="page">
+            <Link to="/cotizaciones" className="page-back">← Volver a Cotizaciones</Link>
+            <div className="page-header">
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                    <h2 style={{ margin: 0 }}>Editar Cotización: {cotizacion?.folio}</h2>
+                    <span className={`badge ${BADGE_ESTADO[cotizacion?.estado] || "badge-neutral"}`}>{cotizacion?.estado}</span>
+                </div>
+            </div>
 
             {error && <p className="error-text">{error}</p>}
             {guardado && <p className="success-text">¡Cotización actualizada correctamente!</p>}
 
-            {orden && (
-                <div className="panel" style={{ marginBottom: "16px", fontSize: "14px", lineHeight: "1.6" }}>
-                    <p><strong>Orden:</strong> {orden.folio}
-                        {cliente && ` · ${cliente.nombre}`}
-                        {cliente?.telefono && ` · ${cliente.telefono}`}
-                    </p>
-                    <p><strong>Equipo:</strong> {equipo ? `${equipo.tipo || "—"}${marca?.nombre ? ` ${marca.nombre}` : ""}${equipo.modelo ? ` ${equipo.modelo}` : ""}` : "Sin equipo asociado"}</p>
-                    <p><strong>Servicio solicitado:</strong> {categoria?.nombre || `#${orden.cat_id}`}</p>
-                    {orden.descripcion && <p><strong>Descripción:</strong> {orden.descripcion}</p>}
-                </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="form">
-                <label>
-                    <span>Estado</span>
-                    <select value={estado} onChange={(e) => setEstado(e.target.value)}>
-                        <option value="borrador">Borrador</option>
-                        <option value="enviada">Enviada</option>
-                        <option value="aprobada">Aprobada</option>
-                        <option value="rechazada">Rechazada</option>
-                    </select>
-                </label>
-
-                <label>
-                    <span>Técnico responsable</span>
-                    <select value={tecId} onChange={(e) => setTecId(e.target.value)}>
-                        {tecnicos.map((tec) => (
-                            <option key={tec.id} value={tec.id}>Técnico #{tec.usu_id}</option>
-                        ))}
-                    </select>
-                </label>
-
-                <label>
-                    <span>Total (calculado automáticamente)</span>
-                    <p style={{ fontWeight: "600", fontSize: "18px" }}>{formatoMoneda(cotizacion?.total || 0)}</p>
-                </label>
-
-                <label>
-                    <span>Notas</span>
-                    <textarea value={notas} onChange={(e) => setNotas(e.target.value)} />
-                </label>
-
-                <div className="form-actions">
-                    <button type="submit" disabled={guardando} className="btn-primary">{guardando ? "Guardando..." : "Guardar cambios"}</button>
-                    <button type="button" onClick={() => navigate("/cotizaciones")}>Volver</button>
-                </div>
-            </form>
-
-            <hr style={{ margin: "24px 0" }} />
-
-            <h3>Piezas y mano de obra</h3>
-
-            {renglones.length === 0 ? (
-                <p>Todavía no hay renglones agregados.</p>
-            ) : (
-                <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "16px" }}>
-                    <thead>
-                        <tr style={{ textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>
-                            <th>Artículo / Concepto</th>
-                            <th>Cantidad</th>
-                            <th>Precio unit.</th>
-                            <th>Subtotal</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {renglones.map((r) => {
-                            const articulo = inventario.find((i) => i.id === r.inv_id);
-                            return (
-                                <tr key={r.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                                    <td>{r.es_mano_obra ? (r.concepto || "Mano de obra") : (articulo?.nombre || `Artículo #${r.inv_id}`)}</td>
-                                    <td>{r.cantidad}</td>
-                                    <td>{formatoMoneda(r.precio_unitario)}</td>
-                                    <td>{formatoMoneda(r.subtotal)}</td>
-                                    <td>
-                                        {esAdmin && (
-                                            <button onClick={() => handleEliminarRenglon(r.id)} style={{ color: "red" }}>Quitar</button>
-                                        )}
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-            )}
-
-            <form onSubmit={handleAgregarRenglon} className="form" style={{ maxWidth: "400px" }}>
-                <p style={{ fontWeight: "600" }}>Agregar renglón</p>
-
-                <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <input type="checkbox" checked={esManoObra} onChange={(e) => {
-                        setEsManoObra(e.target.checked);
-                        setInvId("");
-                        setPrecioUnitario("");
-                        setConcepto("");
-                    }} />
-                    <span>Es mano de obra (no descuenta stock de vehículo)</span>
-                </label>
-
-                {!esManoObra ? (
-                    <label>
-                        <span>Artículo</span>
-                        <select value={invId} onChange={(e) => {
-                            setInvId(e.target.value);
-                            const seleccionado = inventario.find((i) => String(i.id) === e.target.value);
-                            if (seleccionado) setPrecioUnitario(seleccionado.precio_venta);
-                        }}>
-                            <option value="">Selecciona un artículo</option>
-                            {stockVehiculo.map((s) => {
-                                const articulo = inventario.find((i) => i.id === s.inv_id);
-                                return (
-                                    <option key={s.inv_id} value={s.inv_id}>
-                                        {articulo?.nombre || `Artículo #${s.inv_id}`} (disponible: {s.cantidad})
-                                    </option>
-                                );
-                            })}
-                        </select>
-                        {stockVehiculo.length === 0 && (
-                            <p style={{ color: "#b45309", fontSize: "13px" }}>
-                                Este técnico no tiene ningún artículo en su vehículo todavía.
-                            </p>
-                        )}
-                    </label>
-                ) : (
-                    <label>
-                        <span>¿En qué consistió el trabajo? *</span>
-                        <input
-                            type="text"
-                            placeholder="Ej. Instalación de capacitor, diagnóstico eléctrico..."
-                            value={concepto}
-                            onChange={(e) => setConcepto(e.target.value)}
-                        />
-                    </label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1.35fr", gap: "1.5rem", alignItems: "start", width: "100%" }}>
+            <div>
+                {orden && (
+                    <div className="panel" style={{ marginBottom: "1rem", fontSize: "14px", lineHeight: "1.6" }}>
+                        <p style={{ fontWeight: 600, marginBottom: "0.6rem" }}>Contexto</p>
+                        <p><strong>Orden:</strong> {orden.folio}
+                            {cliente && ` · ${cliente.nombre}`}
+                            {cliente?.telefono && ` · ${cliente.telefono}`}
+                        </p>
+                        <p><strong>Equipo:</strong> {equipo ? `${equipo.tipo || "—"}${marca?.nombre ? ` ${marca.nombre}` : ""}${equipo.modelo ? ` ${equipo.modelo}` : ""}` : "Sin equipo asociado"}</p>
+                        <p><strong>Servicio solicitado:</strong> {categoria?.nombre || `#${orden.cat_id}`}</p>
+                        {orden.descripcion && <p style={{ marginBottom: 0 }}><strong>Descripción:</strong> {orden.descripcion}</p>}
+                    </div>
                 )}
 
-                <label>
-                    <span>Cantidad</span>
-                    <input type="number" min="0.001" step="0.001" value={cantidadPieza} onChange={(e) => setCantidadPieza(e.target.value)} />
-                </label>
+                <div className="panel">
+                    <form onSubmit={handleSubmit} className="form">
+                        <label>
+                            <span>Estado</span>
+                            <select value={estado} onChange={(e) => setEstado(e.target.value)}>
+                                <option value="borrador">Borrador</option>
+                                <option value="enviada">Enviada</option>
+                                <option value="aprobada">Aprobada</option>
+                                <option value="rechazada">Rechazada</option>
+                            </select>
+                        </label>
 
-                <label>
-                    <span>Precio unitario</span>
-                    <input type="number" min="0" step="0.01" value={precioUnitario} onChange={(e) => setPrecioUnitario(e.target.value)} />
-                </label>
+                        <label>
+                            <span>Técnico responsable</span>
+                            <select value={tecId} onChange={(e) => setTecId(e.target.value)}>
+                                {tecnicos.map((tec) => (
+                                    <option key={tec.id} value={tec.id}>{tec.nombre || `Técnico #${tec.usu_id}`}</option>
+                                ))}
+                            </select>
+                        </label>
 
-                <button type="submit" disabled={agregando} className="btn-primary">
-                    {agregando ? "Agregando..." : "+ Agregar renglón"}
-                </button>
-            </form>
+                        <label>
+                            <span>Total (calculado automáticamente)</span>
+                            <p style={{ fontWeight: "600", fontSize: "18px" }}>{formatoMoneda(cotizacion?.total || 0)}</p>
+                        </label>
+
+                        <label>
+                            <span>Notas</span>
+                            <textarea value={notas} onChange={(e) => setNotas(e.target.value)} />
+                        </label>
+
+                        <div className="form-actions">
+                            <button type="submit" disabled={guardando} className="btn-primary">{guardando ? "Guardando..." : "Guardar cambios"}</button>
+                            <button type="button" onClick={() => navigate("/cotizaciones")}>Volver</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div className="panel">
+                <p style={{ fontWeight: 600, marginBottom: "0.9rem" }}>Piezas y mano de obra</p>
+
+                {renglones.length === 0 ? (
+                    <p className="muted-text">Todavía no hay renglones agregados.</p>
+                ) : (
+                    <div className="table-wrap" style={{ marginBottom: "1.25rem" }}>
+                        <table className="table">
+                            <thead>
+                                <tr>
+                                    <th>Artículo / Concepto</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio unit.</th>
+                                    <th>Subtotal</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {renglones.map((r) => {
+                                    const articulo = inventario.find((i) => i.id === r.inv_id);
+                                    return (
+                                        <tr key={r.id}>
+                                            <td>{r.es_mano_obra ? (r.concepto || "Mano de obra") : (articulo?.nombre || `Artículo #${r.inv_id}`)}</td>
+                                            <td>{r.cantidad}</td>
+                                            <td>{formatoMoneda(r.precio_unitario)}</td>
+                                            <td>{formatoMoneda(r.subtotal)}</td>
+                                            <td>
+                                                {esAdmin && (
+                                                    <button onClick={() => handleEliminarRenglon(r.id)} className="btn-sm btn-danger">Quitar</button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                <form onSubmit={handleAgregarRenglon} className="form">
+                    <p style={{ fontWeight: "600" }}>Agregar renglón</p>
+
+                    <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <input type="checkbox" checked={esManoObra} onChange={(e) => {
+                            setEsManoObra(e.target.checked);
+                            setInvId("");
+                            setPrecioUnitario("");
+                            setConcepto("");
+                        }} />
+                        <span>Es mano de obra (no descuenta stock de vehículo)</span>
+                    </label>
+
+                    {!esManoObra ? (
+                        <label>
+                            <span>Artículo</span>
+                            <select value={invId} onChange={(e) => {
+                                setInvId(e.target.value);
+                                const seleccionado = inventario.find((i) => String(i.id) === e.target.value);
+                                if (seleccionado) setPrecioUnitario(seleccionado.precio_venta);
+                            }}>
+                                <option value="">Selecciona un artículo</option>
+                                {stockVehiculo.map((s) => {
+                                    const articulo = inventario.find((i) => i.id === s.inv_id);
+                                    return (
+                                        <option key={s.inv_id} value={s.inv_id}>
+                                            {articulo?.nombre || `Artículo #${s.inv_id}`} (disponible: {s.cantidad})
+                                        </option>
+                                    );
+                                })}
+                            </select>
+                            {stockVehiculo.length === 0 && (
+                                <span className="hint-text" style={{ color: "var(--color-danger-text)" }}>
+                                    Este técnico no tiene ningún artículo en su vehículo todavía.
+                                </span>
+                            )}
+                        </label>
+                    ) : (
+                        <label>
+                            <span>¿En qué consistió el trabajo? *</span>
+                            <input
+                                type="text"
+                                placeholder="Ej. Instalación de capacitor, diagnóstico eléctrico..."
+                                value={concepto}
+                                onChange={(e) => setConcepto(e.target.value)}
+                            />
+                        </label>
+                    )}
+
+                    <div className="form-inline" style={{ marginBottom: 0 }}>
+                        <label>
+                            <span>Cantidad</span>
+                            <input type="number" min="0.001" step="0.001" value={cantidadPieza} onChange={(e) => setCantidadPieza(e.target.value)} />
+                        </label>
+
+                        <label>
+                            <span>Precio unitario</span>
+                            <input type="number" min="0" step="0.01" value={precioUnitario} onChange={(e) => setPrecioUnitario(e.target.value)} />
+                        </label>
+                    </div>
+
+                    <button type="submit" disabled={agregando} className="btn-primary" style={{ marginTop: "0.75rem" }}>
+                        {agregando ? "Agregando..." : "+ Agregar renglón"}
+                    </button>
+                </form>
+            </div>
+            </div>
         </div>
     );
 };

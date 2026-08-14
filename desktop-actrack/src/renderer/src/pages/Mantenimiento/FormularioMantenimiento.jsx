@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const FormularioMantenimiento = () => {
@@ -96,11 +96,15 @@ const FormularioMantenimiento = () => {
     if (loading) return <p className="page">Cargando...</p>;
 
     return (
-        <div className="page page-narrow">
-            <h2>{esEdicion ? "Editar" : "Programar"} Mantenimiento</h2>
+        <div className="page page-medium">
+            <Link to="/mantenimiento" className="page-back">← Volver a Mantenimiento</Link>
+            <div className="page-header">
+                <h2>{esEdicion ? "Editar" : "Programar"} Mantenimiento</h2>
+            </div>
 
             {error && <p className="error-text">{error}</p>}
 
+            <div className="panel">
             <form onSubmit={handleSubmit} className="form">
                 <label>
                     <span>Cliente *</span>
@@ -153,6 +157,7 @@ const FormularioMantenimiento = () => {
                     <button type="button" onClick={() => navigate("/mantenimiento")}>Cancelar</button>
                 </div>
             </form>
+            </div>
         </div>
     );
 };

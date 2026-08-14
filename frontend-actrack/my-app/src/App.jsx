@@ -16,6 +16,7 @@ import NotificacionesPush from "./components/NotificacionesPush";
 
 //Component
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import PublicRoute from "./components/PublicRoute.jsx";
 
 import DashboardCliente from "./pages/Dashboard/DashboardCliente.jsx"
 import { AuthProvider } from "./context/AuthContext.jsx";
@@ -30,9 +31,9 @@ function App() {
             <NotificacionesPush />
             <main>
               <Routes>
-                <Route path="/" element={<Login />} />
+                <Route path="/" element={<PublicRoute><Login /></PublicRoute>} />
                 <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
-                <Route path="/signup" element={<SignUp />} />
+                <Route path="/signup" element={<PublicRoute><SignUp /></PublicRoute>} />
                 <Route path="/misequipos" element={<ProtectedRoute><MisEquipos /></ProtectedRoute>}></Route>
                 <Route path="/equipos/:id" element={<ProtectedRoute><EquipoDetalle /></ProtectedRoute>}></Route>
                 <Route path="/pagos" element={<ProtectedRoute><Pagos /></ProtectedRoute>}></Route>

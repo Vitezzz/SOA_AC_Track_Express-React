@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const CrearTecnico = () => {
@@ -66,11 +66,15 @@ const CrearTecnico = () => {
     if (loading) return <p className="page">Cargando...</p>;
 
     return (
-        <div className="page page-narrow">
-            <h2>Nuevo Técnico</h2>
+        <div className="page page-medium">
+            <Link to="/tecnicos" className="page-back">← Volver a Técnicos</Link>
+            <div className="page-header">
+                <h2>Nuevo Técnico</h2>
+            </div>
 
             {error && <p className="error-text">{error}</p>}
 
+            <div className="panel">
             <form onSubmit={handleSubmit} className="form">
                 <label>
                     <span>Nombre *</span>
@@ -102,6 +106,10 @@ const CrearTecnico = () => {
                     </select>
                 </label>
 
+                <p className="hint-text" style={{ marginBottom: "0.75rem" }}>
+                    Con esto se crea su cuenta de acceso a Mobile -- entra con este email y la contraseña temporal, y aparece disponible para asignar órdenes de una vez.
+                </p>
+
                 <div className="form-actions">
                     <button type="submit" disabled={guardando} className="btn-primary">
                         {guardando ? "Creando..." : "Crear técnico"}
@@ -109,6 +117,7 @@ const CrearTecnico = () => {
                     <button type="button" onClick={() => navigate("/tecnicos")}>Cancelar</button>
                 </div>
             </form>
+            </div>
         </div>
     );
 };

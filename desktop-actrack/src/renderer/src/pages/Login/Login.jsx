@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import Logo from "../../components/Logo";
 
 const Login = () => {
     const [email, setEmail] = useState("");
@@ -34,7 +35,9 @@ const Login = () => {
     return (
         <div className="auth-shell">
             <div className="auth-card">
-                <div className="auth-brand-mark">AC</div>
+                <div className="auth-brand-mark">
+                    <Logo className="icon-md" />
+                </div>
                 <h1 style={{ fontSize: "1.25rem", marginBottom: "0.25rem" }}>AC Track — Escritorio</h1>
                 <p className="muted-text" style={{ marginBottom: "1.5rem" }}>Panel interno para el equipo de servicio.</p>
 

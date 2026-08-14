@@ -11,6 +11,11 @@
   height: 0.95rem;
 }
 
+.icon-md {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
 .app-shell {
   display: flex;
   min-height: 100vh;
@@ -105,10 +110,22 @@
 .page {
   padding: 2rem 2.25rem;
   max-width: 1100px;
+  /* Antes el contenido vivía pegado al sidebar -- en una pantalla ancha
+     de verdad todo el espacio sobrante se acumulaba de un solo lado y se
+     veía "atorado en la esquina" en vez de una página con márgenes
+     parejos, que es como se ve cualquier app bien hecha (GitHub, Linear,
+     Notion) en monitores grandes. */
+  margin: 0 auto;
 }
 
 .page-narrow {
   max-width: 30rem;
+}
+
+/* Para pantallas tipo dashboard (Home) que sí tienen suficiente contenido
+   para lucir más anchas -- las de formulario/tabla se quedan en 1100px. */
+.page-wide {
+  max-width: 1500px;
 }
 
 .page-medium {

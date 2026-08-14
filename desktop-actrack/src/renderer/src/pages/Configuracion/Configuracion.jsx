@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
-const PESTAÑAS_BASE = ["Categorías de Servicio", "Categorías de Inventario", "Checklists", "Roles"];
+const PESTAÑAS_BASE = ["Categorías de Servicio", "Categorías de Inventario", "Especialidades", "Checklists", "Roles"];
 
 const Configuracion = () => {
     const { apiFetch, user } = useAuth();
@@ -34,10 +34,13 @@ const Configuracion = () => {
             </div>
 
             {pestañaActiva === "Categorías de Servicio" && (
-                <CatalogoSimple endpoint="/api/categoriaServicio" puedeEditar={esAdmin} />
+                <CatalogoSimple endpoint="/api/categoriaServicio" puedeEditar={esAdmin} conPrecio />
             )}
             {pestañaActiva === "Categorías de Inventario" && (
                 <CatalogoSimple endpoint="/api/categoriaInventario" puedeEditar={esAdmin} />
+            )}
+            {pestañaActiva === "Especialidades" && (
+                <CatalogoSimple endpoint="/api/especialidad" puedeEditar={esAdmin} />
             )}
             {pestañaActiva === "Checklists" && (
                 <ChecklistPlantillas apiFetch={apiFetch} puedeEditar={puedeEditarChecklist} />
@@ -52,12 +55,27 @@ const Configuracion = () => {
 
 // ---------- Catálogo genérico (solo id + nombre): sirve para
 // categorías de servicio Y categorías de inventario, mismo formato ----------
-const CatalogoSimple = ({ endpoint, puedeEditar }) => {
+const formatoMonedaCat = (valor) =>
+    new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(valor));
+
+// "conPrecio" solo lo manda Categorías de Servicio -- Categorías de
+// Inventario sigue siendo id+nombre nada más, no tiene sentido un precio
+// ahí. El precio es opcional A PROPÓSITO: solo debería llenarse en
+// servicios estandarizados (mantenimiento, limpieza, revisión), donde la
+// mano de obra es fija -- se deja en blanco en categorías de diagnóstico
+// o reparación, donde el precio real depende de lo que el técnico
+// encuentre en campo.
+const CatalogoSimple = ({ endpoint, puedeEditar, conPrecio = false }) => {
     const { apiFetch } = useAuth();
     const [items, setItems] = useState([]);
     const [nombreNuevo, setNombreNuevo] = useState("");
+    const [precioNuevo, setPrecioNuevo] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+
+    const [editandoId, setEditandoId] = useState(null);
+    const [precioEditando, setPrecioEditando] = useState("");
+    const [guardandoPrecio, setGuardandoPrecio] = useState(false);
 
     const cargar = async () => {
         try {
@@ -88,11 +106,15 @@ const CatalogoSimple = ({ endpoint, puedeEditar }) => {
             const res = await apiFetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ nombre: nombreNuevo }),
+                body: JSON.stringify({
+                    nombre: nombreNuevo,
+                    ...(conPrecio ? { precio_sugerido: precioNuevo ? Number(precioNuevo) : null } : {}),
+                }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || "No se pudo agregar");
             setNombreNuevo("");
+            setPrecioNuevo("");
             cargar();
         } catch (err) {
             setError(err.message);
@@ -110,6 +132,34 @@ const CatalogoSimple = ({ endpoint, puedeEditar }) => {
         }
     };
 
+    const iniciarEdicionPrecio = (item) => {
+        setEditandoId(item.id);
+        setPrecioEditando(item.precio_sugerido ?? "");
+    };
+
+    const guardarPrecio = async (item) => {
+        setGuardandoPrecio(true);
+        setError("");
+        try {
+            const res = await apiFetch(`${endpoint}/${item.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    nombre: item.nombre,
+                    precio_sugerido: precioEditando ? Number(precioEditando) : null,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "No se pudo guardar el precio");
+            setEditandoId(null);
+            cargar();
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setGuardandoPrecio(false);
+        }
+    };
+
     if (loading) return <p className="muted-text">Cargando...</p>;
 
     return (
@@ -123,6 +173,17 @@ const CatalogoSimple = ({ endpoint, puedeEditar }) => {
                         onChange={(e) => setNombreNuevo(e.target.value)}
                         placeholder="Nombre nuevo..."
                     />
+                    {conPrecio && (
+                        <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={precioNuevo}
+                            onChange={(e) => setPrecioNuevo(e.target.value)}
+                            placeholder="Precio sugerido (opcional)"
+                            style={{ maxWidth: "12rem" }}
+                        />
+                    )}
                     <button type="submit" className="btn-primary">Agregar</button>
                 </form>
             )}
@@ -132,13 +193,49 @@ const CatalogoSimple = ({ endpoint, puedeEditar }) => {
             ) : (
                 <ul className="panel" style={{ padding: "0.5rem 1rem" }}>
                     {items.map((item) => (
-                        <li key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid var(--color-border)" }}>
-                            {item.nombre}
-                            {puedeEditar && (
-                                <button onClick={() => handleEliminar(item.id)} className="btn-sm btn-danger">
-                                    Eliminar
-                                </button>
-                            )}
+                        <li key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid var(--color-border)", gap: "0.75rem" }}>
+                            <span>{item.nombre}</span>
+
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                {conPrecio && (
+                                    editandoId === item.id ? (
+                                        <>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                value={precioEditando}
+                                                onChange={(e) => setPrecioEditando(e.target.value)}
+                                                placeholder="Sin precio sugerido"
+                                                style={{ maxWidth: "9rem" }}
+                                                autoFocus
+                                            />
+                                            <button className="btn-sm btn-primary" onClick={() => guardarPrecio(item)} disabled={guardandoPrecio}>
+                                                {guardandoPrecio ? "..." : "Guardar"}
+                                            </button>
+                                            <button className="btn-sm" onClick={() => setEditandoId(null)} disabled={guardandoPrecio}>
+                                                Cancelar
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="muted-text" style={{ fontSize: "0.85rem" }}>
+                                                {item.precio_sugerido != null ? formatoMonedaCat(item.precio_sugerido) : "Sin precio sugerido"}
+                                            </span>
+                                            {puedeEditar && (
+                                                <button className="btn-sm" onClick={() => iniciarEdicionPrecio(item)}>
+                                                    Editar precio
+                                                </button>
+                                            )}
+                                        </>
+                                    )
+                                )}
+                                {puedeEditar && (
+                                    <button onClick={() => handleEliminar(item.id)} className="btn-sm btn-danger">
+                                        Eliminar
+                                    </button>
+                                )}
+                            </div>
                         </li>
                     ))}
                 </ul>
@@ -148,19 +245,30 @@ const CatalogoSimple = ({ endpoint, puedeEditar }) => {
 };
 
 // ---------- Checklists (necesita categoría de servicio ligada) ----------
+// Un "checklist" en realidad son DOS cosas: la plantilla (el contenedor,
+// ligado a una categoría de servicio -- ej. "Mantenimiento preventivo AC")
+// y sus ítems (las líneas individuales que el técnico marca en campo).
+// Este formulario de arriba solo crea la plantilla; los ítems se agregan
+// expandiendo cada plantilla de la lista.
 const ChecklistPlantillas = ({ apiFetch, puedeEditar }) => {
     const [plantillas, setPlantillas] = useState([]);
     const [categorias, setCategorias] = useState([]);
+    const [items, setItems] = useState([]);
     const [nombreNuevo, setNombreNuevo] = useState("");
     const [catIdNuevo, setCatIdNuevo] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
+    const [expandidoId, setExpandidoId] = useState(null);
+    const [itemNuevoPorPlantilla, setItemNuevoPorPlantilla] = useState({});
+    const [guardandoItem, setGuardandoItem] = useState(false);
+
     const cargar = async () => {
         try {
-            const [resPlantillas, resCategorias] = await Promise.all([
+            const [resPlantillas, resCategorias, resItems] = await Promise.all([
                 apiFetch("/api/checklist_plantillas"),
                 apiFetch("/api/categoriaServicio"),
+                apiFetch("/api/checklist_items_plantilla"),
             ]);
 
             if (resPlantillas.status === 404) {
@@ -172,6 +280,9 @@ const ChecklistPlantillas = ({ apiFetch, puedeEditar }) => {
             }
 
             if (resCategorias.ok) setCategorias(await resCategorias.json());
+            // Sin filtro por che_id en el backend -- se trae todo y se
+            // separa por plantilla aquí mismo (ver itemsDePlantilla).
+            if (resItems.status !== 404 && resItems.ok) setItems(await resItems.json());
         } catch (err) {
             setError(err.message);
         } finally {
@@ -184,9 +295,11 @@ const ChecklistPlantillas = ({ apiFetch, puedeEditar }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const handleAgregar = async (e) => {
+    const handleAgregarPlantilla = async (e) => {
         e.preventDefault();
-        if (!nombreNuevo.trim() || !catIdNuevo) return;
+        if (!nombreNuevo.trim()) return setError("Ponle un nombre al checklist antes de agregarlo.");
+        if (!catIdNuevo) return setError("Selecciona a qué categoría de servicio pertenece este checklist.");
+        setError("");
         try {
             const res = await apiFetch("/api/checklist_plantillas", {
                 method: "POST",
@@ -203,6 +316,57 @@ const ChecklistPlantillas = ({ apiFetch, puedeEditar }) => {
         }
     };
 
+    const handleToggleActivo = async (plantilla) => {
+        setError("");
+        try {
+            const res = await apiFetch(`/api/checklist_plantillas/${plantilla.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ cat_id: plantilla.cat_id, nombre: plantilla.nombre, activo: !plantilla.activo }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "No se pudo actualizar el checklist");
+            cargar();
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
+    const handleAgregarItem = async (cheId) => {
+        const texto = (itemNuevoPorPlantilla[cheId] || "").trim();
+        if (!texto) return setError("Escribe el texto del ítem antes de agregarlo.");
+        setError("");
+        setGuardandoItem(true);
+        try {
+            const itemsDeEsta = items.filter((i) => i.che_id === cheId);
+            const res = await apiFetch("/api/checklist_items_plantilla", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ che_id: cheId, descripcion: texto, orden: itemsDeEsta.length + 1 }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "No se pudo agregar el ítem");
+            setItemNuevoPorPlantilla((prev) => ({ ...prev, [cheId]: "" }));
+            cargar();
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setGuardandoItem(false);
+        }
+    };
+
+    const handleEliminarItem = async (itemId) => {
+        if (!window.confirm("¿Eliminar este ítem del checklist?")) return;
+        setError("");
+        try {
+            const res = await apiFetch(`/api/checklist_items_plantilla/${itemId}`, { method: "DELETE" });
+            if (!res.ok) throw new Error("No se pudo eliminar el ítem");
+            setItems((prev) => prev.filter((i) => i.id !== itemId));
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
     if (loading) return <p className="muted-text">Cargando...</p>;
 
     const plantillasConCategoria = plantillas.map((p) => {
@@ -210,14 +374,17 @@ const ChecklistPlantillas = ({ apiFetch, puedeEditar }) => {
         return { ...p, nombreCategoria: categoria?.nombre || "—" };
     });
 
+    const itemsDePlantilla = (cheId) =>
+        items.filter((i) => i.che_id === cheId).sort((a, b) => (a.orden ?? 999) - (b.orden ?? 999));
+
     return (
         <div>
             {error && <p className="error-text">{error}</p>}
 
             {puedeEditar && (
-                <form onSubmit={handleAgregar} className="form form-inline">
+                <form onSubmit={handleAgregarPlantilla} className="form form-inline">
                     <select value={catIdNuevo} onChange={(e) => setCatIdNuevo(e.target.value)} style={{ flex: "0 0 auto", width: "auto" }}>
-                        <option value="">Categoría...</option>
+                        <option value="">Categoría de servicio (requerida)...</option>
                         {categorias.map((c) => (
                             <option key={c.id} value={c.id}>{c.nombre}</option>
                         ))}
@@ -225,22 +392,88 @@ const ChecklistPlantillas = ({ apiFetch, puedeEditar }) => {
                     <input
                         value={nombreNuevo}
                         onChange={(e) => setNombreNuevo(e.target.value)}
-                        placeholder="Nombre del checklist..."
+                        placeholder="Nombre del checklist (ej. Mantenimiento preventivo)..."
                     />
-                    <button type="submit" className="btn-primary">Agregar</button>
+                    <button type="submit" className="btn-primary">Agregar checklist</button>
                 </form>
             )}
+            <p className="hint-text" style={{ marginTop: "-0.5rem", marginBottom: "1rem" }}>
+                Esto crea el checklist -- para agregarle las líneas que el técnico marca en campo, ábrelo de la lista de abajo.
+            </p>
 
             {plantillasConCategoria.length === 0 ? (
                 <p className="muted-text">Sin checklists todavía.</p>
             ) : (
-                <ul className="panel" style={{ padding: "0.5rem 1rem" }}>
-                    {plantillasConCategoria.map((p) => (
-                        <li key={p.id} style={{ padding: "0.5rem 0", borderBottom: "1px solid var(--color-border)" }}>
-                            <strong>{p.nombre}</strong> — {p.nombreCategoria} {p.activo ? "" : "(inactivo)"}
-                        </li>
-                    ))}
-                </ul>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                    {plantillasConCategoria.map((p) => {
+                        const expandido = expandidoId === p.id;
+                        const itemsDeEsta = itemsDePlantilla(p.id);
+                        return (
+                            <div key={p.id} className="panel" style={{ padding: 0, overflow: "hidden" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                    <button
+                                        onClick={() => setExpandidoId(expandido ? null : p.id)}
+                                        style={{
+                                            flex: 1, display: "flex", justifyContent: "space-between", alignItems: "center",
+                                            padding: "0.75rem 1rem", background: "transparent", border: "none", textAlign: "left",
+                                        }}
+                                    >
+                                        <span>
+                                            <strong>{p.nombre}</strong>
+                                            <span className="muted-text"> — {p.nombreCategoria} · {itemsDeEsta.length} {itemsDeEsta.length === 1 ? "ítem" : "ítems"}</span>
+                                        </span>
+                                        <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                            <span className={`badge ${p.activo ? "badge-success" : "badge-neutral"}`}>{p.activo ? "Activo" : "Inactivo"}</span>
+                                            {expandido ? "▲" : "▼"}
+                                        </span>
+                                    </button>
+                                    {puedeEditar && (
+                                        <button className="btn-sm" onClick={() => handleToggleActivo(p)} style={{ marginRight: "0.75rem" }}>
+                                            {p.activo ? "Desactivar" : "Activar"}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {expandido && (
+                                    <div style={{ borderTop: "1px solid var(--color-border)", padding: "0.75rem 1rem" }}>
+                                        {itemsDeEsta.length === 0 ? (
+                                            <p className="muted-text" style={{ fontSize: "0.9rem" }}>
+                                                Este checklist todavía no tiene ítems -- el técnico no verá nada que marcar hasta que agregues alguno.
+                                            </p>
+                                        ) : (
+                                            <ul style={{ marginBottom: "0.75rem" }}>
+                                                {itemsDeEsta.map((item) => (
+                                                    <li key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.4rem 0", borderBottom: "1px solid var(--color-border)", fontSize: "0.9rem" }}>
+                                                        <span>{item.descripcion}</span>
+                                                        {puedeEditar && (
+                                                            <button className="btn-sm btn-danger" onClick={() => handleEliminarItem(item.id)}>
+                                                                Eliminar
+                                                            </button>
+                                                        )}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+
+                                        {puedeEditar && (
+                                            <div className="form-inline">
+                                                <input
+                                                    value={itemNuevoPorPlantilla[p.id] || ""}
+                                                    onChange={(e) => setItemNuevoPorPlantilla((prev) => ({ ...prev, [p.id]: e.target.value }))}
+                                                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAgregarItem(p.id); } }}
+                                                    placeholder="Texto del ítem (ej. Revisar nivel de gas refrigerante)..."
+                                                />
+                                                <button className="btn-sm btn-primary" onClick={() => handleAgregarItem(p.id)} disabled={guardandoItem}>
+                                                    Agregar ítem
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
             )}
         </div>
     );

@@ -14,6 +14,7 @@ const NotificationBell = () => {
     const navigate = useNavigate();
     const [abierto, setAbierto] = useState(false);
     const [toast, setToast] = useState(null);
+    const [expandidaId, setExpandidaId] = useState(null);
     const vistosRef = useRef(new Set());
     const primeraCargaRef = useRef(true);
     const contenedorRef = useRef(null);
@@ -55,6 +56,15 @@ const NotificationBell = () => {
         navigate(destinoPorTipo(notificacion.tipo));
     };
 
+    // Antes un solo click marcaba leída Y navegaba, así que la campanita se
+    // cerraba antes de que le diera tiempo de leer qué decía. Ahora el click
+    // solo despliega el texto completo (y marca leída); navegar es una
+    // acción aparte.
+    const verNotificacion = (notificacion) => {
+        marcarLeida(notificacion);
+        setExpandidaId((id) => (id === notificacion.id ? null : notificacion.id));
+    };
+
     return (
         <>
             {toast && (
@@ -81,14 +91,20 @@ const NotificationBell = () => {
                                 .reverse()
                                 .slice(0, 20)
                                 .map((n) => (
-                                    <button
-                                        key={n.id}
-                                        type="button"
-                                        className={n.leido ? "notif-item" : "notif-item notif-item-nueva"}
-                                        onClick={() => irA(n)}
-                                    >
-                                        {n.titulo}
-                                    </button>
+                                    <div key={n.id} className={n.leido ? "notif-item" : "notif-item notif-item-nueva"}>
+                                        <button
+                                            type="button"
+                                            className="notif-item-texto"
+                                            onClick={() => verNotificacion(n)}
+                                        >
+                                            {n.titulo}
+                                        </button>
+                                        {expandidaId === n.id && (
+                                            <button type="button" className="notif-item-ir" onClick={() => irA(n)}>
+                                                Ver en Órdenes →
+                                            </button>
+                                        )}
+                                    </div>
                                 ))
                         )}
                     </div>

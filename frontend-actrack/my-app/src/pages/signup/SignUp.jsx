@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { useNavigate, Link } from "react-router-dom";
 import Icon from "../../components/Icon.jsx";
+import Logo from "../../components/Logo.jsx";
 import SelectorDireccion from "../../components/SelectorDireccion.jsx";
 
 const SignUp = () => {
@@ -45,7 +46,9 @@ const SignUp = () => {
       <div className="auth-brand">
         <div className="auth-brand-content">
           <div className="brand text-white text-lg">
-            <span className="brand-mark">AC</span>
+            <span className="brand-mark">
+              <Logo className="w-4 h-4" />
+            </span>
             AC Track
           </div>
           <h2 className="text-3xl font-semibold mt-8 mb-3">Crea tu cuenta en minutos</h2>

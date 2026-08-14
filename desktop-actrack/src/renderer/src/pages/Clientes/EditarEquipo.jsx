@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const EditarEquipo = () => {
@@ -8,6 +8,7 @@ const EditarEquipo = () => {
     const { apiFetch } = useAuth();
 
     const [marcas, setMarcas] = useState([]);
+    const [ordenes, setOrdenes] = useState([]);
     const [cliId, setCliId] = useState("");
     const [marId, setMarId] = useState("");
     const [modelo, setModelo] = useState("");
@@ -23,9 +24,10 @@ const EditarEquipo = () => {
     useEffect(() => {
         const cargarDatos = async () => {
             try {
-                const [resEquipo, resMarcas] = await Promise.all([
+                const [resEquipo, resMarcas, resOrdenes] = await Promise.all([
                     apiFetch(`/api/equipos/${id}`),
                     apiFetch("/api/marcas/"),
+                    apiFetch("/api/ordenes_servicio"),
                 ]);
 
                 if (!resEquipo.ok) throw new Error("No se pudo cargar el equipo");
@@ -38,6 +40,10 @@ const EditarEquipo = () => {
                 setImagenActual(data.imagen_url);
 
                 if (resMarcas.ok) setMarcas(await resMarcas.json());
+                if (resOrdenes.ok) {
+                    const todas = await resOrdenes.json();
+                    setOrdenes(todas.filter((o) => o.equ_id === Number(id)));
+                }
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -95,11 +101,16 @@ const EditarEquipo = () => {
     if (loading) return <p className="page">Cargando...</p>;
 
     return (
-        <div className="page page-narrow">
-            <h2>Editar Equipo</h2>
+        <div className="page">
+            <Link to={`/clientes/${cliId}`} className="page-back">← Volver al cliente</Link>
+            <div className="page-header">
+                <h2>Editar Equipo</h2>
+            </div>
 
             {error && <p className="error-text">{error}</p>}
 
+            <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: "1.5rem", alignItems: "start", width: "100%" }}>
+            <div className="panel">
             <form onSubmit={handleSubmit} className="form">
                 <label>
                     <span>Marca *</span>
@@ -141,6 +152,24 @@ const EditarEquipo = () => {
                     <button type="button" onClick={() => navigate(`/clientes/${cliId}`)}>Cancelar</button>
                 </div>
             </form>
+            </div>
+
+            <div className="panel">
+                <p style={{ fontWeight: 600, marginBottom: "0.9rem" }}>Historial de órdenes ({ordenes.length})</p>
+                {ordenes.length === 0 ? (
+                    <p className="muted-text">Este equipo no tiene órdenes registradas.</p>
+                ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                        {ordenes.map((o) => (
+                            <div key={o.id} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem" }}>
+                                <span>{o.folio}</span>
+                                <span className="muted-text">{o.estatus}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+            </div>
         </div>
     );
 };

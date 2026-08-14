@@ -22,11 +22,19 @@ export const selectCotizacionesByCliente = async (cli_id) => {
 // técnico ASIGNADO A LA ORDEN (ordenes_servicio.tec_id), no por
 // cotizaciones.tec_id -- ese es "quién la redactó", que puede quedar
 // desactualizado si la orden se reasigna a otro técnico después.
+//
+// A diferencia de selectCotizacionesByCliente, aquí SÍ se incluyen los
+// "borrador" -- el cliente nunca debe ver un borrador (no se le ha
+// enviado nada todavía), pero el técnico es quien lo está redactando: si
+// se excluyera, justo después de crear una cotización (que nace en
+// "borrador") la pantalla de cotizar en campo no la encontraría al
+// recargar y se quedaría pegada como si no hubiera pasado nada.
 export const selectCotizacionesByTecnico = async (tec_id) => {
     const result = await pool.query(
         `SELECT c.* FROM cotizaciones c
          JOIN ordenes_servicio o ON c.ord_id = o.id
-         WHERE o.tec_id = $1 AND c.estado != 'borrador'`,
+         WHERE o.tec_id = $1
+         ORDER BY c.id ASC`,
         [tec_id]
     );
     return result.rows;

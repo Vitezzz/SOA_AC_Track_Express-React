@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const NIVELES_PRIORIDAD = { 1: "baja", 2: "normal", 3: "alta", 4: "urgente" };
@@ -13,6 +13,7 @@ const CrearOrden = () => {
     const [categorias, setCategorias] = useState([]);
     const [prioridades, setPrioridades] = useState([]);
     const [tecnicos, setTecnicos] = useState([]);
+    const [especialidades, setEspecialidades] = useState([]);
     const [disponibilidad, setDisponibilidad] = useState({});
 
     const [cliId, setCliId] = useState("");
@@ -47,12 +48,13 @@ const CrearOrden = () => {
     useEffect(() => {
         const cargarCatalogos = async () => {
             try {
-                const [resClientes, resEquipos, resCategorias, resPrioridades, resTecnicos] = await Promise.all([
+                const [resClientes, resEquipos, resCategorias, resPrioridades, resTecnicos, resEsp] = await Promise.all([
                     apiFetch("/api/clientes/"),
                     apiFetch("/api/equipos/"),
                     apiFetch("/api/categoriaServicio"),
                     apiFetch("/api/prioridad"),
                     apiFetch("/api/tecnicos/todos"),
+                    apiFetch("/api/especialidad"),
                 ]);
 
                 if (resClientes.ok) setClientes(await resClientes.json());
@@ -60,6 +62,7 @@ const CrearOrden = () => {
                 if (resCategorias.ok) setCategorias(await resCategorias.json());
                 if (resPrioridades.ok) setPrioridades(await resPrioridades.json());
                 if (resTecnicos.status !== 404 && resTecnicos.ok) setTecnicos(await resTecnicos.json());
+                if (resEsp.ok) setEspecialidades(await resEsp.json());
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -121,12 +124,23 @@ const CrearOrden = () => {
 
     if (loading) return <p className="page">Cargando...</p>;
 
+    const especialidadesPorId = new Map(especialidades.map((e) => [e.id, e]));
+    const clienteElegido = clientes.find((c) => String(c.id) === cliId);
+    const equipoElegido = equiposDelCliente.find((eq) => String(eq.id) === equId);
+    const categoriaElegida = categorias.find((c) => String(c.id) === catId);
+    const tecnicoElegido = tecnicos.find((t) => String(t.id) === tecId);
+
     return (
-        <div className="page page-narrow">
-            <h2>Nueva Orden de Servicio</h2>
+        <div className="page">
+            <Link to="/ordenes" className="page-back">← Volver a Órdenes</Link>
+            <div className="page-header">
+                <h2>Nueva Orden de Servicio</h2>
+            </div>
 
             {error && <p className="error-text">{error}</p>}
 
+            <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: "1.5rem", alignItems: "start", width: "100%" }}>
+            <div className="panel">
             <form onSubmit={handleSubmit} className="form">
                 <label>
                     <span>Cliente *</span>
@@ -185,7 +199,9 @@ const CrearOrden = () => {
                         <option value="">Sin asignar</option>
                         {tecnicos.map((tec) => (
                             <option key={tec.id} value={tec.id} disabled={disponibilidad[tec.id]}>
-                                Técnico #{tec.usu_id} {disponibilidad[tec.id] ? "— Ocupado en ese horario" : ""}
+                                {tec.nombre || `Técnico #${tec.usu_id}`}
+                                {especialidadesPorId.get(tec.esp_id) ? ` — ${especialidadesPorId.get(tec.esp_id).nombre}` : ""}
+                                {disponibilidad[tec.id] ? " — Ocupado en ese horario" : ""}
                             </option>
                         ))}
                     </select>
@@ -198,6 +214,43 @@ const CrearOrden = () => {
                     <button type="button" onClick={() => navigate("/ordenes")}>Cancelar</button>
                 </div>
             </form>
+            </div>
+
+            <div className="panel">
+                <p style={{ fontWeight: 600, marginBottom: "0.9rem" }}>Resumen</p>
+                {!clienteElegido ? (
+                    <p className="muted-text">Elige un cliente para ver aquí el resumen de la orden.</p>
+                ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", fontSize: "0.875rem" }}>
+                        <p style={{ margin: 0 }}>
+                            <span className="muted-text">Cliente: </span>
+                            <strong>{clienteElegido.nombre}</strong>
+                            {clienteElegido.telefono && <span className="muted-text"> · {clienteElegido.telefono}</span>}
+                        </p>
+                        {clienteElegido.direccion && (
+                            <p style={{ margin: 0 }}><span className="muted-text">Dirección: </span>{clienteElegido.direccion}</p>
+                        )}
+                        <p style={{ margin: 0 }}>
+                            <span className="muted-text">Equipo: </span>
+                            {equipoElegido ? `${equipoElegido.tipo} — ${equipoElegido.modelo}` : "Sin equipo asociado"}
+                        </p>
+                        <p style={{ margin: 0 }}>
+                            <span className="muted-text">Servicio: </span>
+                            {categoriaElegida?.nombre || "Sin elegir"}
+                        </p>
+                        <p style={{ margin: 0 }}>
+                            <span className="muted-text">Cuándo: </span>
+                            {fechaProgramada ? new Date(fechaProgramada).toLocaleString("es-MX") : "Sin fecha"}
+                            {" · "}{duracionEstimada || 2}h
+                        </p>
+                        <p style={{ margin: 0 }}>
+                            <span className="muted-text">Técnico: </span>
+                            {tecnicoElegido ? tecnicoElegido.nombre : "Sin asignar todavía"}
+                        </p>
+                    </div>
+                )}
+            </div>
+            </div>
         </div>
     );
 };

@@ -117,7 +117,7 @@ const OrdenDetalle = () => {
     const historialEstados = bitacora.map((f) => f.estado_nuevo);
 
     return (
-        <div className="page-container" style={{ maxWidth: "600px" }}>
+        <div className="page-container-wide">
             <Link to="/ordenes">← Volver a mis órdenes</Link>
 
             <div className="panel" style={{ marginTop: "16px" }}>
@@ -197,40 +197,45 @@ const OrdenDetalle = () => {
                     <p><span className="text-gray-400">Prioridad:</span> <span className="text-gray-700 capitalize">{orden.prioridad}</span></p>
                 </div>
 
-                {equipo && (
-                    <div className="form-section">
-                        <p className="form-section-title"><Icon name="wrench" /> Equipo</p>
-                        <div className="flex items-center gap-3">
-                            {equipo.imagen_url && (
-                                <img src={equipo.imagen_url} alt={equipo.modelo} className="w-16 h-16 object-cover rounded-lg" />
-                            )}
-                            <p className="text-sm text-gray-600">{equipo.tipo} — {equipo.modelo} ({equipo.numero_serie})</p>
+                {/* En dos columnas a partir de aquí -- antes cada bloque iba
+                    apilado a todo lo ancho de una columna de 600px forzada,
+                    dejando vacío el resto de pantallas grandes. */}
+                <div className="grid grid-cols-2 gap-4">
+                    {equipo && (
+                        <div className="form-section">
+                            <p className="form-section-title"><Icon name="wrench" /> Equipo</p>
+                            <div className="flex items-center gap-3">
+                                {equipo.imagen_url && (
+                                    <img src={equipo.imagen_url} alt={equipo.modelo} className="w-16 h-16 object-cover rounded-lg" />
+                                )}
+                                <p className="text-sm text-gray-600">{equipo.tipo} — {equipo.modelo} ({equipo.numero_serie})</p>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                <div className="form-section">
-                    <p className="form-section-title"><Icon name="note" /> Descripción de la falla</p>
-                    <p className="text-sm text-gray-600 whitespace-pre-line">{orden.descripcion}</p>
+                    <div className="form-section">
+                        <p className="form-section-title"><Icon name="note" /> Descripción de la falla</p>
+                        <p className="text-sm text-gray-600 whitespace-pre-line">{orden.descripcion}</p>
+                    </div>
+
+                    {cotizacion && (
+                        <div className="form-section">
+                            <p className="form-section-title"><Icon name="tag" /> Cotización</p>
+                            <p className="text-sm text-gray-600">
+                                {cotizacion.folio} — {formatoMoneda(cotizacion.total)} — <span className="capitalize">{cotizacion.estado}</span>
+                            </p>
+                        </div>
+                    )}
+
+                    {pago && (
+                        <div className="form-section">
+                            <p className="form-section-title"><Icon name="card" /> Pago</p>
+                            <p className="text-sm text-gray-600">
+                                {formatoMoneda(pago.monto)} — <span className="capitalize">{pago.metodo}</span> — <span className="capitalize">{pago.estado}</span>
+                            </p>
+                        </div>
+                    )}
                 </div>
-
-                {cotizacion && (
-                    <div className="form-section">
-                        <p className="form-section-title"><Icon name="tag" /> Cotización</p>
-                        <p className="text-sm text-gray-600">
-                            {cotizacion.folio} — {formatoMoneda(cotizacion.total)} — <span className="capitalize">{cotizacion.estado}</span>
-                        </p>
-                    </div>
-                )}
-
-                {pago && (
-                    <div className="form-section">
-                        <p className="form-section-title"><Icon name="card" /> Pago</p>
-                        <p className="text-sm text-gray-600">
-                            {formatoMoneda(pago.monto)} — <span className="capitalize">{pago.metodo}</span> — <span className="capitalize">{pago.estado}</span>
-                        </p>
-                    </div>
-                )}
 
                 {bitacora.length > 0 && (
                     <div className="form-section">

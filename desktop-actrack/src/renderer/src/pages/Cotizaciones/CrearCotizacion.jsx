@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const CrearCotizacion = () => {
@@ -112,11 +112,16 @@ const CrearCotizacion = () => {
     if (loading) return <p className="page">Cargando...</p>;
 
     return (
-        <div className="page page-narrow">
-            <h2>Nueva Cotización</h2>
+        <div className="page">
+            <Link to="/cotizaciones" className="page-back">← Volver a Cotizaciones</Link>
+            <div className="page-header">
+                <h2>Nueva Cotización</h2>
+            </div>
 
             {error && <p className="error-text">{error}</p>}
 
+            <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: "1.5rem", alignItems: "start", width: "100%" }}>
+            <div className="panel">
             <form onSubmit={handleSubmit} className="form">
                 <label>
                     <span>Orden de servicio *</span>
@@ -132,39 +137,23 @@ const CrearCotizacion = () => {
                         })}
                     </select>
                     {ordenesDisponibles.length === 0 && (
-                        <p style={{ color: "#6b7280", fontSize: "13px" }}>
+                        <span className="hint-text">
                             No hay órdenes disponibles para cotizar (todas ya tienen una cotización activa).
-                        </p>
+                        </span>
                     )}
                 </label>
-
-                {ordenSeleccionada && (() => {
-                    const cliente = clientes.find((c) => c.id === ordenSeleccionada.cli_id);
-                    const equipo = equipos.find((e) => e.id === ordenSeleccionada.equ_id);
-                    const categoria = categorias.find((c) => c.id === ordenSeleccionada.cat_id);
-                    return (
-                        <div className="panel" style={{ marginBottom: "16px", fontSize: "14px", lineHeight: "1.6" }}>
-                            <p><strong>Cliente:</strong> {cliente?.nombre || `#${ordenSeleccionada.cli_id}`}
-                                {cliente?.telefono && ` · ${cliente.telefono}`}
-                            </p>
-                            <p><strong>Equipo:</strong> {equipo ? `${equipo.tipo || "—"}${equipo.modelo ? ` ${equipo.modelo}` : ""}` : "Sin equipo asociado"}</p>
-                            <p><strong>Servicio solicitado:</strong> {categoria?.nombre || `#${ordenSeleccionada.cat_id}`}</p>
-                            {ordenSeleccionada.descripcion && <p><strong>Descripción:</strong> {ordenSeleccionada.descripcion}</p>}
-                        </div>
-                    );
-                })()}
 
                 <label>
                     <span>Técnico responsable *</span>
                     {user.rol_id === 4 ? (
                         <p style={{ padding: "8px", background: "#f3f4f6", borderRadius: "6px" }}>
-                            Tú mismo (Técnico #{user.id})
+                            Tú mismo ({user.nombre || `Técnico #${user.id}`})
                         </p>
                     ) : (
                         <select value={tecId} onChange={(e) => setTecId(e.target.value)}>
                             <option value="">Selecciona un técnico</option>
                             {tecnicos.map((tec) => (
-                                <option key={tec.id} value={tec.id}>Técnico #{tec.usu_id}</option>
+                                <option key={tec.id} value={tec.id}>{tec.nombre || `Técnico #${tec.usu_id}`}</option>
                             ))}
                         </select>
                     )}
@@ -182,6 +171,29 @@ const CrearCotizacion = () => {
                     <button type="button" onClick={() => navigate("/cotizaciones")}>Cancelar</button>
                 </div>
             </form>
+            </div>
+
+            <div className="panel">
+                <p style={{ fontWeight: 600, marginBottom: "0.9rem" }}>Detalle de la orden</p>
+                {!ordenSeleccionada ? (
+                    <p className="muted-text">Elige una orden para ver aquí el cliente, equipo y falla reportada.</p>
+                ) : (() => {
+                    const cliente = clientes.find((c) => c.id === ordenSeleccionada.cli_id);
+                    const equipo = equipos.find((e) => e.id === ordenSeleccionada.equ_id);
+                    const categoria = categorias.find((c) => c.id === ordenSeleccionada.cat_id);
+                    return (
+                        <div style={{ fontSize: "14px", lineHeight: "1.6" }}>
+                            <p><strong>Cliente:</strong> {cliente?.nombre || `#${ordenSeleccionada.cli_id}`}
+                                {cliente?.telefono && ` · ${cliente.telefono}`}
+                            </p>
+                            <p><strong>Equipo:</strong> {equipo ? `${equipo.tipo || "—"}${equipo.modelo ? ` ${equipo.modelo}` : ""}` : "Sin equipo asociado"}</p>
+                            <p><strong>Servicio solicitado:</strong> {categoria?.nombre || `#${ordenSeleccionada.cat_id}`}</p>
+                            {ordenSeleccionada.descripcion && <p style={{ marginBottom: 0 }}><strong>Descripción:</strong> {ordenSeleccionada.descripcion}</p>}
+                        </div>
+                    );
+                })()}
+            </div>
+            </div>
         </div>
     );
 };

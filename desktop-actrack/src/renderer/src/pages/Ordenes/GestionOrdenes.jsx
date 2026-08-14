@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import Icon from "../../components/Icon";
 
@@ -16,12 +16,31 @@ const ESTILOS_ESTADO = {
     cancelada: "badge-danger",
 };
 
+// Antes no había forma de saber, desde esta lista, si una orden ya tiene
+// cotización y en qué estado -- había que ir a la pantalla de Cotizaciones
+// aparte y cruzar por folio a mano.
+const ESTILOS_COTIZACION = {
+    borrador: "badge-neutral",
+    enviada: "badge-info",
+    aprobada: "badge-success",
+    rechazada: "badge-danger",
+};
+
+const ETIQUETAS_COTIZACION = {
+    borrador: "Cotización en borrador",
+    enviada: "Cotización enviada",
+    aprobada: "Cotización aprobada",
+    rechazada: "Cotización rechazada",
+};
+
 // "Completadas" agrupa completada + pagada (para el admin, ambas ya
-// significan que el trabajo en campo terminó). "Sin asignar" es su propia
-// pestaña porque es justo lo que necesita atención inmediata: no importa
-// el estatus, si no tiene técnico todavía nadie va a ir a atenderla.
+// significan que el trabajo en campo terminó). "Sin asignar" y "Atrasadas"
+// son pestañas propias porque son justo lo que necesita atención inmediata
+// -- no importa el estatus exacto, esas son las que alguien tiene que
+// resolver YA.
 const FILTROS = [
     { key: "todas", label: "Todas" },
+    { key: "atrasadas", label: "Atrasadas" },
     { key: "solicitudes", label: "Solicitudes de cliente" },
     { key: "sin_asignar", label: "Sin asignar" },
     { key: "pendiente", label: "Pendientes" },
@@ -29,8 +48,23 @@ const FILTROS = [
     { key: "completada", label: "Completadas" },
 ];
 
+// Estatus que ya "terminaron" en campo -- una vez aquí, "atrasada" deja de
+// tener sentido (ya no hay nada pendiente de hacer con esa orden).
+const ESTATUS_CERRADOS = ["completada", "pagada", "cancelada"];
+
+// "Pendiente" solo dice que nadie la ha empezado -- eso es normal para
+// una orden agendada para la próxima semana Y para una que se quedó
+// olvidada desde hace 10 días, y antes se veían exactamente igual. Esto
+// separa las dos: si ya pasó su fecha programada y sigue sin cerrarse,
+// es una orden que alguien tiene que revisar, no una más de la fila.
+const esAtrasada = (orden) =>
+    !ESTATUS_CERRADOS.includes(orden.estatus) &&
+    !!orden.fecha_programada &&
+    new Date(orden.fecha_programada) < new Date();
+
 const coincideFiltro = (filtro, orden) => {
     if (filtro === "todas") return true;
+    if (filtro === "atrasadas") return orden.atrasada;
     if (filtro === "solicitudes") return orden.solicitud_estado === "pendiente";
     if (filtro === "sin_asignar") return !orden.tec_id && orden.estatus !== "cancelada" && orden.estatus !== "completada" && orden.estatus !== "pagada";
     if (filtro === "completada") return orden.estatus === "completada" || orden.estatus === "pagada";
@@ -38,15 +72,21 @@ const coincideFiltro = (filtro, orden) => {
 };
 
 const GestionOrdenes = () => {
+    // Home manda aquí con un filtro ya elegido (ej. "12 atrasadas" -> cae
+    // directo en la pestaña Atrasadas) en vez de aterrizar en "Todas" y
+    // que el admin tenga que volver a dar clic.
+    const location = useLocation();
+
     const [ordenes, setOrdenes] = useState([]);
     const [clientes, setClientes] = useState([]);
     const [tecnicos, setTecnicos] = useState([]);
+    const [cotizaciones, setCotizaciones] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refrescando, setRefrescando] = useState(false);
     const [error, setError] = useState("");
 
     const [busqueda, setBusqueda] = useState("");
-    const [filtro, setFiltro] = useState("todas");
+    const [filtro, setFiltro] = useState(location.state?.filtro || "todas");
 
     const { apiFetch, user } = useAuth();
 
@@ -54,10 +94,11 @@ const GestionOrdenes = () => {
 
     const cargarDatos = useCallback(async () => {
         try {
-            const [resOrdenes, resClientes, resTecnicos] = await Promise.all([
+            const [resOrdenes, resClientes, resTecnicos, resCotizaciones] = await Promise.all([
                 apiFetch("/api/ordenes_servicio"),
                 apiFetch("/api/clientes/"),
                 apiFetch("/api/tecnicos/todos"),
+                apiFetch("/api/cotizaciones"),
             ]);
 
             if (!resOrdenes.ok) throw new Error("No se pudieron cargar las órdenes");
@@ -70,6 +111,12 @@ const GestionOrdenes = () => {
             }
 
             if (resTecnicos.status !== 404 && resTecnicos.ok) setTecnicos(await resTecnicos.json());
+
+            if (resCotizaciones.status === 404) {
+                setCotizaciones([]);
+            } else if (resCotizaciones.ok) {
+                setCotizaciones(await resCotizaciones.json());
+            }
         } catch (err) {
             setError(err.message);
         }
@@ -98,6 +145,17 @@ const GestionOrdenes = () => {
 
     const tecnicosPorId = new Map(tecnicos.map((t) => [t.id, t]));
 
+    // Misma orden puede tener varias cotizaciones a lo largo del tiempo
+    // (p.ej. una rechazada y luego otra nueva) -- "activa" es la más
+    // reciente, y si esa está rechazada, es la más reciente de todas
+    // (mismo criterio que CrearCotizacion.jsx: una rechazada no bloquea
+    // volver a cotizar, así que sigue siendo la info relevante a mostrar).
+    const cotizacionPorOrden = new Map();
+    for (const cot of cotizaciones) {
+        const actual = cotizacionPorOrden.get(cot.ord_id);
+        if (!actual || cot.id > actual.id) cotizacionPorOrden.set(cot.ord_id, cot);
+    }
+
     const ordenesConNombre = ordenes.map((orden) => {
         const cliente = clientes.find((c) => c.id === orden.cli_id);
         return {
@@ -106,6 +164,8 @@ const GestionOrdenes = () => {
             nombreTecnico: orden.tec_id
                 ? tecnicosPorId.get(orden.tec_id)?.nombre || `Técnico #${orden.tec_id}`
                 : null,
+            cotizacion: cotizacionPorOrden.get(orden.id) || null,
+            atrasada: esAtrasada(orden),
         };
     });
 
@@ -117,13 +177,21 @@ const GestionOrdenes = () => {
         return coincideTexto && coincideFiltro(filtro, orden);
     });
 
+    // Atrasadas siempre arriba (son lo más urgente, sin importar qué
+    // filtro se esté viendo). Dentro de lo que sigue abierto, la más
+    // próxima primero -- es la fila de trabajo del día, no un historial.
+    // Lo ya cerrado (completada/pagada/cancelada) sí tiene más sentido
+    // reciente-primero, como cualquier historial.
     const ordenesOrdenadas = [...ordenesFiltradas].sort((a, b) => {
+        if (a.atrasada !== b.atrasada) return a.atrasada ? -1 : 1;
         if (!a.fecha_programada) return 1;
         if (!b.fecha_programada) return -1;
-        return new Date(b.fecha_programada) - new Date(a.fecha_programada);
+        const diferencia = new Date(a.fecha_programada) - new Date(b.fecha_programada);
+        return ESTATUS_CERRADOS.includes(a.estatus) ? -diferencia : diferencia;
     });
 
     const totalSolicitudes = ordenesConNombre.filter((o) => o.solicitud_estado === "pendiente").length;
+    const totalAtrasadas = ordenesConNombre.filter((o) => o.atrasada).length;
 
     return (
         <div className="page">
@@ -162,6 +230,7 @@ const GestionOrdenes = () => {
                     >
                         {f.label}
                         {f.key === "solicitudes" && totalSolicitudes > 0 && ` (${totalSolicitudes})`}
+                        {f.key === "atrasadas" && totalAtrasadas > 0 && ` (${totalAtrasadas})`}
                     </button>
                 ))}
             </div>
@@ -188,7 +257,7 @@ const GestionOrdenes = () => {
                         {ordenesOrdenadas.map((orden) => {
                             const clase = ESTILOS_ESTADO[orden.estatus] || "badge-neutral";
                             return (
-                                <tr key={orden.id}>
+                                <tr key={orden.id} className={orden.atrasada ? "row-alert" : ""}>
                                     <td>{orden.folio || "—"}</td>
                                     <td>{orden.nombreCliente}</td>
                                     <td>
@@ -197,17 +266,28 @@ const GestionOrdenes = () => {
                                         )}
                                     </td>
                                     <td>
-                                        <span className={`badge ${clase}`}>{orden.estatus}</span>
-                                        {orden.solicitud_estado === "pendiente" && (
-                                            <span className="badge badge-warning" style={{ marginLeft: "6px" }}>
-                                                Pidió {orden.solicitud_tipo === "cancelar" ? "cancelar" : "reagendar"}
-                                            </span>
-                                        )}
+                                        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                                            {orden.atrasada && <span className="badge badge-danger">Atrasada</span>}
+                                            <span className={`badge ${clase}`}>{orden.estatus}</span>
+                                            {orden.solicitud_estado === "pendiente" && (
+                                                <span className="badge badge-warning">
+                                                    Pidió {orden.solicitud_tipo === "cancelar" ? "cancelar" : "reagendar"}
+                                                </span>
+                                            )}
+                                            {orden.cotizacion && (
+                                                <span className={`badge ${ESTILOS_COTIZACION[orden.cotizacion.estado] || "badge-neutral"}`}>
+                                                    {ETIQUETAS_COTIZACION[orden.cotizacion.estado] || orden.cotizacion.estado}
+                                                </span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td>
                                         {orden.fecha_programada
                                             ? new Date(orden.fecha_programada).toLocaleDateString("es-MX")
                                             : "Sin fecha"}
+                                        {orden.duracion_estimada_horas != null && (
+                                            <span className="muted-text"> · {Number(orden.duracion_estimada_horas)}h</span>
+                                        )}
                                     </td>
                                     <td>
                                         <Link to={`/ordenes/${orden.id}/editar`}>

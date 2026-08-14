@@ -1,4 +1,5 @@
 import pool from '../config/database.js'
+import { aFechaSinZona } from '../utils/fechaLocal.js'
 
 export const selectPagos = async () => {
     const result = await pool.query(`SELECT * from pagos`);
@@ -26,10 +27,15 @@ export const selectPagosByTecnico = async (tec_id) => {
     return result.rows;
 }
 
+// created_at NO se deja al DEFAULT now() de Postgres -- la sesión de la
+// base corre en UTC, pero esa columna es TIMESTAMP sin zona y se lee de
+// vuelta como hora LOCAL (ver fechaLocal.js), así que un now() de la base
+// terminaba mostrándose 6h adelantado (UTC-6). Se manda ya normalizada.
 export const insertPagos = async ({ cot_id, ord_id, cli_id, metodo, monto, estado }) => {
-    const result = await pool.query(`INSERT INTO pagos (cot_id, ord_id, cli_id, metodo, monto, estado)
-        VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-        [cot_id, ord_id, cli_id, metodo, monto, estado])
+    const creado = aFechaSinZona(new Date());
+    const result = await pool.query(`INSERT INTO pagos (cot_id, ord_id, cli_id, metodo, monto, estado, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+        [cot_id, ord_id, cli_id, metodo, monto, estado, creado])
 
     return result.rows[0];
 }

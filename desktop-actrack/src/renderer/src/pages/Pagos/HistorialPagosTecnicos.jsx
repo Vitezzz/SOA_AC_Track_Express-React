@@ -55,7 +55,7 @@ const HistorialPagosTecnicos = () => {
             return {
                 ...p,
                 folioOrden: orden?.folio || `Orden #${p.ord_id}`,
-                nombreTecnico: tecnico ? `Técnico #${tecnico.usu_id}` : "Sin técnico asignado",
+                nombreTecnico: tecnico ? (tecnico.nombre || `Técnico #${tecnico.usu_id}`) : "Sin técnico asignado",
                 tecId: tecnico?.id ?? null,
                 mesLabel: fecha ? `${NOMBRES_MES[fecha.getMonth()]} ${fecha.getFullYear()}` : "Sin fecha",
             };

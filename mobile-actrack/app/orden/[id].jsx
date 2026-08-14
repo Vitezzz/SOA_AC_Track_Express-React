@@ -4,6 +4,7 @@ import { View, Text, Pressable, ScrollView, StyleSheet, ActivityIndicator } from
 import { useOrdenDetalle } from '../../src/hooks/useOrdenDetalle';
 import InfoTab from '../../src/components/orden/InfoTab';
 import ChecklistTab from '../../src/components/orden/ChecklistTab';
+import CotizarTab from '../../src/components/orden/CotizarTab';
 import InventarioTab from '../../src/components/orden/InventarioTab';
 import PagoTab from '../../src/components/orden/PagoTab';
 import CierreTab from '../../src/components/orden/CierreTab';
@@ -11,6 +12,7 @@ import CierreTab from '../../src/components/orden/CierreTab';
 const TABS = [
   { key: 'info', label: 'Info' },
   { key: 'checklist', label: 'Checklist' },
+  { key: 'cotizar', label: 'Cotizar' },
   { key: 'inventario', label: 'Inv.' },
   { key: 'pago', label: 'Pago' },
   { key: 'cierre', label: 'Cierre' },
@@ -56,8 +58,9 @@ export default function DetalleOrden() {
       </View>
 
       <ScrollView style={styles.contenido} contentContainerStyle={{ paddingBottom: 40 }}>
-        {tab === 'info' && <InfoTab orden={orden} cliente={cliente} equipo={equipo} />}
+        {tab === 'info' && <InfoTab orden={orden} cliente={cliente} equipo={equipo} recargar={recargar} />}
         {tab === 'checklist' && <ChecklistTab orden={orden} />}
+        {tab === 'cotizar' && <CotizarTab orden={orden} />}
         {tab === 'inventario' && <InventarioTab orden={orden} />}
         {tab === 'pago' && <PagoTab orden={orden} />}
         {tab === 'cierre' && <CierreTab orden={orden} setOrden={setOrden} recargar={recargar} cliente={cliente} />}

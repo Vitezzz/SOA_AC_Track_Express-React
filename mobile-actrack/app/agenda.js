@@ -64,11 +64,20 @@ export default function Agenda() {
 
   if (!user) return <Redirect href="/login" />;
 
-  // Las paradas se atienden en orden -- la de posición N+1 se habilita
-  // hasta que se cierre la N. Solo aplica viendo HOY: no tiene caso
-  // "bloquear" una parada de un día que ni siquiera ha empezado.
+  // Antes esto solo bloqueaba viendo HOY -- pero el selector de día deja
+  // ver CUALQUIER día, y en un día futuro no había ningún candado: se
+  // podía entrar a una orden de mañana (o de la semana que viene) y
+  // moverle cosas (checklist, cotizar) sin que ni siquiera fuera el día,
+  // muchos menos su turno. Dos reglas, no una:
+  // 1) Un día futuro (todavía no llega) se bloquea completo, sin importar
+  //    la posición -- no tiene caso "adelantarte" a un día que no ha
+  //    empezado.
+  // 2) Dentro de un día (hoy o uno atrasado que se sigue viendo), las
+  //    paradas se atienden en orden -- la N+1 se habilita hasta que se
+  //    cierre la N.
+  const fechaEsFutura = fecha > aFechaLocal(new Date());
   const posicionesAbiertas = paradas.filter((p) => !ordenEstaCerrada(p.orden.estatus)).map((p) => p.posicion);
-  const primeraAbiertaPos = hoy && posicionesAbiertas.length ? Math.min(...posicionesAbiertas) : null;
+  const primeraAbiertaPos = posicionesAbiertas.length ? Math.min(...posicionesAbiertas) : null;
 
   return (
     <View style={styles.container}>
@@ -134,12 +143,17 @@ export default function Agenda() {
           contentContainerStyle={paradas.length === 0 ? styles.listaVacia : undefined}
           renderItem={({ item }) => {
             const cerrada = ordenEstaCerrada(item.orden.estatus);
-            const bloqueada = !cerrada && primeraAbiertaPos != null && item.posicion > primeraAbiertaPos;
+            const bloqueadaPorSecuencia = !cerrada && primeraAbiertaPos != null && item.posicion > primeraAbiertaPos;
+            const bloqueada = !cerrada && (fechaEsFutura || bloqueadaPorSecuencia);
             return (
               <Pressable
                 style={[styles.parada, bloqueada && styles.paradaBloqueada]}
                 onPress={() => {
-                  if (bloqueada) {
+                  if (fechaEsFutura) {
+                    Alert.alert('Todavía no es ese día', 'Esta parada se habilita hasta que llegue su fecha.');
+                    return;
+                  }
+                  if (bloqueadaPorSecuencia) {
                     Alert.alert('Todavía no', 'Termina la parada anterior antes de entrar a esta.');
                     return;
                   }
@@ -156,7 +170,9 @@ export default function Agenda() {
                 {bloqueada && (
                   <View style={styles.avisoBloqueadaRow}>
                     <Icon name="lock" size={11} color="#9ca3af" />
-                    <Text style={styles.avisoBloqueada}>Se habilita al terminar la anterior</Text>
+                    <Text style={styles.avisoBloqueada}>
+                      {fechaEsFutura ? 'Se habilita hasta ese día' : 'Se habilita al terminar la anterior'}
+                    </Text>
                   </View>
                 )}
               </Pressable>

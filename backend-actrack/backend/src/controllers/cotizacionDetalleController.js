@@ -7,8 +7,31 @@ import {
 import { selectCotizacionesById, recalcularTotalCotizacion } from "../models/cotizaciones.js";
 import { selectInventarioId } from "../models/inventario.js";
 import { selectInventarioVehiculoPorTecnicoYArticulo, descontarInventarioVehiculo } from "../models/inventario_vehiculo.js";
+import { selectTecnicoById } from "../models/tecnicos.js";
 import { puedeVerTodo } from "../utils/roleUtils.js";
 import { getClienteIdByUserId, getTecnicoIdByUserId } from '../utils/lookupUtils.js'
+
+// IDs de tipos_movimiento_inventario -- "Salida" cuando una pieza se usa
+// en una cotización, "Entrada" cuando se quita/edita un renglón y la
+// pieza vuelve al stock del técnico.
+const TIPO_SALIDA_ID = 3;
+const TIPO_ENTRADA_ID = 2;
+
+// Antes, usar una pieza en una cotización descontaba el stock del vehículo
+// pero no dejaba ningún rastro en movimientos_inventario -- esa tabla es
+// el historial que alimenta reportes de "qué se usó y cuándo", y se
+// quedaba ciega a la mayoría del consumo real (todo lo que se cotiza y
+// cobra, que ahora es el flujo principal desde que el técnico cotiza en
+// campo). Se registra aquí mismo, dentro de la misma transacción que
+// mueve el stock, para que ambos números siempre cuenten la misma historia.
+const registrarMovimientoPorCotizacion = async (client, { tec_id, inv_id, ord_id, cantidad, tip_id }) => {
+    const tecnico = await selectTecnicoById(tec_id);
+    if (!tecnico) return;
+    await client.query(
+        `INSERT INTO movimientos_inventario (inv_id, ord_id, usu_id, tip_id, cantidad) VALUES ($1, $2, $3, $4, $5)`,
+        [inv_id, ord_id, tecnico.usu_id, tip_id, cantidad]
+    );
+};
 
 const getCotizacionDetalle = async (req, res) => {
     try {
@@ -125,6 +148,10 @@ const postCotizacionDetalleById = async (req, res) => {
 
             if (!es_mano_obra) {
                 await descontarInventarioVehiculo(client, cotizacionExiste.tec_id, inv_id, cantidad);
+                await registrarMovimientoPorCotizacion(client, {
+                    tec_id: cotizacionExiste.tec_id, inv_id, ord_id: cotizacionExiste.ord_id,
+                    cantidad, tip_id: TIPO_SALIDA_ID,
+                });
             }
 
             await recalcularTotalCotizacion(client, cot_id);
@@ -190,6 +217,10 @@ const putCotizacionDetalleById = async (req, res) => {
                     `UPDATE inventario_vehiculo SET cantidad = cantidad + $1 WHERE tec_id = $2 AND inv_id = $3`,
                     [detalleAnterior.cantidad, cotizacionExiste.tec_id, detalleAnterior.inv_id]
                 );
+                await registrarMovimientoPorCotizacion(client, {
+                    tec_id: cotizacionExiste.tec_id, inv_id: detalleAnterior.inv_id, ord_id: cotizacionExiste.ord_id,
+                    cantidad: detalleAnterior.cantidad, tip_id: TIPO_ENTRADA_ID,
+                });
             }
 
             if (!es_mano_obra) {
@@ -208,6 +239,10 @@ const putCotizacionDetalleById = async (req, res) => {
                     `UPDATE inventario_vehiculo SET cantidad = cantidad - $1 WHERE tec_id = $2 AND inv_id = $3`,
                     [cantidad, cotizacionExiste.tec_id, inv_id]
                 );
+                await registrarMovimientoPorCotizacion(client, {
+                    tec_id: cotizacionExiste.tec_id, inv_id, ord_id: cotizacionExiste.ord_id,
+                    cantidad, tip_id: TIPO_SALIDA_ID,
+                });
             }
 
             const subtotal = cantidad * precio_unitario;
@@ -271,6 +306,10 @@ const dltCotizacionDetalle = async (req, res) => {
                     `UPDATE inventario_vehiculo SET cantidad = cantidad + $1 WHERE tec_id = $2 AND inv_id = $3`,
                     [detalleExistente.cantidad, cotizacion.tec_id, detalleExistente.inv_id]
                 );
+                await registrarMovimientoPorCotizacion(client, {
+                    tec_id: cotizacion.tec_id, inv_id: detalleExistente.inv_id, ord_id: cotizacion.ord_id,
+                    cantidad: detalleExistente.cantidad, tip_id: TIPO_ENTRADA_ID,
+                });
             }
 
             await recalcularTotalCotizacion(client, detalleExistente.cot_id);

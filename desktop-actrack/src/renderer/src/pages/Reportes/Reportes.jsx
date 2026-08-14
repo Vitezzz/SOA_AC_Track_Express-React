@@ -40,8 +40,18 @@ const Reportes = () => {
     const [tiposMovimientoTodos, setTiposMovimientoTodos] = useState([]);
     const [especialidadesTodas, setEspecialidadesTodas] = useState([]);
 
+    // Para "cuánto tardó el servicio" (bitácora_estados.created_at, desde
+    // que el técnico llegó), categoría/prioridad de la orden, y cuánto se
+    // cotizó vs. cuánto se cobró de verdad.
+    const [bitacoraTodos, setBitacoraTodos] = useState([]);
+    const [categoriasTodas, setCategoriasTodas] = useState([]);
+    const [cotizacionesTodas, setCotizacionesTodas] = useState([]);
+    const [categoriasInventarioTodas, setCategoriasInventarioTodas] = useState([]);
+    const [clientesTodos, setClientesTodos] = useState([]);
+
     const [reporteOrden, setReporteOrden] = useState(null);
     const [reporteTecnico, setReporteTecnico] = useState(null);
+    const [reporteInventario, setReporteInventario] = useState(false);
     const [cargandoReporteOrdenId, setCargandoReporteOrdenId] = useState(null);
 
     const cargarReportes = async () => {
@@ -70,6 +80,7 @@ const Reportes = () => {
                 const [
                     resOrdenes, resClientes, resTecnicos, resPagos, resItems,
                     resMovimientos, resInventario, resTiposMovimiento, resEspecialidades,
+                    resBitacora, resCategorias, resCotizaciones, resCategoriasInv,
                 ] = await Promise.all([
                     apiFetch("/api/ordenes_servicio"),
                     apiFetch("/api/clientes/"),
@@ -80,6 +91,10 @@ const Reportes = () => {
                     apiFetch("/api/inventario"),
                     apiFetch("/api/tipo_movimiento_inventario"),
                     apiFetch("/api/especialidad"),
+                    apiFetch("/api/bitacora_estados"),
+                    apiFetch("/api/categoriaServicio"),
+                    apiFetch("/api/cotizaciones"),
+                    apiFetch("/api/categoriaInventario"),
                 ]);
 
                 const ordenes = resOrdenes.ok ? await resOrdenes.json() : [];
@@ -91,6 +106,10 @@ const Reportes = () => {
                 const inventario = resInventario.ok ? await resInventario.json() : [];
                 const tiposMovimiento = resTiposMovimiento.ok ? await resTiposMovimiento.json() : [];
                 const especialidades = resEspecialidades.ok ? await resEspecialidades.json() : [];
+                const bitacora = resBitacora.status === 404 ? [] : resBitacora.ok ? await resBitacora.json() : [];
+                const categorias = resCategorias.ok ? await resCategorias.json() : [];
+                const cotizaciones = resCotizaciones.status === 404 ? [] : resCotizaciones.ok ? await resCotizaciones.json() : [];
+                const categoriasInv = resCategoriasInv.ok ? await resCategoriasInv.json() : [];
 
                 const clientesPorId = new Map(clientes.map((c) => [c.id, c]));
                 const tecnicosPorId = new Map(tecnicos.map((t) => [t.id, t]));
@@ -114,6 +133,11 @@ const Reportes = () => {
                 setInventarioTodos(inventario);
                 setTiposMovimientoTodos(tiposMovimiento);
                 setEspecialidadesTodas(especialidades);
+                setBitacoraTodos(bitacora);
+                setCategoriasTodas(categorias);
+                setCotizacionesTodas(cotizaciones);
+                setCategoriasInventarioTodas(categoriasInv);
+                setClientesTodos(clientes);
             } catch (err) {
                 setErrorFinalizadas(err.message);
             }
@@ -201,6 +225,57 @@ const Reportes = () => {
         return Array.from(porArticulo.entries()).map(([articulo, cantidad]) => ({ articulo, cantidad }));
     };
 
+    const categoriasPorId = new Map(categoriasTodas.map((c) => [c.id, c]));
+
+    // "Duración real" (desde que el técnico llegó, no desde que se
+    // agendó) solo existe para servicios cerrados DESPUÉS de que se
+    // agregó bitacora_estados.created_at (ver migración 002) -- las
+    // órdenes viejas no tienen esa marca de tiempo y no hay forma de
+    // reconstruirla. Para esas, se cae a fecha_programada -> fecha_cierre
+    // como aproximación, dejando claro que es aproximada.
+    const duracionDeOrden = (orden) => {
+        if (!orden.fecha_cierre) return null;
+        const llegada = bitacoraTodos.find(
+            (b) => b.ord_id === orden.id && b.estado_nuevo === "tecnico_llego" && b.created_at
+        );
+        const inicio = llegada?.created_at || orden.fecha_programada;
+        if (!inicio) return null;
+        const horas = (new Date(orden.fecha_cierre) - new Date(inicio)) / (1000 * 60 * 60);
+        if (!Number.isFinite(horas) || horas < 0) return null;
+        return { horas, exacta: !!llegada };
+    };
+
+    const formatoDuracion = (dur) => {
+        if (!dur) return "—";
+        const texto = dur.horas < 1
+            ? `${Math.round(dur.horas * 60)} min`
+            : `${dur.horas.toFixed(1)} h`;
+        return dur.exacta ? texto : `${texto} (aprox.)`;
+    };
+
+    // Promedio de horas por servicio de un técnico -- solo cuenta las
+    // órdenes con duración calculable (ver duracionDeOrden); si ninguna
+    // tiene datos suficientes (todas de antes de la migración 002, sin
+    // técnico llegó registrado y sin fecha_programada), no se muestra.
+    const duracionPromedioDeTecnico = (tecId) => {
+        const duraciones = ordenesFinalizadas
+            .filter((o) => o.tec_id === tecId)
+            .map((o) => duracionDeOrden(o))
+            .filter(Boolean);
+        if (duraciones.length === 0) return null;
+        const promedio = duraciones.reduce((s, d) => s + d.horas, 0) / duraciones.length;
+        return { horas: promedio, exacta: duraciones.every((d) => d.exacta) };
+    };
+
+    // La cotización "vigente" de la orden: la aprobada si existe, si no la
+    // más reciente que no esté rechazada -- mismo criterio que se usa en
+    // Gestión de Órdenes para el badge de estado de cotización.
+    const cotizacionDeOrden = (ordId) => {
+        const deEstaOrden = cotizacionesTodas.filter((c) => c.ord_id === ordId && c.estado !== "rechazada");
+        if (deEstaOrden.length === 0) return null;
+        return deEstaOrden.find((c) => c.estado === "aprobada") || deEstaOrden[deEstaOrden.length - 1];
+    };
+
     const handleRecalcular = async () => {
         setRecalculando(true);
         setError("");
@@ -237,36 +312,112 @@ const Reportes = () => {
 
     const productividad = reportes.productividad_tecnicos || [];
     const cobros = reportes.cobros || [];
-    const stockCritico = reportes.stock_critico || [];
     const tecnicosPorTecId = new Map(tecnicosDisponibles.map((t) => [t.id, t]));
+    const tecnicosPorUsuId = new Map(tecnicosDisponibles.map((t) => [t.usu_id, t]));
+    const clientesPorId = new Map(clientesTodos.map((c) => [c.id, c]));
+
+    // Órdenes que sí atendió un técnico (para el reporte individual con
+    // horas por servicio, no solo el promedio) -- mismo criterio de
+    // duración que el resto del archivo (duracionDeOrden).
+    const ordenesDeTecnico = (tecId) =>
+        ordenesFinalizadas
+            .filter((o) => o.tec_id === tecId)
+            .map((o) => ({ ...o, duracion: duracionDeOrden(o) }))
+            .sort((a, b) => new Date(b.fecha_cierre) - new Date(a.fecha_cierre));
+
+    const horasTotalesDeTecnico = (tecId) => {
+        const conHoras = ordenesDeTecnico(tecId).filter((o) => o.duracion);
+        if (conHoras.length === 0) return null;
+        const horas = conHoras.reduce((s, o) => s + o.duracion.horas, 0);
+        return { horas, exacta: conHoras.every((o) => o.duracion.exacta), cuenta: conHoras.length, total: ordenesDeTecnico(tecId).length };
+    };
+
+    // Productividad -- resumen general arriba de la tabla.
+    const totalCompletadas = productividad.reduce((s, p) => s + Number(p.completadas), 0);
+    const totalCanceladas = productividad.reduce((s, p) => s + Number(p.canceladas), 0);
+    const totalAsignadas = productividad.reduce((s, p) => s + Number(p.total_asignadas), 0);
+
+    // Cobros -- resumen general y desglose por método (para no solo ver
+    // filas sueltas de método+estado sin ningún total que las agrupe).
+    const totalCobrado = cobros.filter((c) => c.estado === "pagado").reduce((s, c) => s + Number(c.total), 0);
+    const totalPendienteCobro = cobros.filter((c) => c.estado === "pendiente").reduce((s, c) => s + Number(c.total), 0);
+    const porMetodo = new Map();
+    cobros.forEach((c) => {
+        const actual = porMetodo.get(c.metodo) || 0;
+        porMetodo.set(c.metodo, actual + Number(c.total));
+    });
+    const totalGeneralCobros = cobros.reduce((s, c) => s + Number(c.total), 0);
+
+    // Inventario -- el reporte precomputado (/api/reportes) solo trae
+    // stock_critico; el resto (valor total, por categoría, más usados,
+    // movimientos recientes) se calcula aquí mismo con datos ya cargados
+    // en vivo (inventarioTodos/movimientosTodos), así siempre refleja el
+    // estado actual sin depender de "Actualizar datos".
+    const categoriasInvPorId = new Map(categoriasInventarioTodas.map((c) => [c.id, c]));
+    const tiposMovimientoPorId = new Map(tiposMovimientoTodos.map((t) => [t.id, t]));
+
+    const valorLinea = (item) => Number(item.stock_actual) * Number(item.precio_venta || 0);
+    const valorTotalInventario = inventarioTodos.reduce((s, i) => s + valorLinea(i), 0);
+    const stockCritico = inventarioTodos.filter((i) => Number(i.stock_actual) <= Number(i.stock_minimo));
+
+    const porCategoriaMap = new Map();
+    inventarioTodos.forEach((item) => {
+        const nombreCat = categoriasInvPorId.get(item.cat_id)?.nombre || "Sin categoría";
+        const actual = porCategoriaMap.get(nombreCat) || { categoria: nombreCat, articulos: 0, valor: 0, criticos: 0 };
+        actual.articulos += 1;
+        actual.valor += valorLinea(item);
+        if (Number(item.stock_actual) <= Number(item.stock_minimo)) actual.criticos += 1;
+        porCategoriaMap.set(nombreCat, actual);
+    });
+    const porCategoriaInventario = Array.from(porCategoriaMap.values()).sort((a, b) => b.valor - a.valor);
+
+    const usoPorArticulo = new Map();
+    movimientosTodos
+        .filter((m) => tiposUsoPorId.has(m.tip_id))
+        .forEach((m) => {
+            const item = inventarioPorId.get(m.inv_id);
+            const nombre = item?.nombre || `Artículo #${m.inv_id}`;
+            usoPorArticulo.set(nombre, (usoPorArticulo.get(nombre) || 0) + Number(m.cantidad));
+        });
+    const articulosMasUsados = Array.from(usoPorArticulo.entries())
+        .map(([articulo, cantidad]) => ({ articulo, cantidad }))
+        .sort((a, b) => b.cantidad - a.cantidad)
+        .slice(0, 6);
+
+    // movimientos_inventario no tiene columna de fecha -- el id ascendente
+    // es el único proxy disponible para "más reciente primero" (mismo
+    // criterio usado en RegistrarMovimiento.jsx / FormularioInventario.jsx).
+    const movimientosRecientes = [...movimientosTodos]
+        .sort((a, b) => b.id - a.id)
+        .slice(0, 10)
+        .map((m) => ({
+            ...m,
+            articulo: inventarioPorId.get(m.inv_id)?.nombre || `Artículo #${m.inv_id}`,
+            tipoNombre: tiposMovimientoPorId.get(m.tip_id)?.nombre || "—",
+            esEntrada: !!tiposMovimientoPorId.get(m.tip_id)?.es_entrada,
+            tecnicoNombre: tecnicosPorUsuId.get(m.usu_id)?.nombre || (m.usu_id ? `Usuario #${m.usu_id}` : "—"),
+        }));
 
     return (
-        <div style={{ padding: "24px" }}>
-            <Link to="/home">← Inicio</Link>
+        <div className="page page-wide">
+            <Link to="/home" className="page-back">← Inicio</Link>
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "8px" }}>
-                <h2>Reportes</h2>
-                <button onClick={handleRecalcular} disabled={recalculando} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <div className="page-header">
+                <h1 style={{ fontSize: "1.5rem", margin: 0 }}>Reportes</h1>
+                <button className="btn-primary" onClick={handleRecalcular} disabled={recalculando} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     {!recalculando && <Icon name="refresh" className="icon-sm" />}
                     {recalculando ? "Actualizando..." : "Actualizar datos"}
                 </button>
             </div>
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && <p className="error-text">{error}</p>}
 
-            <div style={{ display: "flex", gap: "8px", margin: "16px 0", borderBottom: "1px solid #e5e7eb" }}>
+            <div className="tabs">
                 {PESTAÑAS.map((p) => (
                     <button
                         key={p}
                         onClick={() => setPestañaActiva(p)}
-                        style={{
-                            padding: "8px 16px",
-                            border: "none",
-                            borderBottom: pestañaActiva === p ? "2px solid #111827" : "2px solid transparent",
-                            background: "transparent",
-                            fontWeight: pestañaActiva === p ? "600" : "400",
-                            cursor: "pointer",
-                        }}
+                        className={pestañaActiva === p ? "tab active" : "tab"}
                     >
                         {p}
                     </button>
@@ -275,111 +426,291 @@ const Reportes = () => {
 
             {pestañaActiva === "Productividad" && (
                 <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
+                    {productividad.length > 0 && (
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
+                            <div className="panel" style={{ padding: "1.1rem 1.25rem" }}>
+                                <p className="muted-text" style={{ fontSize: "0.8rem", marginBottom: "0.35rem" }}>Técnicos activos</p>
+                                <p style={{ fontSize: "1.5rem", fontWeight: 700 }}>{productividad.length}</p>
+                            </div>
+                            <div className="panel" style={{ padding: "1.1rem 1.25rem" }}>
+                                <p className="muted-text" style={{ fontSize: "0.8rem", marginBottom: "0.35rem" }}>Órdenes completadas</p>
+                                <p style={{ fontSize: "1.5rem", fontWeight: 700 }}>{totalCompletadas}</p>
+                            </div>
+                            <div className="panel" style={{ padding: "1.1rem 1.25rem" }}>
+                                <p className="muted-text" style={{ fontSize: "0.8rem", marginBottom: "0.35rem" }}>Órdenes canceladas</p>
+                                <p style={{ fontSize: "1.5rem", fontWeight: 700, color: totalCanceladas > 0 ? "var(--color-danger-text)" : undefined }}>{totalCanceladas}</p>
+                            </div>
+                            <div className="panel" style={{ padding: "1.1rem 1.25rem" }}>
+                                <p className="muted-text" style={{ fontSize: "0.8rem", marginBottom: "0.35rem" }}>Tasa de cumplimiento</p>
+                                <p style={{ fontSize: "1.5rem", fontWeight: 700 }}>
+                                    {totalAsignadas > 0 ? `${Math.round((totalCompletadas / totalAsignadas) * 100)}%` : "—"}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
                         <p style={{ fontWeight: "600" }}>Productividad por técnico</p>
-                        <button onClick={() => exportarCSV(productividad, "productividad_tecnicos")}>
+                        <button
+                            className="btn-sm"
+                            onClick={() => {
+                                const conDuracion = productividad.map((p) => ({
+                                    ...p,
+                                    nombre_tecnico: tecnicosPorTecId.get(p.tec_id)?.nombre || `Técnico #${p.usu_id}`,
+                                    duracion_promedio_horas: duracionPromedioDeTecnico(p.tec_id)?.horas?.toFixed(2) || "",
+                                }));
+                                exportarCSV(conDuracion, "productividad_tecnicos");
+                            }}
+                        >
                             ⬇ Exportar CSV
                         </button>
                     </div>
                     {productividad.length === 0 ? (
-                        <p>Sin datos todavía.</p>
+                        <div className="empty-state panel">
+                            <div className="empty-state-icon"><Icon name="chart" className="icon-md" /></div>
+                            <p className="empty-state-title">Sin datos todavía</p>
+                            <p className="empty-state-description">Cuando haya órdenes completadas, aquí aparecerá la productividad por técnico.</p>
+                        </div>
                     ) : (
-                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                            <thead>
-                                <tr style={{ textAlign: "left", borderBottom: "2px solid #e5e7eb" }}>
-                                    <th style={{ padding: "8px" }}>Técnico</th>
-                                    <th style={{ padding: "8px" }}>Completadas</th>
-                                    <th style={{ padding: "8px" }}>Canceladas</th>
-                                    <th style={{ padding: "8px" }}>Total asignadas</th>
-                                    <th style={{ padding: "8px" }}></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {productividad.map((p) => (
-                                    <tr key={p.tec_id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                                        <td style={{ padding: "8px" }}>
-                                            {tecnicosPorTecId.get(p.tec_id)?.nombre || `Técnico #${p.usu_id}`}
-                                        </td>
-                                        <td style={{ padding: "8px" }}>{p.completadas}</td>
-                                        <td style={{ padding: "8px" }}>{p.canceladas}</td>
-                                        <td style={{ padding: "8px" }}>{p.total_asignadas}</td>
-                                        <td style={{ padding: "8px" }}>
-                                            <button onClick={() => setReporteTecnico(p)} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                                                <Icon name="file" className="icon-sm" /> Reporte
-                                            </button>
-                                        </td>
+                        <div className="table-wrap">
+                            <table className="table">
+                                <thead>
+                                    <tr>
+                                        <th>Técnico</th>
+                                        <th>Completadas</th>
+                                        <th>Canceladas</th>
+                                        <th>Total asignadas</th>
+                                        <th>Duración promedio</th>
+                                        <th></th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {productividad.map((p) => (
+                                        <tr key={p.tec_id}>
+                                            <td>{tecnicosPorTecId.get(p.tec_id)?.nombre || `Técnico #${p.usu_id}`}</td>
+                                            <td>{p.completadas}</td>
+                                            <td>{p.canceladas}</td>
+                                            <td>{p.total_asignadas}</td>
+                                            <td>{formatoDuracion(duracionPromedioDeTecnico(p.tec_id))}</td>
+                                            <td>
+                                                <button className="btn-sm" onClick={() => setReporteTecnico(p)} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                                                    <Icon name="file" className="icon-sm" /> Reporte
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     )}
                 </div>
             )}
 
             {pestañaActiva === "Cobros" && (
                 <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
+                    {cobros.length > 0 && (
+                        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "1.25rem", marginBottom: "1.5rem", alignItems: "start" }}>
+                            <div className="panel" style={{ padding: "1.25rem 1.5rem" }}>
+                                <p className="muted-text" style={{ fontSize: "0.8rem", marginBottom: "0.35rem" }}>Total cobrado</p>
+                                <p style={{ fontSize: "1.75rem", fontWeight: 700, marginBottom: "1rem" }}>{formatoMoneda(totalCobrado)}</p>
+                                <div style={{ display: "flex", gap: "1.5rem" }}>
+                                    <div>
+                                        <p className="muted-text" style={{ fontSize: "0.8rem" }}>Pendiente por cobrar</p>
+                                        <p style={{ fontWeight: 600, color: totalPendienteCobro > 0 ? "var(--color-warning-text)" : undefined }}>
+                                            {formatoMoneda(totalPendienteCobro)}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="muted-text" style={{ fontSize: "0.8rem" }}>Total general</p>
+                                        <p style={{ fontWeight: 600 }}>{formatoMoneda(totalGeneralCobros)}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="panel" style={{ padding: "1.25rem 1.5rem" }}>
+                                <p style={{ fontWeight: 600, marginBottom: "0.75rem", fontSize: "0.9rem" }}>Por método de pago</p>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                    {Array.from(porMetodo.entries()).sort((a, b) => b[1] - a[1]).map(([metodo, total]) => (
+                                        <div key={metodo} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem" }}>
+                                            <span style={{ textTransform: "capitalize" }}>{metodo}</span>
+                                            <span style={{ fontWeight: 600 }}>{formatoMoneda(total)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
                         <p style={{ fontWeight: "600" }}>Desglose de cobros</p>
-                        <button onClick={() => exportarCSV(cobros, "cobros")}>
+                        <button className="btn-sm" onClick={() => exportarCSV(cobros, "cobros")}>
                             ⬇ Exportar CSV
                         </button>
                     </div>
                     {cobros.length === 0 ? (
-                        <p>Sin datos todavía.</p>
+                        <div className="empty-state panel">
+                            <div className="empty-state-icon"><Icon name="card" className="icon-md" /></div>
+                            <p className="empty-state-title">Sin datos todavía</p>
+                            <p className="empty-state-description">Cuando se registren pagos, aquí aparecerá el desglose por método y estado.</p>
+                        </div>
                     ) : (
-                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                            <thead>
-                                <tr style={{ textAlign: "left", borderBottom: "2px solid #e5e7eb" }}>
-                                    <th style={{ padding: "8px" }}>Método</th>
-                                    <th style={{ padding: "8px" }}>Estado</th>
-                                    <th style={{ padding: "8px" }}>Cantidad</th>
-                                    <th style={{ padding: "8px" }}>Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {cobros.map((c, i) => (
-                                    <tr key={i} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                                        <td style={{ padding: "8px", textTransform: "capitalize" }}>{c.metodo}</td>
-                                        <td style={{ padding: "8px", textTransform: "capitalize" }}>{c.estado}</td>
-                                        <td style={{ padding: "8px" }}>{c.cantidad}</td>
-                                        <td style={{ padding: "8px" }}>{formatoMoneda(c.total)}</td>
+                        <div className="table-wrap">
+                            <table className="table">
+                                <thead>
+                                    <tr>
+                                        <th>Método</th>
+                                        <th>Estado</th>
+                                        <th>Cantidad</th>
+                                        <th>Total</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {cobros.map((c, i) => (
+                                        <tr key={i}>
+                                            <td style={{ textTransform: "capitalize" }}>{c.metodo}</td>
+                                            <td>
+                                                <span className={`badge ${c.estado === "pagado" ? "badge-success" : c.estado === "pendiente" ? "badge-warning" : "badge-neutral"}`}>
+                                                    {c.estado}
+                                                </span>
+                                            </td>
+                                            <td>{c.cantidad}</td>
+                                            <td>{formatoMoneda(c.total)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     )}
                 </div>
             )}
 
             {pestañaActiva === "Inventario" && (
                 <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
-                        <p style={{ fontWeight: "600" }}>Artículos en stock crítico</p>
-                        <button onClick={() => exportarCSV(stockCritico, "stock_critico")}>
-                            ⬇ Exportar CSV
-                        </button>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
+                        <div className="panel" style={{ padding: "1.1rem 1.25rem" }}>
+                            <p className="muted-text" style={{ fontSize: "0.8rem", marginBottom: "0.35rem" }}>Artículos registrados</p>
+                            <p style={{ fontSize: "1.5rem", fontWeight: 700 }}>{inventarioTodos.length}</p>
+                        </div>
+                        <div className="panel" style={{ padding: "1.1rem 1.25rem" }}>
+                            <p className="muted-text" style={{ fontSize: "0.8rem", marginBottom: "0.35rem" }}>Valor total en almacén</p>
+                            <p style={{ fontSize: "1.5rem", fontWeight: 700 }}>{formatoMoneda(valorTotalInventario)}</p>
+                        </div>
+                        <div className="panel" style={{ padding: "1.1rem 1.25rem" }}>
+                            <p className="muted-text" style={{ fontSize: "0.8rem", marginBottom: "0.35rem" }}>Categorías</p>
+                            <p style={{ fontSize: "1.5rem", fontWeight: 700 }}>{categoriasInventarioTodas.length}</p>
+                        </div>
+                        <div className="panel" style={{ padding: "1.1rem 1.25rem", borderColor: stockCritico.length > 0 ? "var(--color-danger-text)" : undefined }}>
+                            <p className="muted-text" style={{ fontSize: "0.8rem", marginBottom: "0.35rem" }}>En stock crítico</p>
+                            <p style={{ fontSize: "1.5rem", fontWeight: 700, color: stockCritico.length > 0 ? "var(--color-danger-text)" : undefined }}>
+                                {stockCritico.length}
+                            </p>
+                        </div>
                     </div>
-                    {stockCritico.length === 0 ? (
-                        <p style={{ color: "#15803d" }}>Ningún artículo está en nivel crítico ahorita.</p>
+
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+                        <p style={{ fontWeight: "600" }}>Inventario completo</p>
+                        <div style={{ display: "flex", gap: "0.5rem" }}>
+                            <button className="btn-sm" onClick={() => setReporteInventario(true)} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                                <Icon name="file" className="icon-sm" /> Reporte / PDF
+                            </button>
+                            <button
+                                className="btn-sm"
+                                onClick={() => {
+                                    const conCategoria = inventarioTodos.map((i) => ({
+                                        ...i,
+                                        categoria: categoriasInvPorId.get(i.cat_id)?.nombre || "Sin categoría",
+                                        valor_total: valorLinea(i).toFixed(2),
+                                    }));
+                                    exportarCSV(conCategoria, "inventario_completo");
+                                }}
+                            >
+                                ⬇ Exportar CSV
+                            </button>
+                        </div>
+                    </div>
+                    {inventarioTodos.length === 0 ? (
+                        <div className="empty-state panel">
+                            <div className="empty-state-icon"><Icon name="box" className="icon-md" /></div>
+                            <p className="empty-state-title">Sin artículos registrados</p>
+                            <p className="empty-state-description">Cuando se den de alta artículos de inventario, aquí aparecerá el detalle completo.</p>
+                        </div>
                     ) : (
-                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                            <thead>
-                                <tr style={{ textAlign: "left", borderBottom: "2px solid #e5e7eb" }}>
-                                    <th style={{ padding: "8px" }}>Artículo</th>
-                                    <th style={{ padding: "8px" }}>Stock actual</th>
-                                    <th style={{ padding: "8px" }}>Stock mínimo</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {stockCritico.map((item) => (
-                                    <tr key={item.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                                        <td style={{ padding: "8px" }}>{item.nombre}</td>
-                                        <td style={{ padding: "8px", color: "#b91c1c", fontWeight: "600" }}>{item.stock_actual}</td>
-                                        <td style={{ padding: "8px" }}>{item.stock_minimo}</td>
+                        <div className="table-wrap" style={{ marginBottom: "1.5rem" }}>
+                            <table className="table">
+                                <thead>
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Artículo</th>
+                                        <th>Categoría</th>
+                                        <th>Stock actual</th>
+                                        <th>Stock mínimo</th>
+                                        <th>Precio</th>
+                                        <th>Valor total</th>
+                                        <th>Estado</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {[...inventarioTodos]
+                                        .sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""))
+                                        .map((item) => {
+                                            const esCritico = Number(item.stock_actual) <= Number(item.stock_minimo);
+                                            return (
+                                                <tr key={item.id} className={esCritico ? "row-alert" : ""}>
+                                                    <td>{item.codigo || "—"}</td>
+                                                    <td>{item.nombre}</td>
+                                                    <td>{categoriasInvPorId.get(item.cat_id)?.nombre || "Sin categoría"}</td>
+                                                    <td style={{ fontWeight: esCritico ? 600 : 400, color: esCritico ? "var(--color-danger-text)" : undefined }}>
+                                                        {item.stock_actual} {item.unidad_medida}
+                                                    </td>
+                                                    <td>{item.stock_minimo}</td>
+                                                    <td>{formatoMoneda(item.precio_venta)}</td>
+                                                    <td>{formatoMoneda(valorLinea(item))}</td>
+                                                    <td>
+                                                        <span className={`badge ${esCritico ? "badge-danger" : "badge-success"}`}>
+                                                            {esCritico ? "Crítico" : "Normal"}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    <p style={{ fontWeight: "600", marginBottom: "0.75rem" }}>Movimientos recientes</p>
+                    {movimientosRecientes.length === 0 ? (
+                        <div className="empty-state panel">
+                            <div className="empty-state-icon"><Icon name="route" className="icon-md" /></div>
+                            <p className="empty-state-title">Sin movimientos registrados</p>
+                            <p className="empty-state-description">Las entradas, salidas y ajustes de inventario aparecerán aquí.</p>
+                        </div>
+                    ) : (
+                        <div className="table-wrap">
+                            <table className="table">
+                                <thead>
+                                    <tr>
+                                        <th>Artículo</th>
+                                        <th>Tipo</th>
+                                        <th>Cantidad</th>
+                                        <th>Orden</th>
+                                        <th>Técnico</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {movimientosRecientes.map((m) => (
+                                        <tr key={m.id}>
+                                            <td>{m.articulo}</td>
+                                            <td>
+                                                <span className={`badge ${m.esEntrada ? "badge-info" : "badge-neutral"}`}>{m.tipoNombre}</span>
+                                            </td>
+                                            <td>{m.cantidad}</td>
+                                            <td>{m.ord_id ? `Orden #${m.ord_id}` : "—"}</td>
+                                            <td>{m.tecnicoNombre}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     )}
                 </div>
             )}
@@ -454,6 +785,7 @@ const Reportes = () => {
                                                         Técnico: {orden.tecnicoNombre} · Estatus: {orden.estatus}
                                                         {orden.fecha_cierre &&
                                                             ` · Cerrada: ${new Date(orden.fecha_cierre).toLocaleDateString("es-MX")}`}
+                                                        {` · Duración: ${formatoDuracion(duracionDeOrden(orden))}`}
                                                     </p>
                                                 </div>
                                                 <span>{expandido ? "▲" : "▼"}</span>
@@ -486,6 +818,14 @@ const Reportes = () => {
                                                         </p>
                                                     </div>
                                                     <div>
+                                                        <p style={{ margin: 0, color: "#9ca3af" }}>Categoría</p>
+                                                        <p style={{ margin: 0 }}>{categoriasPorId.get(orden.cat_id)?.nombre || "—"}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p style={{ margin: 0, color: "#9ca3af" }}>Prioridad</p>
+                                                        <p style={{ margin: 0, textTransform: "capitalize" }}>{orden.prioridad || "—"}</p>
+                                                    </div>
+                                                    <div>
                                                         <p style={{ margin: 0, color: "#9ca3af" }}>Descripción</p>
                                                         <p style={{ margin: 0 }}>{orden.descripcion || "—"}</p>
                                                     </div>
@@ -504,7 +844,10 @@ const Reportes = () => {
                                                                 style={{ display: "flex", gap: "8px", fontSize: "13px", padding: "4px 0" }}
                                                             >
                                                                 <Icon name={item.completado ? "check-square" : "square"} className="icon-sm" style={{ color: item.completado ? "#15803d" : "#9ca3af" }} />
-                                                                <span>{item.descripcion || "(sin descripción)"}</span>
+                                                                <span>
+                                                                    {item.descripcion || "(sin descripción)"}
+                                                                    {item.notas && <span style={{ color: "#9ca3af" }}> — {item.notas}</span>}
+                                                                </span>
                                                             </div>
                                                         ))}
                                                     </div>
@@ -515,6 +858,16 @@ const Reportes = () => {
                                                 )}
 
                                                 <p style={{ fontWeight: "600", fontSize: "13px", marginBottom: "6px" }}>Pagos</p>
+                                                {(() => {
+                                                    const cot = cotizacionDeOrden(orden.id);
+                                                    if (!cot) return null;
+                                                    const cobrado = pagosOrden.filter((p) => p.estado === "pagado").reduce((s, p) => s + Number(p.monto), 0);
+                                                    return (
+                                                        <p style={{ fontSize: "13px", color: "#6b7280", marginBottom: "6px" }}>
+                                                            Cotizado: {formatoMoneda(cot.total)} · Cobrado: {formatoMoneda(cobrado)}
+                                                        </p>
+                                                    );
+                                                })()}
                                                 {pagosOrden.length === 0 ? (
                                                     <p style={{ fontSize: "13px", color: "#9ca3af" }}>Sin pagos registrados.</p>
                                                 ) : (
@@ -553,7 +906,20 @@ const Reportes = () => {
                     titulo={`Reporte de servicio — ${reporteOrden.folio}`}
                     subtitulo={`Cliente: ${reporteOrden.clienteNombre}`}
                     onCerrar={() => setReporteOrden(null)}
+                    firmas={["Firma del técnico", "Firma del cliente"]}
                 >
+                    {(() => {
+                        const cliente = clientesPorId.get(reporteOrden.cli_id);
+                        if (!cliente) return null;
+                        return (
+                            <div style={{ display: "flex", gap: "24px", flexWrap: "wrap", marginBottom: "16px", fontSize: "13px", color: "#6b7280", background: "#f9fafb", borderRadius: "6px", padding: "10px 14px" }}>
+                                {cliente.telefono && <span>📞 {cliente.telefono}</span>}
+                                {cliente.email && <span>✉ {cliente.email}</span>}
+                                {cliente.direccion && <span>📍 {cliente.direccion}</span>}
+                            </div>
+                        );
+                    })()}
+
                     <div style={{ display: "flex", gap: "24px", flexWrap: "wrap", marginBottom: "20px", fontSize: "14px" }}>
                         <div>
                             <p style={{ margin: 0, color: "#9ca3af" }}>Técnico</p>
@@ -564,12 +930,32 @@ const Reportes = () => {
                             <p style={{ margin: 0, textTransform: "capitalize" }}>{reporteOrden.estatus}</p>
                         </div>
                         <div>
+                            <p style={{ margin: 0, color: "#9ca3af" }}>Fecha programada</p>
+                            <p style={{ margin: 0 }}>
+                                {reporteOrden.fecha_programada
+                                    ? new Date(reporteOrden.fecha_programada).toLocaleString("es-MX", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
+                                    : "—"}
+                            </p>
+                        </div>
+                        <div>
                             <p style={{ margin: 0, color: "#9ca3af" }}>Fecha de cierre</p>
                             <p style={{ margin: 0 }}>
                                 {reporteOrden.fecha_cierre
-                                    ? new Date(reporteOrden.fecha_cierre).toLocaleDateString("es-MX")
+                                    ? new Date(reporteOrden.fecha_cierre).toLocaleString("es-MX", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
                                     : "—"}
                             </p>
+                        </div>
+                        <div>
+                            <p style={{ margin: 0, color: "#9ca3af" }}>Horas invertidas</p>
+                            <p style={{ margin: 0, fontWeight: 600 }}>{formatoDuracion(duracionDeOrden(reporteOrden))}</p>
+                        </div>
+                        <div>
+                            <p style={{ margin: 0, color: "#9ca3af" }}>Categoría</p>
+                            <p style={{ margin: 0 }}>{categoriasPorId.get(reporteOrden.cat_id)?.nombre || "—"}</p>
+                        </div>
+                        <div>
+                            <p style={{ margin: 0, color: "#9ca3af" }}>Prioridad</p>
+                            <p style={{ margin: 0, textTransform: "capitalize" }}>{reporteOrden.prioridad || "—"}</p>
                         </div>
                         <div>
                             <p style={{ margin: 0, color: "#9ca3af" }}>Equipo</p>
@@ -592,7 +978,10 @@ const Reportes = () => {
                             {checklistPorOrden[reporteOrden.id].map((item) => (
                                 <div key={item.id} style={{ display: "flex", gap: "8px", fontSize: "14px", padding: "3px 0" }}>
                                     <Icon name={item.completado ? "check-square" : "square"} className="icon-sm" style={{ color: item.completado ? "#15803d" : "#9ca3af" }} />
-                                    <span>{item.descripcion || "(sin descripción)"}</span>
+                                    <span>
+                                        {item.descripcion || "(sin descripción)"}
+                                        {item.notas && <span style={{ color: "#9ca3af" }}> — {item.notas}</span>}
+                                    </span>
                                 </div>
                             ))}
                         </div>
@@ -621,6 +1010,18 @@ const Reportes = () => {
                     )}
 
                     <p style={{ fontWeight: "600", marginBottom: "6px" }}>Pagos</p>
+                    {(() => {
+                        const cot = cotizacionDeOrden(reporteOrden.id);
+                        if (!cot) return null;
+                        const cobrado = pagosTodos
+                            .filter((p) => p.ord_id === reporteOrden.id && p.estado === "pagado")
+                            .reduce((s, p) => s + Number(p.monto), 0);
+                        return (
+                            <p style={{ fontSize: "14px", color: "#6b7280", marginTop: 0, marginBottom: "10px" }}>
+                                Cotizado: {formatoMoneda(cot.total)} · Cobrado: {formatoMoneda(cobrado)}
+                            </p>
+                        );
+                    })()}
                     {pagosTodos.filter((p) => p.ord_id === reporteOrden.id).length === 0 ? (
                         <p style={{ color: "#9ca3af" }}>Sin pagos registrados.</p>
                     ) : (
@@ -656,7 +1057,7 @@ const Reportes = () => {
                     }
                     onCerrar={() => setReporteTecnico(null)}
                 >
-                    <div style={{ display: "flex", gap: "32px", marginBottom: "24px" }}>
+                    <div style={{ display: "flex", gap: "32px", marginBottom: "10px", flexWrap: "wrap" }}>
                         <div>
                             <p style={{ margin: 0, color: "#9ca3af", fontSize: "13px" }}>Órdenes completadas</p>
                             <p style={{ margin: 0, fontSize: "22px", fontWeight: "700" }}>{reporteTecnico.completadas}</p>
@@ -669,7 +1070,61 @@ const Reportes = () => {
                             <p style={{ margin: 0, color: "#9ca3af", fontSize: "13px" }}>Total asignadas</p>
                             <p style={{ margin: 0, fontSize: "22px", fontWeight: "700" }}>{reporteTecnico.total_asignadas}</p>
                         </div>
+                        <div>
+                            <p style={{ margin: 0, color: "#9ca3af", fontSize: "13px" }}>Duración promedio</p>
+                            <p style={{ margin: 0, fontSize: "22px", fontWeight: "700" }}>
+                                {formatoDuracion(duracionPromedioDeTecnico(reporteTecnico.tec_id))}
+                            </p>
+                        </div>
+                        <div>
+                            <p style={{ margin: 0, color: "#9ca3af", fontSize: "13px" }}>Horas totales trabajadas</p>
+                            <p style={{ margin: 0, fontSize: "22px", fontWeight: "700" }}>
+                                {(() => {
+                                    const h = horasTotalesDeTecnico(reporteTecnico.tec_id);
+                                    if (!h) return "—";
+                                    return `${h.horas < 1 ? `${Math.round(h.horas * 60)} min` : `${h.horas.toFixed(1)} h`}${h.exacta ? "" : " (aprox.)"}`;
+                                })()}
+                            </p>
+                        </div>
                     </div>
+                    <p style={{ margin: "0 0 20px", fontSize: "11px", color: "#9ca3af" }}>
+                        Las horas se calculan desde el registro de "técnico llegó" hasta el cierre de la orden; cuando esa marca no existe (órdenes anteriores a la bitácora de estados), se aproxima desde la fecha programada.
+                    </p>
+
+                    <p style={{ fontWeight: "600", marginBottom: "6px" }}>Órdenes atendidas</p>
+                    {(() => {
+                        const tecnico = tecnicosPorTecId.get(reporteTecnico.tec_id);
+                        const ordenes = tecnico ? ordenesDeTecnico(tecnico.id) : [];
+                        if (ordenes.length === 0) {
+                            return <p style={{ color: "#9ca3af", marginBottom: "20px" }}>Este técnico no tiene órdenes finalizadas.</p>;
+                        }
+                        return (
+                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", marginBottom: "20px" }}>
+                                <thead>
+                                    <tr style={{ textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>
+                                        <th style={{ padding: "6px" }}>Folio</th>
+                                        <th style={{ padding: "6px" }}>Cliente</th>
+                                        <th style={{ padding: "6px" }}>Cierre</th>
+                                        <th style={{ padding: "6px" }}>Estatus</th>
+                                        <th style={{ padding: "6px" }}>Horas</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {ordenes.map((o) => (
+                                        <tr key={o.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
+                                            <td style={{ padding: "6px" }}>{o.folio}</td>
+                                            <td style={{ padding: "6px" }}>{o.clienteNombre}</td>
+                                            <td style={{ padding: "6px" }}>
+                                                {o.fecha_cierre ? new Date(o.fecha_cierre).toLocaleDateString("es-MX") : "—"}
+                                            </td>
+                                            <td style={{ padding: "6px", textTransform: "capitalize" }}>{o.estatus}</td>
+                                            <td style={{ padding: "6px" }}>{formatoDuracion(o.duracion)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        );
+                    })()}
 
                     <p style={{ fontWeight: "600", marginBottom: "6px" }}>Piezas / artículos usados (histórico)</p>
                     {(() => {
@@ -697,6 +1152,148 @@ const Reportes = () => {
                             </table>
                         );
                     })()}
+                </ReporteImprimible>
+            )}
+
+            {reporteInventario && (
+                <ReporteImprimible
+                    titulo="Reporte general de inventario"
+                    subtitulo={`Corte al ${new Date().toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}`}
+                    onCerrar={() => setReporteInventario(false)}
+                >
+                    <div style={{ display: "flex", gap: "32px", marginBottom: "20px", flexWrap: "wrap" }}>
+                        <div>
+                            <p style={{ margin: 0, color: "#9ca3af", fontSize: "13px" }}>Artículos registrados</p>
+                            <p style={{ margin: 0, fontSize: "22px", fontWeight: "700" }}>{inventarioTodos.length}</p>
+                        </div>
+                        <div>
+                            <p style={{ margin: 0, color: "#9ca3af", fontSize: "13px" }}>Valor total en almacén</p>
+                            <p style={{ margin: 0, fontSize: "22px", fontWeight: "700" }}>{formatoMoneda(valorTotalInventario)}</p>
+                        </div>
+                        <div>
+                            <p style={{ margin: 0, color: "#9ca3af", fontSize: "13px" }}>Categorías</p>
+                            <p style={{ margin: 0, fontSize: "22px", fontWeight: "700" }}>{categoriasInventarioTodas.length}</p>
+                        </div>
+                        <div>
+                            <p style={{ margin: 0, color: "#9ca3af", fontSize: "13px" }}>En stock crítico</p>
+                            <p style={{ margin: 0, fontSize: "22px", fontWeight: "700", color: stockCritico.length > 0 ? "#b91c1c" : undefined }}>
+                                {stockCritico.length}
+                            </p>
+                        </div>
+                    </div>
+
+                    <p style={{ fontWeight: "600", marginBottom: "6px" }}>Valor por categoría</p>
+                    {porCategoriaInventario.length === 0 ? (
+                        <p style={{ color: "#9ca3af", marginBottom: "20px" }}>Sin artículos registrados.</p>
+                    ) : (
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", marginBottom: "20px" }}>
+                            <thead>
+                                <tr style={{ textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>
+                                    <th style={{ padding: "6px" }}>Categoría</th>
+                                    <th style={{ padding: "6px" }}>Artículos</th>
+                                    <th style={{ padding: "6px" }}>Críticos</th>
+                                    <th style={{ padding: "6px" }}>Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {porCategoriaInventario.map((cat) => (
+                                    <tr key={cat.categoria} style={{ borderBottom: "1px solid #f3f4f6" }}>
+                                        <td style={{ padding: "6px" }}>{cat.categoria}</td>
+                                        <td style={{ padding: "6px" }}>{cat.articulos}</td>
+                                        <td style={{ padding: "6px", color: cat.criticos > 0 ? "#b91c1c" : undefined }}>{cat.criticos || "—"}</td>
+                                        <td style={{ padding: "6px" }}>{formatoMoneda(cat.valor)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+
+                    <p style={{ fontWeight: "600", marginBottom: "6px" }}>Artículos más usados</p>
+                    {articulosMasUsados.length === 0 ? (
+                        <p style={{ color: "#9ca3af", marginBottom: "20px" }}>Todavía no hay movimientos de salida registrados.</p>
+                    ) : (
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", marginBottom: "20px" }}>
+                            <thead>
+                                <tr style={{ textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>
+                                    <th style={{ padding: "6px" }}>Artículo</th>
+                                    <th style={{ padding: "6px" }}>Cantidad usada</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {articulosMasUsados.map((a) => (
+                                    <tr key={a.articulo} style={{ borderBottom: "1px solid #f3f4f6" }}>
+                                        <td style={{ padding: "6px" }}>{a.articulo}</td>
+                                        <td style={{ padding: "6px" }}>{a.cantidad}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+
+                    <p style={{ fontWeight: "600", marginBottom: "6px" }}>Inventario completo</p>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", marginBottom: "20px" }}>
+                        <thead>
+                            <tr style={{ textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>
+                                <th style={{ padding: "5px" }}>Código</th>
+                                <th style={{ padding: "5px" }}>Artículo</th>
+                                <th style={{ padding: "5px" }}>Categoría</th>
+                                <th style={{ padding: "5px" }}>Stock</th>
+                                <th style={{ padding: "5px" }}>Mínimo</th>
+                                <th style={{ padding: "5px" }}>Precio</th>
+                                <th style={{ padding: "5px" }}>Valor</th>
+                                <th style={{ padding: "5px" }}>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {[...inventarioTodos]
+                                .sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""))
+                                .map((item) => {
+                                    const esCritico = Number(item.stock_actual) <= Number(item.stock_minimo);
+                                    return (
+                                        <tr key={item.id} style={{ borderBottom: "1px solid #f3f4f6", background: esCritico ? "#fef2f2" : undefined }}>
+                                            <td style={{ padding: "5px" }}>{item.codigo || "—"}</td>
+                                            <td style={{ padding: "5px" }}>{item.nombre}</td>
+                                            <td style={{ padding: "5px" }}>{categoriasInvPorId.get(item.cat_id)?.nombre || "Sin categoría"}</td>
+                                            <td style={{ padding: "5px", fontWeight: esCritico ? 600 : 400, color: esCritico ? "#b91c1c" : undefined }}>
+                                                {item.stock_actual} {item.unidad_medida}
+                                            </td>
+                                            <td style={{ padding: "5px" }}>{item.stock_minimo}</td>
+                                            <td style={{ padding: "5px" }}>{formatoMoneda(item.precio_venta)}</td>
+                                            <td style={{ padding: "5px" }}>{formatoMoneda(valorLinea(item))}</td>
+                                            <td style={{ padding: "5px" }}>{esCritico ? "Crítico" : "Normal"}</td>
+                                        </tr>
+                                    );
+                                })}
+                        </tbody>
+                    </table>
+
+                    <p style={{ fontWeight: "600", marginBottom: "6px" }}>Movimientos recientes</p>
+                    {movimientosRecientes.length === 0 ? (
+                        <p style={{ color: "#9ca3af" }}>Sin movimientos registrados.</p>
+                    ) : (
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+                            <thead>
+                                <tr style={{ textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>
+                                    <th style={{ padding: "6px" }}>Artículo</th>
+                                    <th style={{ padding: "6px" }}>Tipo</th>
+                                    <th style={{ padding: "6px" }}>Cantidad</th>
+                                    <th style={{ padding: "6px" }}>Orden</th>
+                                    <th style={{ padding: "6px" }}>Técnico</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {movimientosRecientes.map((m) => (
+                                    <tr key={m.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
+                                        <td style={{ padding: "6px" }}>{m.articulo}</td>
+                                        <td style={{ padding: "6px" }}>{m.tipoNombre}</td>
+                                        <td style={{ padding: "6px" }}>{m.cantidad}</td>
+                                        <td style={{ padding: "6px" }}>{m.ord_id ? `Orden #${m.ord_id}` : "—"}</td>
+                                        <td style={{ padding: "6px" }}>{m.tecnicoNombre}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
                 </ReporteImprimible>
             )}
         </div>

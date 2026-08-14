@@ -319,8 +319,12 @@ const styles = StyleSheet.create({
   navegarTextoPrimario: { color: '#fff', fontWeight: '600', fontSize: 13 },
   paradaDireccion: { color: '#6b7280', fontSize: 11, marginTop: 2 },
   avisoBloqueada: { color: '#9ca3af', fontSize: 11, marginTop: 4, fontStyle: 'italic' },
-  mapaWrap: { position: 'relative' },
-  mapa: { height: '35%', width: '100%' },
+  // "35%" de un contenedor sin altura fija resuelve a 0 -- el WebView del
+  // mapa quedaba invisible, aunque los botones flotantes (position:
+  // absolute, no dependen de la altura del padre) sí se veían. Con una
+  // altura fija en el wrapper, el WebView (flex:1) sí tiene de dónde tomar.
+  mapaWrap: { position: 'relative', height: 260 },
+  mapa: { flex: 1, width: '100%' },
   mapaBotones: { position: 'absolute', right: 12, bottom: 12, gap: 8 },
   mapaBoton: {
     width: 40,

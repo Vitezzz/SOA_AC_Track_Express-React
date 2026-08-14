@@ -6,6 +6,7 @@ import { useAuth } from '../../src/context/AuthContext';
 import { useUbicacionActual } from '../../src/hooks/useUbicacionActual';
 import { usePasoActual } from '../../src/hooks/usePasoActual';
 import { calcularRutaConPasos } from '../../src/utils/osrmPasos';
+import Icon from '../../src/components/Icon';
 
 // Mismo criterio que ruta.js: Leaflet + tiles de OpenStreetMap dentro de un
 // WebView, en vez de un SDK nativo de mapas -- así no se necesita salir de
@@ -54,6 +55,19 @@ const construirHtml = (destino) => `
       }
       if (seguirCentrado) mapa.setView([lat, lng], mapa.getZoom());
     };
+
+    // Mismo patrón que ruta.js: un tap centra una vez (sin activar
+    // seguimiento continuo), el toggle prende/apaga que el mapa se
+    // recentre solo en cada actualización de GPS -- útil mientras se
+    // maneja, para no perder de vista dónde vas.
+    window.centrarEnMi = () => {
+      if (yo) mapa.setView(yo.getLatLng(), Math.max(mapa.getZoom(), 15));
+    };
+
+    window.setSeguirme = (activo) => {
+      seguirCentrado = activo;
+      if (activo && yo) mapa.setView(yo.getLatLng(), Math.max(mapa.getZoom(), 15));
+    };
   </script>
 </body>
 </html>`;
@@ -70,6 +84,7 @@ export default function Navegar() {
   const [ruta, setRuta] = useState(null);
   const [calculando, setCalculando] = useState(true);
   const [error, setError] = useState('');
+  const [siguiendoMiUbicacion, setSiguiendoMiUbicacion] = useState(true);
   const origenInicialRef = useRef(null);
 
   const { pasoActual, distanciaAlPaso, llegado } = usePasoActual(ruta?.pasos ?? [], posicion);
@@ -154,16 +169,38 @@ export default function Navegar() {
             )}
           </View>
 
-          <WebView
-            ref={webviewRef}
-            style={styles.mapa}
-            originWhitelist={['*']}
-            source={{ html: construirHtml(destino) }}
-            onLoadEnd={() => {
-              if (ruta) webviewRef.current?.injectJavaScript(`window.dibujarRuta(${JSON.stringify(ruta.coordenadasRuta)}); true;`);
-              if (posicion) webviewRef.current?.injectJavaScript(`window.moverYo(${posicion.lat}, ${posicion.lng}); true;`);
-            }}
-          />
+          <View style={styles.mapaWrap}>
+            <WebView
+              ref={webviewRef}
+              style={styles.mapa}
+              originWhitelist={['*']}
+              source={{ html: construirHtml(destino) }}
+              onLoadEnd={() => {
+                if (ruta) webviewRef.current?.injectJavaScript(`window.dibujarRuta(${JSON.stringify(ruta.coordenadasRuta)}); true;`);
+                if (posicion) webviewRef.current?.injectJavaScript(`window.moverYo(${posicion.lat}, ${posicion.lng}); true;`);
+                webviewRef.current?.injectJavaScript(`window.setSeguirme(${siguiendoMiUbicacion}); true;`);
+              }}
+            />
+
+            <View style={styles.mapaBotones}>
+              <Pressable
+                style={styles.mapaBoton}
+                onPress={() => webviewRef.current?.injectJavaScript('window.centrarEnMi(); true;')}
+              >
+                <Icon name="pin" size={18} color="#111827" />
+              </Pressable>
+              <Pressable
+                style={[styles.mapaBoton, siguiendoMiUbicacion && styles.mapaBotonActivo]}
+                onPress={() => {
+                  const nuevoValor = !siguiendoMiUbicacion;
+                  setSiguiendoMiUbicacion(nuevoValor);
+                  webviewRef.current?.injectJavaScript(`window.setSeguirme(${nuevoValor}); true;`);
+                }}
+              >
+                <Icon name="target" size={18} color={siguiendoMiUbicacion ? '#fff' : '#111827'} />
+              </Pressable>
+            </View>
+          </View>
         </>
       )}
     </View>
@@ -182,5 +219,21 @@ const styles = StyleSheet.create({
   bannerLlegado: { backgroundColor: '#15803d' },
   bannerTexto: { color: '#fff', fontSize: 16, fontWeight: '600' },
   bannerDistancia: { color: '#d1d5db', fontSize: 13, marginTop: 2 },
+  mapaWrap: { flex: 1, position: 'relative' },
   mapa: { flex: 1 },
+  mapaBotones: { position: 'absolute', right: 12, bottom: 12, gap: 8 },
+  mapaBoton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 3,
+  },
+  mapaBotonActivo: { backgroundColor: '#111827' },
 });

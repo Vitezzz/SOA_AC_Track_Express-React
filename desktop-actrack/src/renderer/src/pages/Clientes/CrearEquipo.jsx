@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const CrearEquipo = () => {
@@ -8,6 +8,8 @@ const CrearEquipo = () => {
     const { apiFetch } = useAuth();
 
     const [marcas, setMarcas] = useState([]);
+    const [cliente, setCliente] = useState(null);
+    const [equiposDelCliente, setEquiposDelCliente] = useState([]);
     const [marId, setMarId] = useState("");
     const [modelo, setModelo] = useState("");
     const [numeroSerie, setNumeroSerie] = useState("");
@@ -21,8 +23,17 @@ const CrearEquipo = () => {
     useEffect(() => {
         const cargarMarcas = async () => {
             try {
-                const res = await apiFetch("/api/marcas/");
-                if (res.ok) setMarcas(await res.json());
+                const [resMarcas, resCliente, resEquipos] = await Promise.all([
+                    apiFetch("/api/marcas/"),
+                    apiFetch(`/api/clientes/${id}`),
+                    apiFetch("/api/equipos/"),
+                ]);
+                if (resMarcas.ok) setMarcas(await resMarcas.json());
+                if (resCliente.ok) setCliente(await resCliente.json());
+                if (resEquipos.ok) {
+                    const todos = await resEquipos.json();
+                    setEquiposDelCliente(todos.filter((eq) => String(eq.cli_id) === String(id)));
+                }
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -101,11 +112,16 @@ const CrearEquipo = () => {
     if (loading) return <p className="page">Cargando...</p>;
 
     return (
-        <div className="page page-narrow">
-            <h2>Registrar Equipo</h2>
+        <div className="page">
+            <Link to={`/clientes/${id}`} className="page-back">← Volver a {cliente?.nombre || "Cliente"}</Link>
+            <div className="page-header">
+                <h2>Registrar Equipo {cliente && <span className="muted-text" style={{ fontWeight: 400 }}>— para {cliente.nombre}</span>}</h2>
+            </div>
 
             {error && <p className="error-text">{error}</p>}
 
+            <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: "1.5rem", alignItems: "start", width: "100%" }}>
+            <div className="panel">
             <form onSubmit={handleSubmit} className="form">
                 <label>
                     <span>Marca *</span>
@@ -142,6 +158,25 @@ const CrearEquipo = () => {
                     <button type="button" onClick={() => navigate(`/clientes/${id}`)}>Cancelar</button>
                 </div>
             </form>
+            </div>
+
+            <div className="panel">
+                <p style={{ fontWeight: 600, marginBottom: "0.9rem" }}>
+                    Equipos que ya tiene ({equiposDelCliente.length})
+                </p>
+                {equiposDelCliente.length === 0 ? (
+                    <p className="muted-text">Este cliente todavía no tiene equipos registrados.</p>
+                ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                        {equiposDelCliente.map((eq) => (
+                            <div key={eq.id} style={{ fontSize: "0.875rem" }}>
+                                {eq.tipo} — {eq.modelo} <span className="muted-text">({eq.numero_serie})</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+            </div>
         </div>
     );
 };

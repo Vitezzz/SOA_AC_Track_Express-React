@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const FormularioInventario = () => {
@@ -9,6 +9,8 @@ const FormularioInventario = () => {
     const esEdicion = Boolean(id);
 
     const [categorias, setCategorias] = useState([]);
+    const [movimientos, setMovimientos] = useState([]);
+    const [tipos, setTipos] = useState([]);
     const [catId, setCatId] = useState("");
     const [codigo, setCodigo] = useState("");
     const [nombre, setNombre] = useState("");
@@ -25,9 +27,13 @@ const FormularioInventario = () => {
         const cargarDatos = async () => {
             try {
                 const peticiones = [apiFetch("/api/categoriaInventario")];
-                if (esEdicion) peticiones.push(apiFetch(`/api/inventario/${id}`));
+                if (esEdicion) {
+                    peticiones.push(apiFetch(`/api/inventario/${id}`));
+                    peticiones.push(apiFetch("/api/movimientos_inventario"));
+                    peticiones.push(apiFetch("/api/tipo_movimiento_inventario"));
+                }
 
-                const [resCategorias, resItem] = await Promise.all(peticiones);
+                const [resCategorias, resItem, resMovimientos, resTipos] = await Promise.all(peticiones);
                 if (resCategorias.ok) setCategorias(await resCategorias.json());
 
                 if (esEdicion) {
@@ -40,6 +46,14 @@ const FormularioInventario = () => {
                     setStockActual(data.stock_actual);
                     setStockMinimo(data.stock_minimo);
                     setPrecioVenta(data.precio_venta);
+
+                    if (resTipos?.ok) setTipos(await resTipos.json());
+                    if (resMovimientos?.status !== 404 && resMovimientos?.ok) {
+                        const todos = await resMovimientos.json();
+                        setMovimientos(
+                            todos.filter((m) => m.inv_id === Number(id)).sort((a, b) => b.id - a.id).slice(0, 10)
+                        );
+                    }
                 }
             } catch (err) {
                 setError(err.message);
@@ -89,12 +103,19 @@ const FormularioInventario = () => {
 
     if (loading) return <p className="page">Cargando...</p>;
 
+    const tiposPorId = new Map(tipos.map((t) => [t.id, t]));
+
     return (
-        <div className="page page-narrow">
-            <h2>{esEdicion ? "Editar" : "Nuevo"} Artículo</h2>
+        <div className={esEdicion ? "page" : "page page-medium"}>
+            <Link to="/inventario" className="page-back">← Volver a Inventario</Link>
+            <div className="page-header">
+                <h2>{esEdicion ? "Editar" : "Nuevo"} Artículo</h2>
+            </div>
 
             {error && <p className="error-text">{error}</p>}
 
+            <div style={esEdicion ? { display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: "1.5rem", alignItems: "start", width: "100%" } : undefined}>
+            <div className="panel">
             <form onSubmit={handleSubmit} className="form">
                 <label>
                     <span>Categoría *</span>
@@ -144,6 +165,26 @@ const FormularioInventario = () => {
                     <button type="button" onClick={() => navigate("/inventario")}>Cancelar</button>
                 </div>
             </form>
+            </div>
+
+            {esEdicion && (
+                <div className="panel">
+                    <p style={{ fontWeight: 600, marginBottom: "0.9rem" }}>Movimientos recientes</p>
+                    {movimientos.length === 0 ? (
+                        <p className="muted-text">Todavía no hay movimientos registrados de este artículo.</p>
+                    ) : (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                            {movimientos.map((mov) => (
+                                <div key={mov.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.875rem" }}>
+                                    <span className="badge badge-neutral">{tiposPorId.get(mov.tip_id)?.nombre || "—"}</span>
+                                    <strong>{mov.cantidad}</strong>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+            </div>
         </div>
     );
 };

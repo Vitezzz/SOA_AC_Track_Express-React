@@ -27,6 +27,8 @@ const paths = (color) => ({
       <Circle cx="12" cy="12" r="0.6" fill={color} stroke="none" />
     </>
   ),
+  navigation: <Path d="M12 2 19 21 12 17 5 21 12 2Z" />,
+  x: <Path d="M6 6 18 18M18 6 6 18" />,
 });
 
 export default function Icon({ name, size = 20, color = '#111827', style }) {

@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Icon from "./Icon";
+import Logo from "./Logo";
 import NotificationBell from "./NotificationBell";
 
 const enlaces = [
@@ -33,7 +34,9 @@ const Sidebar = () => {
     return (
         <aside className="sidebar">
             <div className="sidebar-brand">
-                <span className="sidebar-brand-mark">AC</span>
+                <span className="sidebar-brand-mark">
+                    <Logo className="icon-sm" />
+                </span>
                 AC Track
                 <NotificationBell />
             </div>

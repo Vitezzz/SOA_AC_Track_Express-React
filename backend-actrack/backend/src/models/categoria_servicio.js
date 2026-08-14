@@ -10,14 +10,14 @@ export const getCategoriaServicioId = async(id) => {
     return result.rows[0];
 }
 
-export const createCategoriaServicio = async({nombre}) => {
-    const result = await pool.query(`INSERT INTO categoria_servicio (nombre) VALUES ($1) RETURNING *`, [nombre]);
+export const createCategoriaServicio = async({nombre, precio_sugerido}) => {
+    const result = await pool.query(`INSERT INTO categoria_servicio (nombre, precio_sugerido) VALUES ($1, $2) RETURNING *`, [nombre, precio_sugerido ?? null]);
     return result.rows[0];
 }
 
-export const updateCategoriaServicio = async(id, {nombre}) => {
-    const result = await pool.query(`UPDATE categoria_servicio SET nombre = $1 WHERE id = $2 RETURNING *`,
-        [nombre, id]);
+export const updateCategoriaServicio = async(id, {nombre, precio_sugerido}) => {
+    const result = await pool.query(`UPDATE categoria_servicio SET nombre = $1, precio_sugerido = $2 WHERE id = $3 RETURNING *`,
+        [nombre, precio_sugerido ?? null, id]);
     return result.rows[0];
 }
 

@@ -4,6 +4,7 @@ import LineaTiempoEstado from '../../components/LineaTiempoEstado.jsx';
 import { Link } from "react-router-dom";
 import LoadingState from "../../components/LoadingState.jsx";
 import EmptyState from "../../components/EmptyState.jsx";
+import Icon from "../../components/Icon.jsx";
 import { indiceProgreso, ordenEstaActiva } from "../../utils/ordenesProgreso.js";
 
 const formatearFecha = (fecha) =>
@@ -32,14 +33,19 @@ const TarjetaOrden = ({ orden, historial, destacada = false }) => (
         to={`/ordenes/${orden.id}`}
         className={`panel block hover:shadow-md transition-shadow ${destacada ? "panel-featured" : ""}`}
     >
-        <div className="flex justify-between items-start mb-4">
-            <div className="flex items-center gap-2">
-                {destacada && (
-                    <span className="badge-status badge-status-success">Más cerca de completarse</span>
-                )}
-                <span className="font-semibold text-gray-900">Folio: {orden.folio}</span>
+        <div className="flex justify-between items-start mb-4 gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+                <span className="card-icon-badge">
+                    <Icon name="wrench" />
+                </span>
+                <div className="min-w-0">
+                    {destacada && (
+                        <span className="badge-status badge-status-success mb-1">Más cerca de completarse</span>
+                    )}
+                    <p className="font-semibold text-gray-900 truncate">Folio: {orden.folio}</p>
+                </div>
             </div>
-            <span className="text-gray-400 text-xs">{formatearFecha(orden.fecha_programada)}</span>
+            <span className="text-gray-400 text-xs shrink-0">{formatearFecha(orden.fecha_programada)}</span>
         </div>
 
         <LineaTiempoEstado estatus={orden.estatus} historial={historial} />
@@ -118,9 +124,30 @@ const Ordenes = () => {
     const [destacada, ...restoActivas] = filtro === "todas" ? activas : [];
     const listaSimple = filtro === "todas" ? [] : [...activas, ...finalizadas];
 
+    // Conteos SIN filtrar -- para los pills y el encabezado, que deben
+    // reflejar el total real y no lo que ya se filtró en pantalla.
+    const totalActivas = ordenes.filter((o) => ordenEstaActiva(o.estatus)).length;
+    const conteosPorFiltro = Object.fromEntries(
+        FILTROS.map((f) => [f.key, ordenes.filter((o) => coincideFiltro(f.key, o.estatus)).length])
+    );
+
     return (
         <div className="page-container">
-            <h2 className="page-title">Mis Órdenes</h2>
+            <div className="list-header">
+                <span className="list-header-icon">
+                    <Icon name="wrench" />
+                </span>
+                <div>
+                    <p className="list-header-title">Mis Órdenes</p>
+                    <p className="list-header-subtitle">
+                        {ordenes.length === 0
+                            ? "Aquí verás el estatus de tus servicios en tiempo real"
+                            : totalActivas > 0
+                                ? `${totalActivas} ${totalActivas === 1 ? "orden en curso" : "órdenes en curso"} · ${ordenes.length - totalActivas} en tu historial`
+                                : `${ordenes.length} en tu historial`}
+                    </p>
+                </div>
+            </div>
 
             {error && <p className="form-error mb-4">{error}</p>}
 
@@ -141,6 +168,7 @@ const Ordenes = () => {
                                 className={`filter-pill ${filtro === f.key ? "filter-pill-active" : ""}`}
                             >
                                 {f.label}
+                                <span className="filter-pill-count">{conteosPorFiltro[f.key]}</span>
                             </button>
                         ))}
                     </div>
@@ -154,7 +182,7 @@ const Ordenes = () => {
                                     <TarjetaOrden orden={destacada.orden} historial={destacada.historial} destacada />
                                     {restoActivas.length > 0 && (
                                         <div className="space-y-4">
-                                            <h3 className="text-sm font-medium text-gray-500">Otras órdenes en curso</h3>
+                                            <h3 className="list-section-title">Otras órdenes en curso</h3>
                                             {restoActivas.map(({ orden, historial }) => (
                                                 <TarjetaOrden key={orden.id} orden={orden} historial={historial} />
                                             ))}
@@ -165,7 +193,7 @@ const Ordenes = () => {
 
                             {finalizadas.length > 0 && (
                                 <div className="space-y-4">
-                                    {destacada && <h3 className="text-sm font-medium text-gray-500">Historial</h3>}
+                                    {destacada && <h3 className="list-section-title">Historial</h3>}
                                     {finalizadas.map(({ orden, historial }) => (
                                         <TarjetaOrden key={orden.id} orden={orden} historial={historial} />
                                     ))}

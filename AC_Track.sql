@@ -67,6 +67,7 @@ create table BITACORA_ESTADOS (
    USU_ID               INT2                 null,
    ESTADO_ANTERIOR      VARCHAR(50)          null,
    ESTADO_NUEVO         VARCHAR(50)          null,
+   CREATED_AT           TIMESTAMP            null,
    constraint PK_BITACORA_ESTADOS primary key (ID)
 );
 
@@ -85,6 +86,7 @@ create table CATEGORIA_INVENTARIO (
 create table CATEGORIA_SERVICIO (
    ID                   INT2                 not null,
    NOMBRE               VARCHAR(80)          null,
+   PRECIO_SUGERIDO      NUMERIC              null,
    constraint PK_CATEGORIA_SERVICIO primary key (ID)
 );
 

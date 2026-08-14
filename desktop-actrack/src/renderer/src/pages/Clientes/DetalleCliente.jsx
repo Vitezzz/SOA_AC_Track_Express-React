@@ -100,7 +100,7 @@ const DetalleCliente = () => {
     if (loading) return <p className="page">Cargando...</p>;
 
     return (
-        <div className="page page-medium">
+        <div className="page">
             <Link to="/clientes" className="page-back">← Volver a Clientes</Link>
 
             {error && <p className="error-text">{error}</p>}
@@ -114,14 +114,14 @@ const DetalleCliente = () => {
                     </div>
 
                     {!editando ? (
-                        <p className="muted-text">
+                        <p className="muted-text" style={{ marginBottom: "1.25rem" }}>
                             {cliente.email} · {cliente.telefono || "Sin teléfono"} · {cliente.direccion || "Sin dirección"} ·{" "}
                             <span className={`badge ${cliente.activo ? "badge-success" : "badge-neutral"}`}>
                                 {cliente.activo ? "Activo" : "Inactivo"}
                             </span>
                         </p>
                     ) : (
-                        <form onSubmit={handleGuardar} className="form page-narrow" style={{ marginTop: "0.75rem" }}>
+                        <form onSubmit={handleGuardar} className="form page-narrow" style={{ marginTop: "0.75rem", marginBottom: "1.25rem" }}>
                             <label>
                                 <span>Teléfono</span>
                                 <input
@@ -155,84 +155,90 @@ const DetalleCliente = () => {
                         </form>
                     )}
 
-                    <div className="page-header" style={{ marginTop: "1.75rem" }}>
-                        <h3>Equipos registrados ({equipos.length})</h3>
-                        <Link to={`/clientes/${id}/equipos/nuevo`}><button className="btn-sm">+ Registrar Equipo</button></Link>
+                    <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: "1.5rem", alignItems: "start", width: "100%" }}>
+                    <div>
+                        <div className="page-header" style={{ marginBottom: "0.75rem" }}>
+                            <h3 style={{ margin: 0 }}>Equipos registrados ({equipos.length})</h3>
+                            <Link to={`/clientes/${id}/equipos/nuevo`}><button className="btn-sm">+ Registrar Equipo</button></Link>
+                        </div>
+
+                        {equipos.length === 0 ? (
+                            <p className="muted-text">Este cliente no tiene equipos registrados.</p>
+                        ) : (
+                            <ul className="panel" style={{ padding: "0.5rem 1rem" }}>
+                                {equipos.map((eq) => (
+                                    <li
+                                        key={eq.id}
+                                        style={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            alignItems: "center",
+                                            padding: "0.65rem 0",
+                                            borderBottom: "1px solid var(--color-border)",
+                                        }}
+                                    >
+                                        <span style={{ display: "flex", alignItems: "center", gap: "0.65rem" }}>
+                                            {eq.imagen_url ? (
+                                                <img
+                                                    src={eq.imagen_url}
+                                                    alt={eq.modelo}
+                                                    style={{
+                                                        width: "48px",
+                                                        height: "48px",
+                                                        objectFit: "cover",
+                                                        borderRadius: "6px",
+                                                        flexShrink: 0,
+                                                    }}
+                                                />
+                                            ) : (
+                                                <span
+                                                    className="muted-text"
+                                                    style={{
+                                                        width: "48px",
+                                                        height: "48px",
+                                                        background: "var(--color-bg)",
+                                                        borderRadius: "6px",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        fontSize: "10px",
+                                                        flexShrink: 0,
+                                                    }}
+                                                >
+                                                    Sin foto
+                                                </span>
+                                            )}
+                                            <span>{eq.tipo} — {eq.modelo} ({eq.numero_serie})</span>
+                                        </span>
+                                        <span className="table-actions" style={{ flexShrink: 0 }}>
+                                            <Link to={`/equipos/${eq.id}/editar`}><button className="btn-sm">Editar</button></Link>
+                                            {user?.rol_id === 2 && (
+                                                <button onClick={() => handleDesactivar(eq.id)} className="btn-sm btn-danger">Desactivar</button>
+                                            )}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </div>
 
-                    {equipos.length === 0 ? (
-                        <p className="muted-text">Este cliente no tiene equipos registrados.</p>
-                    ) : (
-                        <ul className="panel" style={{ padding: "0.5rem 1rem" }}>
-                            {equipos.map((eq) => (
-                                <li
-                                    key={eq.id}
-                                    style={{
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        alignItems: "center",
-                                        padding: "0.65rem 0",
-                                        borderBottom: "1px solid var(--color-border)",
-                                    }}
-                                >
-                                    <span style={{ display: "flex", alignItems: "center", gap: "0.65rem" }}>
-                                        {eq.imagen_url ? (
-                                            <img
-                                                src={eq.imagen_url}
-                                                alt={eq.modelo}
-                                                style={{
-                                                    width: "48px",
-                                                    height: "48px",
-                                                    objectFit: "cover",
-                                                    borderRadius: "6px",
-                                                    flexShrink: 0,
-                                                }}
-                                            />
-                                        ) : (
-                                            <span
-                                                className="muted-text"
-                                                style={{
-                                                    width: "48px",
-                                                    height: "48px",
-                                                    background: "var(--color-bg)",
-                                                    borderRadius: "6px",
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "center",
-                                                    fontSize: "10px",
-                                                    flexShrink: 0,
-                                                }}
-                                            >
-                                                Sin foto
-                                            </span>
-                                        )}
-                                        <span>{eq.tipo} — {eq.modelo} ({eq.numero_serie})</span>
-                                    </span>
-                                    <span className="table-actions" style={{ flexShrink: 0 }}>
-                                        <Link to={`/equipos/${eq.id}/editar`}><button className="btn-sm">Editar</button></Link>
-                                        {user?.rol_id === 2 && (
-                                            <button onClick={() => handleDesactivar(eq.id)} className="btn-sm btn-danger">Desactivar</button>
-                                        )}
-                                    </span>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-
-                    <h3 style={{ marginTop: "1.75rem", marginBottom: "0.5rem" }}>Historial de órdenes ({ordenes.length})</h3>
-                    {ordenes.length === 0 ? (
-                        <p className="muted-text">Este cliente no tiene órdenes registradas.</p>
-                    ) : (
-                        <ul className="panel" style={{ padding: "0.5rem 1rem" }}>
-                            {ordenes.map((orden) => (
-                                <li key={orden.id} style={{ padding: "0.35rem 0" }}>
-                                    <Link to={`/ordenes/${orden.id}/editar`}>
-                                        {orden.folio} — {orden.estatus}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
+                    <div>
+                        <h3 style={{ marginBottom: "0.75rem" }}>Historial de órdenes ({ordenes.length})</h3>
+                        {ordenes.length === 0 ? (
+                            <p className="muted-text">Este cliente no tiene órdenes registradas.</p>
+                        ) : (
+                            <ul className="panel" style={{ padding: "0.5rem 1rem", maxHeight: "28rem", overflowY: "auto" }}>
+                                {ordenes.map((orden) => (
+                                    <li key={orden.id} style={{ padding: "0.35rem 0" }}>
+                                        <Link to={`/ordenes/${orden.id}/editar`}>
+                                            {orden.folio} — {orden.estatus}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+                    </div>
                 </>
             )}
         </div>

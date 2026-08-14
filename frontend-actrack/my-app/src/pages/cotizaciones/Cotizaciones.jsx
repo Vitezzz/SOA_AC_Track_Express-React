@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
+import Icon from "../../components/Icon";
+import EmptyState from "../../components/EmptyState";
+import LoadingState from "../../components/LoadingState";
 
 const ESTILOS_ESTADO = {
     borrador: "badge-status-neutral",
@@ -10,6 +13,88 @@ const ESTILOS_ESTADO = {
 
 const formatoMoneda = (valor) =>
     new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(valor);
+
+const TarjetaCotizacion = ({ cot, contexto, procesando, onResponder }) => {
+    const clase = ESTILOS_ESTADO[cot.estado] || "badge-status-neutral";
+    const { renglones, orden, categoria, equipo, tecnico } = contexto;
+
+    return (
+        <div className={`panel quote-card quote-card-${cot.estado} flex flex-col ${cot.estado === "enviada" ? "panel-featured" : ""}`}>
+            <div className="flex justify-between items-start mb-3 gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                    <span className="card-icon-badge">
+                        <Icon name="tag" />
+                    </span>
+                    <div className="min-w-0">
+                        <p className="text-gray-900 font-semibold truncate">
+                            {categoria?.nombre || "Cotización de servicio"}
+                        </p>
+                        <p className="text-gray-400 text-xs">Folio: {cot.folio}</p>
+                    </div>
+                </div>
+                <span className={`badge-status ${clase} shrink-0`}>{cot.estado}</span>
+            </div>
+
+            <p className="text-gray-500 text-sm mb-3">
+                {orden && `Orden: ${orden.folio}`}
+                {equipo && ` · Equipo: ${equipo.tipo}${equipo.modelo ? ` (${equipo.modelo})` : ""}`}
+            </p>
+            {orden?.descripcion && (
+                <p className="text-gray-600 text-sm mb-2">{orden.descripcion}</p>
+            )}
+            <p className="text-gray-400 text-xs mb-4">
+                {tecnico && `Elaborada por ${tecnico.nombre || `Técnico #${tecnico.usu_id}`}`}
+                {tecnico && orden?.fecha_programada && " · "}
+                {orden?.fecha_programada &&
+                    `Fecha de servicio: ${new Date(orden.fecha_programada).toLocaleDateString("es-MX")}`}
+            </p>
+
+            <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-gray-500">Total</span>
+                <span className="price-tag">{formatoMoneda(cot.total)}</span>
+            </div>
+            {cot.notas && <p className="text-gray-600 text-sm mt-3">{cot.notas}</p>}
+
+            {renglones.length > 0 && (
+                <details className="detalle-toggle">
+                    <summary>
+                        <Icon name="chevron-right" />
+                        Ver desglose ({renglones.length})
+                    </summary>
+                    <ul className="detalle-list">
+                        {renglones.map((r) => (
+                            <li key={r.id} className="flex justify-between text-sm text-gray-600">
+                                <span>
+                                    {r.nombreArticulo} × {r.cantidad}
+                                </span>
+                                <span>{formatoMoneda(r.subtotal)}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </details>
+            )}
+
+            {cot.estado === "enviada" && (
+                <div className="flex gap-3 mt-auto pt-4">
+                    <button
+                        onClick={() => onResponder(cot, "aprobada")}
+                        disabled={procesando}
+                        className="btn-primary flex-1 py-2 inline-flex items-center justify-center gap-1.5"
+                    >
+                        <Icon name="check" className="w-4 h-4" /> Aceptar
+                    </button>
+                    <button
+                        onClick={() => onResponder(cot, "rechazada")}
+                        disabled={procesando}
+                        className="btn-secondary flex-1 py-2 inline-flex items-center justify-center gap-1.5"
+                    >
+                        <Icon name="close" className="w-4 h-4" /> Rechazar
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+};
 
 const Cotizaciones = () => {
     const [cotizaciones, setCotizaciones] = useState([]);
@@ -100,97 +185,93 @@ const Cotizaciones = () => {
         }
     };
 
-    if (loading) return <p className="text-center mt-10">Cargando...</p>;
+    if (loading) return <LoadingState />;
+
+    const contextoDe = (cot) => {
+        const orden = ordenes.find((o) => o.id === cot.ord_id);
+        return {
+            renglones: detalles
+                .filter((d) => d.cot_id === cot.id)
+                .map((r) => ({
+                    ...r,
+                    nombreArticulo: r.es_mano_obra
+                        ? (r.concepto || "Mano de obra")
+                        : (inventario.find((i) => i.id === r.inv_id)?.nombre || "Artículo"),
+                })),
+            orden,
+            categoria: categorias.find((c) => c.id === orden?.cat_id),
+            equipo: equipos.find((e) => e.id === orden?.equ_id),
+            tecnico: tecnicos.find((t) => t.id === cot.tec_id),
+        };
+    };
+
+    const pendientes = cotizaciones.filter((c) => c.estado === "enviada");
+    const historial = cotizaciones.filter((c) => c.estado !== "enviada");
 
     return (
-        <div className="page-container">
-            <h2 className="page-title">Mis Cotizaciones</h2>
+        <div className="page-container-wide">
+            <div className="list-header">
+                <span className="list-header-icon">
+                    <Icon name="tag" />
+                </span>
+                <div>
+                    <p className="list-header-title">Mis Cotizaciones</p>
+                    <p className="list-header-subtitle">
+                        {cotizaciones.length === 0
+                            ? "Aquí verás las cotizaciones que te envíe el equipo de servicio"
+                            : pendientes.length > 0
+                                ? `${pendientes.length} ${pendientes.length === 1 ? "cotización" : "cotizaciones"} esperando tu respuesta`
+                                : `${cotizaciones.length} en tu historial`}
+                    </p>
+                </div>
+            </div>
 
             {error && <p className="form-error mb-4">{error}</p>}
 
             {cotizaciones.length === 0 ? (
-                <p className="text-gray-500 text-center">Todavía no tienes cotizaciones.</p>
+                <EmptyState
+                    icon="tag"
+                    title="Todavía no tienes cotizaciones"
+                    description="Cuando un técnico elabore una cotización para tu servicio, aparecerá aquí."
+                />
             ) : (
-                <div className="space-y-4">
-                    {cotizaciones.map((cot) => {
-                        const clase = ESTILOS_ESTADO[cot.estado] || "badge-status-neutral";
-                        const renglones = detalles.filter((d) => d.cot_id === cot.id);
-
-                        const orden = ordenes.find((o) => o.id === cot.ord_id);
-                        const categoria = categorias.find((c) => c.id === orden?.cat_id);
-                        const equipo = equipos.find((e) => e.id === orden?.equ_id);
-                        const tecnico = tecnicos.find((t) => t.id === cot.tec_id);
-
-                        return (
-                            <div key={cot.id} className="panel">
-                                <div className="flex justify-between items-start mb-1">
-                                    <span className="text-gray-900 text-lg font-semibold">
-                                        {categoria?.nombre || "Cotización de servicio"}
-                                    </span>
-                                    <span className={`badge-status ${clase}`}>
-                                        {cot.estado}
-                                    </span>
-                                </div>
-                                <p className="text-gray-500 text-sm mb-3">
-                                    Folio: {cot.folio}
-                                    {orden && ` · Orden: ${orden.folio}`}
-                                    {equipo && ` · Equipo: ${equipo.tipo}${equipo.modelo ? ` (${equipo.modelo})` : ""}`}
-                                </p>
-                                {orden?.descripcion && (
-                                    <p className="text-gray-600 text-sm mb-2">{orden.descripcion}</p>
-                                )}
-                                <p className="text-gray-400 text-xs mb-3">
-                                    {tecnico && `Elaborada por ${tecnico.nombre || `Técnico #${tecnico.usu_id}`}`}
-                                    {tecnico && orden?.fecha_programada && " · "}
-                                    {orden?.fecha_programada &&
-                                        `Fecha de servicio: ${new Date(orden.fecha_programada).toLocaleDateString("es-MX")}`}
-                                </p>
-                                <p className="text-gray-900 text-lg font-semibold mb-1">
-                                    {formatoMoneda(cot.total)}
-                                </p>
-                                {cot.notas && <p className="text-gray-600 text-sm mb-4">{cot.notas}</p>}
-
-                                {renglones.length > 0 && (
-                                    <div className="border-t border-gray-100 pt-3 mb-4">
-                                        <p className="text-sm font-medium text-gray-700 mb-2">Desglose</p>
-                                        <ul className="space-y-1">
-                                            {renglones.map((r) => {
-                                                const articulo = inventario.find((i) => i.id === r.inv_id);
-                                                return (
-                                                    <li key={r.id} className="flex justify-between text-sm text-gray-600">
-                                                        <span>
-                                                            {r.es_mano_obra ? (r.concepto || "Mano de obra") : (articulo?.nombre || "Artículo")}
-                                                            {" "}× {r.cantidad}
-                                                        </span>
-                                                        <span>{formatoMoneda(r.subtotal)}</span>
-                                                    </li>
-                                                );
-                                            })}
-                                        </ul>
-                                    </div>
-                                )}
-
-                                {cot.estado === "enviada" && (
-                                    <div className="flex gap-3">
-                                        <button
-                                            onClick={() => responder(cot, "aprobada")}
-                                            disabled={procesandoId === cot.id}
-                                            className="btn-primary flex-1 py-2"
-                                        >
-                                            Aceptar
-                                        </button>
-                                        <button
-                                            onClick={() => responder(cot, "rechazada")}
-                                            disabled={procesandoId === cot.id}
-                                            className="btn-secondary flex-1 py-2"
-                                        >
-                                            Rechazar
-                                        </button>
-                                    </div>
-                                )}
+                <div className="space-y-8">
+                    {pendientes.length > 0 && (
+                        <div>
+                            <h3 className="list-section-title">
+                                Necesitan tu respuesta
+                                <span className="badge-status badge-status-info">{pendientes.length}</span>
+                            </h3>
+                            <div className="quote-grid">
+                                {pendientes.map((cot) => (
+                                    <TarjetaCotizacion
+                                        key={cot.id}
+                                        cot={cot}
+                                        contexto={contextoDe(cot)}
+                                        procesando={procesandoId === cot.id}
+                                        onResponder={responder}
+                                    />
+                                ))}
                             </div>
-                        );
-                    })}
+                        </div>
+                    )}
+
+                    {historial.length > 0 && (
+                        <div>
+                            {pendientes.length > 0 && <h3 className="list-section-title">Historial</h3>}
+                            <div className="quote-grid">
+                                {historial.map((cot) => (
+                                    <TarjetaCotizacion
+                                        key={cot.id}
+                                        cot={cot}
+                                        contexto={contextoDe(cot)}
+                                        procesando={procesandoId === cot.id}
+                                        onResponder={responder}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
